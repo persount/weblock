@@ -718,7 +718,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                } else if(messageContent.buttonsMessage) {
                     
                     const content = getAdditionalNode('buttons')
-                    (stanza.content as BinaryNode[]).push(...content)}
+                    (stanza.content as BinaryNode[]).push(...content)
                     
                } else if(messageContent.listMessage) {
                     
