@@ -646,20 +646,32 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 
             const content = getAdditionalNode('order')
             const filteredContent = getBinaryNodeFilter(additionalNodes);
-            (stanza.content as BinaryNode[]).push(...filteredContent)
+            if(filteredContent && filteredContent.length) {
+                (stanza.content as BinaryNode[]).push(...filteredContent)
+            } else {
+                (stanza.content as BinaryNode[]).push(...content)
+            }
                                       
         } else if(!isNewsletter && (messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage)) {
                 
-             const content = getAdditionalNode('interactive')
-             const filteredContent = getBinaryNodeFilter(additionalNodes);
-             (stanza.content as BinaryNode[]).push(...filteredContent)
+            const content = getAdditionalNode('interactive')
+            const filteredContent = getBinaryNodeFilter(additionalNodes);
+            if(filteredContent && filteredContent.length) {
+                (stanza.content as BinaryNode[]).push(...filteredContent)
+            } else {
+                (stanza.content as BinaryNode[]).push(...content)
+            }
                    
                    
 				} else if(!isNewsletter && messageContent.buttonsMessage) {
 				        
-             const content = getAdditionalNode('buttons')
-             const filteredContent = getBinaryNodeFilter(additionalNodes);
-            (stanza.content as BinaryNode[]).push(...filteredContent)
+            const content = getAdditionalNode('buttons')
+            const filteredContent = getBinaryNodeFilter(additionalNodes);
+            if(filteredContent && filteredContent.length) {
+                (stanza.content as BinaryNode[]).push(...filteredContent)
+            } else {
+                (stanza.content as BinaryNode[]).push(...content)
+            }
                    
                    
 				    logger.debug({ jid }, 'adding business node')
@@ -667,7 +679,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				        
             const content = getAdditionalNode('list')
             const filteredContent = getBinaryNodeFilter(additionalNodes);
-            (stanza.content as BinaryNode[]).push(...filteredContent)
+            if(filteredContent && filteredContent.length) {
+                (stanza.content as BinaryNode[]).push(...filteredContent)
+            } else {
+                (stanza.content as BinaryNode[]).push(...content)
+            }
                    
 				    logger.debug({ jid }, 'adding business node')
 				}
@@ -675,7 +691,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			  if(isPerson) {
 				    const content = getAdditionalNode('bot')
             const filteredContent = getBinaryNodeFilter(additionalNodes);
-            (stanza.content as BinaryNode[]).push(...filteredContent)
+            if(filteredContent && filteredContent.length) {
+                (stanza.content as BinaryNode[]).push(...filteredContent)
+            } else {
+                (stanza.content as BinaryNode[]).push(...content)
+            }
 			  }
 
 				logger.debug({ msgId }, `sending message to ${participants.length} devices`)
