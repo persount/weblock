@@ -372,6 +372,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const isGroup = server === 'g.us'
 		const isNewsletter = server == 'newsletter'
 		const isStatus = jid === statusJid
+    const isBroadcast = server === 'broadcast'
 		const isLid = server === 'lid'
     const isPerson = server === 's.whatsapp.net'
 
@@ -380,7 +381,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
 		const participants: BinaryNode[] = []
-		const destinationJid = (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : 's.whatsapp.net') : statusJid
+		const destinationJid = (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBroadcast ? 'broadcast' : 's.whatsapp.net') : statusJid
 		const binaryNodeContent: BinaryNode[] = []
 		const devices: JidWithDevice[] = []
 
@@ -415,7 +416,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					extraAttrs['decrypt-fail'] = 'hide'
 				}
 
-				if(isGroup || isStatus) {
+				if(isGroup || isStatus || isBroadcast) {
 					const [groupData, senderKeyMap] = await Promise.all([
 						(async() => {
 							let groupData = useCachedGroupMetadata && cachedGroupMetadata ? await cachedGroupMetadata(jid) : undefined
@@ -644,20 +645,20 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           messageContent?.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay'))) {
                 
             const content = getAdditionalNode('order')
-            const filteredContent = getBinaryNodeFilter(stanza);
+            const filteredContent = getBinaryNodeFilter(additionalNodes);
             (stanza.content as BinaryNode[]).push(...filteredContent)
                                       
         } else if(!isNewsletter && (messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage)) {
                 
              const content = getAdditionalNode('interactive')
-             const filteredContent = getBinaryNodeFilter(stanza);
+             const filteredContent = getBinaryNodeFilter(additionalNodes);
              (stanza.content as BinaryNode[]).push(...filteredContent)
                    
                    
 				} else if(!isNewsletter && messageContent.buttonsMessage) {
 				        
              const content = getAdditionalNode('buttons')
-             const filteredContent = getBinaryNodeFilter(stanza);
+             const filteredContent = getBinaryNodeFilter(additionalNodes);
             (stanza.content as BinaryNode[]).push(...filteredContent)
                    
                    
@@ -665,7 +666,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				} else if(!isNewsletter && messageContent.listMessage) {
 				        
             const content = getAdditionalNode('list')
-            const filteredContent = getBinaryNodeFilter(stanza);
+            const filteredContent = getBinaryNodeFilter(additionalNodes);
             (stanza.content as BinaryNode[]).push(...filteredContent)
                    
 				    logger.debug({ jid }, 'adding business node')
@@ -673,7 +674,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
   
 			  if(isPerson) {
 				    const content = getAdditionalNode('bot')
-            const filteredContent = getBinaryNodeFilter(stanza);
+            const filteredContent = getBinaryNodeFilter(additionalNodes);
             (stanza.content as BinaryNode[]).push(...filteredContent)
 			  }
 
