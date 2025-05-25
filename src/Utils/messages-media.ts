@@ -143,7 +143,7 @@ export const encodeBase64EncodedStringForUpload = (b64: string) => (
 )
 
 export const generateProfilePicture = async(mediaUpload: WAMediaUpload) => {
-	const bufferOrFilePath: Buffer | string	    
+	let bufferOrFilePath: Buffer | string	    
   let img: Promise<Buffer>
   
 	if(Buffer.isBuffer(mediaUpload)) {
