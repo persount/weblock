@@ -697,6 +697,41 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			      } else {
                (stanza.content as BinaryNode[]).push(...additionalNodes)
             }
+				} else {
+				    if(!stanza.content || !Array.isArray(stanza.content)) {
+               stanza.content = []
+            }
+            if(!isNewsletter) {
+               if(messageContent.interactiveMessage 
+                    && (messageContent.interactiveMessage?.nativeFlowMessage 
+                    && messageContent.interactiveMessage.nativeFlowMessage?.buttons 
+                    && messageContent?.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay')) {
+                    
+                    const content = getAdditionalNode('order')
+                    (stanza.content as BinaryNode[]).push(...content)
+               
+               } else if(messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage) {
+                    
+                    const content = getAdditionalNode('interactive')
+                    (stanza.content as BinaryNode[]).push(...content)
+                    
+               } else if(messageContent.buttonsMessage) {
+                    
+                    const content = getAdditionalNode('buttons')
+                    (stanza.content as BinaryNode[]).push(...content)}
+                    
+               } else if(messageContent.listMessage) {
+                    
+                    const content = getAdditionalNode('list')
+                    (stanza.content as BinaryNode[]).push(...content)
+                    
+                    logger.debug({ jid }, 'adding business node')
+                                   
+               }
+            } else if(isPerson) {
+				       const bots = getAdditionalNode('bot')
+               (stanza.content as BinaryNode[]).push(...bots)
+            }
 				}
 				               
 
