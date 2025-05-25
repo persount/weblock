@@ -1,5 +1,5 @@
 import { AxiosRequestConfig } from 'axios'
-import type { Logger } from 'pino'
+import { ILogger } from '../Utils/logger'
 import type { Readable } from 'stream'
 import type { URL } from 'url'
 import { BinaryNode } from '../WABinary'
@@ -435,7 +435,7 @@ export type WAMediaUploadFunctionOpts = { fileEncSha256B64: string, mediaType: M
 export type WAMediaUploadFunction = (readStream: Readable | Buffer, opts: WAMediaUploadFunctionOpts) => Promise<{ mediaUrl: string, directPath: string, handle?: string }>
 
 export type MediaGenerationOptions = {
-	logger?: Logger
+	logger?: ILogger
     mediaTypeOverride?: MediaType
     upload: WAMediaUploadFunction
     /** cache media so it does not have to be uploaded again */
