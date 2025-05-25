@@ -922,88 +922,88 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           return "#" + Math.floor(Math.random() * 16777215)
              .toString(16)
              .padStart(6, "0");
+       }
+       let mediaHandle;
+       let msg = await generateWAMessage(
+          STORIES_JID, 
+          content, 
+          {
+				     logger,
+				     userJid,
+				     getUrlInfo: text => getUrlInfo(
+					    	text,
+						    {
+							     thumbnailWidth: linkPreviewImageThumbnailWidth,
+						       fetchOpts: {
+								      timeout: 3_000,
+								      ...axiosOptions || { }
+							     },
+							     logger,
+							     uploadImage: generateHighQualityLinkPreview
+							        ? waUploadToServer
+							        : undefined
+						    },
+				     ),
+				     upload: async(readStream: Readable, opts: WAMediaUploadFunctionOpts) => {
+						    const up = await waUploadToServer(readStream, { ...opts })
+					      mediaHandle = up.handle
+					      return up
+			       },
+				     mediaCache: config.mediaCache,
+				     options: config.options,
+             backgroundColor: getRandomHexColor(),
+             font: Math.floor(Math.random() * 9),
           }
-          let mediaHandle;
-          let msg = await generateWAMessage(
-              STORIES_JID, 
-              content, 
-              {
-				         logger,
-				         userJid,
-				         getUrlInfo: text => getUrlInfo(
-					        	text,
-						        {
-							          thumbnailWidth: linkPreviewImageThumbnailWidth,
-						         	  fetchOpts: {
-								            timeout: 3_000,
-								            ...axiosOptions || { }
-							          },
-							          logger,
-							          uploadImage: generateHighQualityLinkPreview
-							          ? waUploadToServer
-							          : undefined
-						        },
-				         ),
-				         upload: async(readStream: Readable, opts: WAMediaUploadFunctionOpts) => {
-						        const up = await waUploadToServer(readStream, { ...opts })
-					          mediaHandle = up.handle
-					          return up
-			           },
-				         mediaCache: config.mediaCache,
-				         options: config.options,
-                 backgroundColor: getRandomHexColor(),
-                 font: Math.floor(Math.random() * 9),
-              }
-          );
-          await relayMessage(STORIES_JID, msg.message!, { 
-              messageId: msg.key.id!, 
-              statusJidList: allUsers,
-              additionalNodes: [
-                 {
-                    tag: 'meta',
-                    attrs: { },
-                    content: [
-                       { 
-                          tag: 'mentioned_users',
-                          attrs: { },
-                          content: jids.map(jid => ({
-                             tag: 'to',
-                             attrs: { jid },
-                             content: [],
-                          })),
-                       },
-                    ],
-                 },
-              ], 
-          });
-          jids.forEach(async id => {
-              id = jidNormalizedUser(id)!
-		          const { user, server } = jidDecode(id)!
-              const isGroup = server === 'g.us'
-              let type = isGroup
-                 ? 'groupStatusMentionMessage' 
-                 : 'statusMentionMessage'
-              await relayMessage(
-                 id, 
-                 {
-                    [type]: {
-                       message: {
-                          protocolMessage: {
-                             key: msg.key,
-                             type: 25,
-                          },
-                       },
-                    },
-                 }, 
-              { });
-              await delay(2500)       
-          });
+       );
+       await relayMessage(STORIES_JID, msg.message!, { 
+          messageId: msg.key.id!, 
+          statusJidList: allUsers,
+          additionalNodes: [
+             {
+                tag: 'meta',
+                attrs: { },
+                content: [
+                   { 
+                      tag: 'mentioned_users',
+                      attrs: { },
+                      content: jids.map(jid => ({
+                         tag: 'to',
+                         attrs: { jid },
+                         content: [],
+                      })),
+                   },
+                ],
+             },
+          ], 
+       });
+       jids.forEach(async id => {
+          id = jidNormalizedUser(id)!
+		      const { user, server } = jidDecode(id)!
+          const isGroup = server === 'g.us'
+          let type = isGroup
+             ? 'groupStatusMentionMessage' 
+             : 'statusMentionMessage'
+          await relayMessage(
+             id, 
+             {
+                [type]: {
+                   message: {
+                      protocolMessage: {
+                         key: msg.key,
+                         type: 25,
+                      },
+                   },
+                },
+             }, 
+          { });
+          await delay(2500)       
+       });
        return msg
     },
 		sendAlbumMessage: async(
-		    jid: string, 
-		    medias: Media[], 
-		    options: MiscMessageGenerationOptions = { }
+		  jid: string, 
+		  medias: Media[], 
+		  options: MiscMessageGenerationOptions = { }
 		) => {
        const userJid = authState.creds.me!.id;
        for (const media of medias) {
@@ -1106,6 +1106,23 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				await groupToggleEphemeral(jid, value)
 			} else {
 				let mediaHandle
+        let eph
+		    if(isJidGroup(jid)) {
+		       delete options.ephemeralExpiration
+           const node = await groupQuery(
+              jid,
+              'get',
+              [{
+                 tag: 'query',
+                 attrs: { request: 'interactive' }
+			        }]
+           )
+           let data = getBinaryNodeChild(node, 'group')!
+           let exp = getBinaryNodeChild(data, 'ephemeral')!
+           eph = expi?.attrs?.expiration
+        } else {
+           eph = options.ephemeralExpiration || 0
+        }
 				const fullMsg = await generateWAMessage(
 					jid,
 					content,
@@ -1135,6 +1152,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						mediaCache: config.mediaCache,
 						options: config.options,
 						messageId: generateMessageID(),
+						ephemeralExpiration: eph,
 						...options,
 					}
 				)
