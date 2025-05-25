@@ -83,7 +83,7 @@ export enum XWAPaths {
     METADATA_UPDATE = 'xwa2_notify_newsletter_on_metadata_update'
 }
 
-enum QueryIds {
+export enum QueryIds {
     JOB_MUTATION = '7150902998257522',
     METADATA = '6620195908089573',
     UNFOLLOW = '7238632346214362',
