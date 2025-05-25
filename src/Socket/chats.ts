@@ -192,6 +192,20 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		}
 	}
 
+	const fetchUserLid = async(...jids: string[]) => {
+		const usyncQuery = new USyncQuery()
+			.withLIDProtocol()
+
+		for(const jid of jids) {
+			usyncQuery.withUser(new USyncUser().withId(jid))
+		}
+
+		const result = await sock.executeUSyncQuery(usyncQuery)
+		if(result) {
+			return result.list
+		}
+	}
+	
 	const fetchStatus = async(...jids: string[]) => {
 		const usyncQuery = new USyncQuery()
 			.withStatusProtocol()
@@ -989,6 +1003,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		fetchBlocklist,
 		fetchDisappearingDuration,
 		fetchStatus,
+		fetchUserLid,
 		updateProfilePicture,
 		removeProfilePicture,
 		updateProfileStatus,

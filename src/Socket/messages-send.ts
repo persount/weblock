@@ -644,20 +644,20 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           messageContent?.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay'))) {
                 
             const content = getAdditionalNode('order')
-            const filteredContent = getBinaryNodeFilter(additionalNodes, content);
+            const filteredContent = getBinaryNodeFilter(stanza);
             (stanza.content as BinaryNode[]).push(...filteredContent)
                                       
         } else if(!isNewsletter && (messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage)) {
                 
              const content = getAdditionalNode('interactive')
-             const filteredContent = getBinaryNodeFilter(additionalNodes, content);
+             const filteredContent = getBinaryNodeFilter(stanza);
              (stanza.content as BinaryNode[]).push(...filteredContent)
                    
                    
 				} else if(!isNewsletter && messageContent.buttonsMessage) {
 				        
              const content = getAdditionalNode('buttons')
-             const filteredContent = getBinaryNodeFilter(additionalNodes, content);
+             const filteredContent = getBinaryNodeFilter(stanza);
             (stanza.content as BinaryNode[]).push(...filteredContent)
                    
                    
@@ -665,7 +665,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				} else if(!isNewsletter && messageContent.listMessage) {
 				        
             const content = getAdditionalNode('list')
-            const filteredContent = getBinaryNodeFilter(additionalNodes, content);
+            const filteredContent = getBinaryNodeFilter(stanza);
             (stanza.content as BinaryNode[]).push(...filteredContent)
                    
 				    logger.debug({ jid }, 'adding business node')
@@ -673,7 +673,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
   
 			  if(isPerson) {
 				    const content = getAdditionalNode('bot')
-            const filteredContent = getBinaryNodeFilter(additionalNodes, content);
+            const filteredContent = getBinaryNodeFilter(stanza);
             (stanza.content as BinaryNode[]).push(...filteredContent)
 			  }
 
