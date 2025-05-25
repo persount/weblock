@@ -49,18 +49,10 @@ export const getBinaryNodeChildUInt = (node: BinaryNode, childTag: string, lengt
 	}
 }
 
-export const getBinaryNodeFilter = (additionalNodes, content) => {
-  const node = [...additionalNodes]
-  const indexObject = node.findIndex(item => JSON.stringify(item) === JSON.stringify(content));
-
-  if (indexObject !== -1) {
-    node.splice(indexObject, 1);
-    node.push(content); 
-    return node;
-  } else {
-    node.push(content);
-    return node;
-  }
+export const getBinaryNodeFilter = (node: BinaryNode) => {
+   return node.content.filter((value, index, self) =>
+      index === self.findIndex((t) => (t.tag === value.tag))
+   )
 }
 
 
