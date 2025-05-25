@@ -1,21 +1,7 @@
-import { SocketConfig, WAMediaUpload, NewsletterMetadata, NewsletterReactionMode, NewsletterViewRole, XWAPaths, NewsletterReaction, NewsletterFetchedUpdate } from '../Types'
+import { SocketConfig, WAMediaUpload, QueryIds, NewsletterMetadata, NewsletterReactionMode, NewsletterViewRole, XWAPaths, NewsletterReaction, NewsletterFetchedUpdate } from '../Types'
 import { decryptMessageNode, generateMessageID, generateProfilePicture } from '../Utils'
 import { BinaryNode, getAllBinaryNodeChildren, getBinaryNodeChild, getBinaryNodeChildren, S_WHATSAPP_NET } from '../WABinary'
 import { makeGroupsSocket } from './groups'
-
-enum QueryIds {
-    JOB_MUTATION = '7150902998257522',
-    METADATA = '6620195908089573',
-    UNFOLLOW = '7238632346214362',
-    FOLLOW = '7871414976211147',
-    UNMUTE = '7337137176362961',
-    MUTE = '25151904754424642',
-    CREATE = '6996806640408138',
-    ADMIN_COUNT = '7130823597031706',
-    CHANGE_OWNER = '7341777602580933',
-    DELETE = '8316537688363079',
-    DEMOTE = '6551828931592903'
-}
 
 export const makeNewsletterSocket = (config: SocketConfig) => {
 	const sock = makeGroupsSocket(config)
@@ -24,10 +10,10 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
     const encoder = new TextEncoder()
 
 	const newsletterQuery = async(jid: string, type: 'get' | 'set', content: BinaryNode[]) => (
-		query({
+		await query({
 			tag: 'iq',
 			attrs: {
-                id: generateMessageTag(),
+        id: generateMessageTag(),
 				type,
 				xmlns: 'newsletter',
 				to: jid,
@@ -37,22 +23,22 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 	)
 
     const newsletterWMexQuery = async(jid: string | undefined, query_id: QueryIds, content?: object) => (
-        query({
-			tag: 'iq',
-			attrs: {
-                id: generateMessageTag(),
-				type: 'get',
-				xmlns: 'w:mex',
-				to: S_WHATSAPP_NET,
-			},
-			content: [
-                {
-                    tag: 'query',
-                    attrs: {query_id},
-                    content: encoder.encode(JSON.stringify({ variables: { newsletter_id: jid, ...content } }))
-                }
-            ]
-		})
+      await query({
+		   	tag: 'iq',
+		  	attrs: {
+          id: generateMessageTag(),
+			   	type: 'get',
+				  xmlns: 'w:mex',
+				  to: S_WHATSAPP_NET,
+			  },
+			  content: [
+          {
+            tag: 'query',
+            attrs: { query_id },
+            content: encoder.encode(JSON.stringify({ variables: { newsletter_id: jid, ...content } }))
+          }
+        ]
+		  })
     )
 
     const parseFetchedUpdates = async(node: BinaryNode, type: 'messages' | 'updates') => {

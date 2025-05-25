@@ -4,10 +4,10 @@ import NodeCache from '@cacheable/node-cache'
 import { Readable } from 'stream'
 import { proto } from '../../WAProto'
 import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults'
-import { AnyMessageContent, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
+import { AnyMessageContent, Media, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
 import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, delay, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageID, generateWAMessage, generateWAMessageFromContent, getContentType, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, parseAndInjectE2ESessions, unixTimestampSeconds, normalizeMessageContent } from '../Utils'
 import { getUrlInfo } from '../Utils/link-preview'
-import { areJidsSameUser, BinaryNode, BinaryNodeAttributes, getAdditionalNode, getBinaryNodeChild, getBinaryNodeChildren, getBinaryNodeFilter, isJidGroup, isJidNewsletter, isJidUser, jidDecode, jidEncode, jidNormalizedUser, JidWithDevice, S_WHATSAPP_NET } from '../WABinary'
+import { areJidsSameUser, BinaryNode, BinaryNodeAttributes, getAdditionalNode, getBinaryNodeChild, getBinaryNodeChildren, getBinaryNodeFilter, isJidGroup, isJidNewsletter, isJidUser, jidDecode, jidEncode, jidNormalizedUser, JidWithDevice, S_WHATSAPP_NET, STORIES_JID } from '../WABinary'
 import { USyncQuery, USyncUser } from '../WAUSync'
 import { makeNewsletterSocket } from './newsletter'
 import ListType = proto.Message.ListMessage.ListType;
@@ -31,8 +31,10 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		query,
 		fetchPrivacySettings,
 		sendNode,
+		groupQuery,
 		groupMetadata,
 		groupToggleEphemeral,
+		newsletterWMexQuery,
 	} = sock
 
 	const userDevicesCache = config.userDevicesCache || new NodeCache({
@@ -630,24 +632,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					logger.debug({ jid }, 'adding device identity')
 				}
 
-				const buttonType = getButtonType(message)
-				if(buttonType) {
-					(stanza.content as BinaryNode[]).push({
-						tag: 'biz',
-						attrs: { },
-						content: [
-							{
-								tag: buttonType,
-								attrs: getButtonArgs(message),
-							}
-						]
-					})
-
-					logger.debug({ jid }, 'adding business node')
-				}
-
 				if(additionalNodes && additionalNodes.length > 0) {
-                   (stanza.content as BinaryNode[]).push(...additionalNodes);
+            (stanza.content as BinaryNode[]).push(...additionalNodes);
 				}
 				
 				const messageContent = normalizeMessageContent(message)!                
@@ -720,8 +706,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			return getTypeMessage(msg.documentWithCaptionMessage.message!)
 		} else if (msg.reactionMessage) {
 			return 'reaction'
-		} else if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3 || msg.pollUpdateMessage) {
-			return 'poll'
 		} else if (getMediaType(msg)) {
 			return 'media'
 		} else {
@@ -1044,7 +1028,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { 
                     userJid,
                     upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsLetter(jid) });
+                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
                        mediaHandle = up.handle;
                        return up;
                     },
@@ -1062,7 +1046,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { 
                     userJid,
                     upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsLetter(jid) });
+                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
                        mediaHandle = up.handle;
                        return up;
                     },
@@ -1119,7 +1103,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            )
            let data = getBinaryNodeChild(node, 'group')!
            let exp = getBinaryNodeChild(data, 'ephemeral')!
-           eph = expi?.attrs?.expiration
+           eph = exp?.attrs?.expiration
         } else {
            eph = options.ephemeralExpiration || 0
         }
@@ -1143,7 +1127,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 									: undefined
 							},
 						),
-						getProfilePicUrl: profilePictureUrl,
+						getProfilePicUrl: await profilePictureUrl,
 						upload: async(readStream: Readable, opts: WAMediaUploadFunctionOpts) => {
 							const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) })
 							mediaHandle = up.handle
