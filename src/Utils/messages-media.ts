@@ -143,9 +143,9 @@ export const encodeBase64EncodedStringForUpload = (b64: string) => (
 )
 
 export const generateProfilePicture = async(mediaUpload: WAMediaUpload) => {
-	let bufferOrFilePath: Buffer | string
-	let img: Promise<Buffer>
-
+	const bufferOrFilePath: Buffer | string	    
+  let img: Promise<Buffer>
+  
 	if(Buffer.isBuffer(mediaUpload)) {
 		bufferOrFilePath = mediaUpload
 	} else if('url' in mediaUpload) {
@@ -153,17 +153,20 @@ export const generateProfilePicture = async(mediaUpload: WAMediaUpload) => {
 	} else {
 		bufferOrFilePath = await toBuffer(mediaUpload.stream)
 	}
+	
+  const { read, MIME_JPEG, AUTO } = require('jimp')
+  const jimp = await read(bufferOrFilePath as any)
+  const min = jimp.getWidth()
+  const max = jimp.getHeight()
 
-	const jimp = await Jimp.read(bufferOrFilePath as any)
-	const cropped = jimp.getWidth() > jimp.getHeight() ? jimp.resize(550, -1) : jimp.resize(-1, 650)
-
-		img = cropped
-			.quality(100)
-			.getBufferAsync(Jimp.MIME_JPEG)
-
-	return {
-		img: await img,
-	}
+  const cropped = jimp.crop(0, 0, min, max)
+  img = cropped
+        .quality(100)
+        .scaleToFit(720, 720, AUTO)
+        .getBufferAsync(MIME_JPEG)
+  return {
+     img: await img
+  }
 }
 
 /** gets the SHA256 of the given media message */
