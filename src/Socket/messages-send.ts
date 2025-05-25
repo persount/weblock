@@ -637,7 +637,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				
 				if(additionalNodes && additionalNodes.length > 0) {
 				    if(!stanza.content || !Array.isArray(stanza.content)) {
-               stanza.content as BinaryNode[] = [];
+               stanza.content: BinaryNode[] = []
             }
             if(!isNewsletter) {
                if(messageContent.interactiveMessage 
