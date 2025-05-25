@@ -49,9 +49,9 @@ export const getBinaryNodeChildUInt = (node: BinaryNode, childTag: string, lengt
 	}
 }
 
-export const getBinaryNodeFilter = (node: BinaryNode[]) => {
-   if(Array.isArray(node?.content)) {
-		  return node.content.filter((value, index, self) =>
+export const getBinaryNodeFilter = (node: BinaryNode[] | undefined) => {
+   if(Array.isArray(node)) {
+		  return node.filter((value, index, self) =>
          index === self.findIndex((t) => (t.tag === value.tag))
       )
  	 }
