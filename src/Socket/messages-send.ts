@@ -639,105 +639,79 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				    if(!stanza.content || !Array.isArray(stanza.content)) {
                stanza.content = []
             }
-            if(!isNewsletter) {
-               if(messageContent.interactiveMessage 
-                    && (messageContent.interactiveMessage?.nativeFlowMessage 
-                    && messageContent.interactiveMessage.nativeFlowMessage?.buttons 
-                    && messageContent?.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay')) {
-                    
-                    const content = getAdditionalNode('order')
-                    const filteredContent = getBinaryNodeFilter(additionalNodes);
-                    if(filteredContent && filteredContent.length > 0) {
-                       (stanza.content as BinaryNode[]).push(...filteredContent)
-                    } else {
-                       (stanza.content as BinaryNode[]).push(...content)
-                    }
-               
-               } else if(messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage) {
-                    
-                    const content = getAdditionalNode('interactive')
-                    const filteredContent = getBinaryNodeFilter(additionalNodes);
-                    if(filteredContent && filteredContent.length > 0) {
-                       (stanza.content as BinaryNode[]).push(...filteredContent)
-                    } else {
-                       (stanza.content as BinaryNode[]).push(...content)
-                    }
-                    
-               } else if(messageContent.buttonsMessage) {
-                    
-                    const content = getAdditionalNode('buttons')
-                    const filteredContent = getBinaryNodeFilter(additionalNodes);
-                    if(filteredContent && filteredContent.length > 0) {
-                       (stanza.content as BinaryNode[]).push(...filteredContent)
-                    } else {
-                       (stanza.content as BinaryNode[]).push(...content)
-                    }
-                    
-               } else if(messageContent.listMessage) {
-                    
-                    const content = getAdditionalNode('list')
-                    const filteredContent = getBinaryNodeFilter(additionalNodes);
-                    if(filteredContent && filteredContent.length) {
-                       (stanza.content as BinaryNode[]).push(...filteredContent)
-                    } else {
-                       (stanza.content as BinaryNode[]).push(...content)
-                    }
-                    
-                    logger.debug({ jid }, 'adding business node')
-                                   
-               }
-            } else if(isPerson) {
-				       const content = getAdditionalNode('bot')
-               const botsNode = getBinaryNodeFilter(additionalNodes);
-               if(botsNode && botsNode.length > 0) {
-                    (stanza.content as BinaryNode[]).push(...filteredContent)
-               } else {
-                    (stanza.content as BinaryNode[]).push(...content)
-               }
-			      } else {
-               (stanza.content as BinaryNode[]).push(...additionalNodes)
-            }
-            
-				} else {
-				
-				    if(!stanza.content || !Array.isArray(stanza.content)) {
-               stanza.content = []
-            }
-            
-            if(!isNewsletter) {
-               if(messageContent.interactiveMessage 
-                    && (messageContent.interactiveMessage?.nativeFlowMessage 
-                    && messageContent.interactiveMessage.nativeFlowMessage?.buttons 
-                    && messageContent?.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay')) {
-                    
-                    let order = getAdditionalNode('order')
-                    (stanza.content as BinaryNode[]).push(...order)
-               
-               } else if(messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage) {
-                    
-                    let interactive = getAdditionalNode('interactive')
-                    (stanza.content as BinaryNode[]).push(...interactive)
-                    
-               } else if(messageContent.buttonsMessage) {
-                    
-                    let buttons = getAdditionalNode('buttons')
-                    (stanza.content as BinaryNode[]).push(...buttons)
-                    
-               } else if(messageContent.listMessage) {
-                    
-                    let listNode = getAdditionalNode('list')
-                    (stanza.content as BinaryNode[]).push(...listNode)
-                    
-                    logger.debug({ jid }, 'adding business node')
-                                   
-               }
-            } else if(isPerson) {
-				       let bots = getAdditionalNode('bot')
-               (stanza.content as BinaryNode[]).push(...bots)
-            }
+            (stanza.content as BinaryNode[]).push(...additionalNodes)            
 				}
+				
+				
+        if(!isNewsletter) {
+           if(messageContent.interactiveMessage 
+              && (messageContent.interactiveMessage?.nativeFlowMessage 
+              && messageContent.interactiveMessage.nativeFlowMessage?.buttons 
+              && messageContent?.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay')) {
+              if(!stanza.content || !Array.isArray(stanza.content)) {
+                 stanza.content = []
+              }      
+              const nodes = getAdditionalNode('order')
+              const content = getBinaryNodeFilter(additionalNodes);
+              if(content && content.length > 0) {
+                 (stanza.content as BinaryNode[]).push(...content)
+              } else {
+                 (stanza.content as BinaryNode[]).push(...nodes)
+              }
+               
+           } else if(messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage) {
+              if(!stanza.content || !Array.isArray(stanza.content)) {
+                 stanza.content = []
+              }      
+              const nodes = getAdditionalNode('interactive')
+              const content = getBinaryNodeFilter(additionalNodes);
+              if(content && content.length > 0) {
+                 (stanza.content as BinaryNode[]).push(...content)
+              } else {
+                 (stanza.content as BinaryNode[]).push(...nodes)
+              }
+                    
+           } else if(messageContent.buttonsMessage) {
+              if(!stanza.content || !Array.isArray(stanza.content)) {
+                 stanza.content = []
+              }      
+              const nodes = getAdditionalNode('buttons')
+              const content = getBinaryNodeFilter(additionalNodes);
+              if(content && content.length > 0) {
+                 (stanza.content as BinaryNode[]).push(...content)
+              } else {
+                 (stanza.content as BinaryNode[]).push(...nodes)
+              }
+                    
+           } else if(messageContent.listMessage) {
+              if(!stanza.content || !Array.isArray(stanza.content)) {
+                 stanza.content = []
+              }      
+              const nodes = getAdditionalNode('list')
+              const content = getBinaryNodeFilter(additionalNodes);
+              if(content && content.length > 0) {
+                 (stanza.content as BinaryNode[]).push(...content)
+              } else {
+                 (stanza.content as BinaryNode[]).push(...nodes)
+              }
+              
+              logger.debug({ jid }, 'adding business node')
+           }
+        } 
+            
+        if(isPerson) {
+           if(!stanza.content || !Array.isArray(stanza.content)) {
+             stanza.content = []
+           }
+				   const nodes = getAdditionalNode('bot')
+           const botsNode = getBinaryNodeFilter(additionalNodes);
+           if(botsNode && botsNode.length > 0) {
+             (stanza.content as BinaryNode[]).push(...botsNode)
+           } else {
+             (stanza.content as BinaryNode[]).push(...nodes)
+           }
+			  }
 				               
-
 				logger.debug({ msgId }, `sending message to ${participants.length} devices`)
 
 				await sendNode(stanza)
