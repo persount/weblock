@@ -398,7 +398,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			// when the retry request is not for a group
 			// only send to the specific device that asked for a retry
 			// otherwise the message is sent out to every device that should be a recipient
-			if(!isGroup && !isStatus) {
+			if(!isGroup && !isStatus && !isBroadcast) {
 				additionalAttributes = { ...additionalAttributes, 'device_fanout': 'false' }
 			}
 
@@ -601,7 +601,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					tag: 'message',
 					attrs: {
 						id: msgId!,
-						type: isNewsletter ? getTypeMessage(message) : getMessageType(message),
+						type: isNewsletter ? getTypeMessage(message) : 'text',
 						...(additionalAttributes || {})
 					},
 					content: binaryNodeContent
@@ -719,13 +719,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		)
 
 		return msgId
-	}
-
-	const getMessageType = (message: proto.IMessage) => {
-		if(message.pollCreationMessage || message.pollCreationMessageV2 || message.pollCreationMessageV3 || message.pollUpdateMessage) {
-			return 'poll'
-		}
-		return 'text'
 	}
 
 	const getTypeMessage = (msg: proto.IMessage) => {
@@ -1127,6 +1120,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				let mediaHandle
         let eph
 		    if(isJidGroup(jid)) {
+		       options.ephemeralExpiration = parseInt(options.ephemeralExpiration)
 		       delete options.ephemeralExpiration
            const node = await groupQuery(
               jid,
@@ -1197,14 +1191,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				} else if(isPinMsg) {
 					additionalAttributes.edit = '2'
 				// required for keep message
-				} else if(isPollMessage) {
-					additionalNodes.push({
-						tag: 'meta',
-						attrs: {
-							polltype: 'creation'
-						},
-					} as BinaryNode)
-				// required to display AI icon on message
 				} else if(isAiMsg) {
 					additionalNodes.push({
 						attrs: {
