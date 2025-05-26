@@ -1084,10 +1084,10 @@ export const generateWAMessageFromContent = (
 		let requestPayment;
 		if(key === 'requestPaymentMessage') {
 		    if(innerMessage?.requestPaymentMessage?.noteMessage && innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage) {
-		        requestPayment = innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage
-            } else if(innerMessage?.requestPaymentMessage?.noteMessage && innerMessage?.requestPaymentMessage?.noteMessage?.stickerMessage) {
-                requestPayment = innerMessage.requestPaymentMessage?.noteMessage?.stickerMessage
-            }
+		       requestPayment = innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage
+        } else if(innerMessage?.requestPaymentMessage?.noteMessage && innerMessage?.requestPaymentMessage?.noteMessage?.stickerMessage) {
+            requestPayment = innerMessage.requestPaymentMessage?.noteMessage?.stickerMessage
+        }
 		}
 		
 		const contextInfo: proto.IContextInfo = (key ==='requestPaymentMessage' ? requestPayment.contextInfo : innerMessage[key].contextInfo) || { }
@@ -1118,7 +1118,8 @@ export const generateWAMessageFromContent = (
 		innerMessage[key].contextInfo = {
 			...(innerMessage[key].contextInfo || {}),
 			expiration: options.ephemeralExpiration || WA_DEFAULT_EPHEMERAL,
-			//ephemeralSettingTimestamp: options.ephemeralOptions.eph_setting_ts?.toString()
+			ephemeralSettingTimestamp: timestamp,
+			disappearingMode: { initiator: 0, trigger: 2, initiatedByMe: false }
 		}		
 	}
 
