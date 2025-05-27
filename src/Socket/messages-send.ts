@@ -1116,7 +1116,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				let mediaHandle
         let eph
 		    if(isJidGroup(jid)) {
-		       options.ephemeralExpiration = parseInt(options.ephemeralExpiration)
 		       delete options.ephemeralExpiration
            const node = await groupQuery(
               jid,
