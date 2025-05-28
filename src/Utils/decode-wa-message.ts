@@ -56,7 +56,7 @@ export function decodeMessageNode(
 
 			chatId = recipient
 		} else {
-			chatId = from
+			chatId = recipient
 		}
 
 		msgType = 'chat'
@@ -86,7 +86,7 @@ export function decodeMessageNode(
 		}
 
 		chatId = from
-		author = participant
+		author = recipient
 	} else {
 		throw new Boom('Unknown message type', { data: stanza })
 	}
