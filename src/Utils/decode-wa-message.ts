@@ -71,7 +71,7 @@ export function decodeMessageNode(
 		chatId = from
 	} else if(isJidNewsletter(from)) {
 		msgType = 'newsletter'
-		author = from
+		author = participant
 		chatId = from
 	} else if(isJidBroadcast(from)) {
 		if(!participant) {
