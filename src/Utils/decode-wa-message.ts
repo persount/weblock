@@ -56,7 +56,7 @@ export function decodeMessageNode(
 
 			chatId = recipient
 		} else {
-			chatId = recipient
+			chatId = from
 		}
 
 		msgType = 'chat'
@@ -71,7 +71,7 @@ export function decodeMessageNode(
 		chatId = from
 	} else if(isJidNewsletter(from)) {
 		msgType = 'newsletter'
-		author = participant
+		author = from
 		chatId = from
 	} else if(isJidBroadcast(from)) {
 		if(!participant) {
@@ -86,7 +86,7 @@ export function decodeMessageNode(
 		}
 
 		chatId = from
-		author = recipient
+		author = participant
 	} else {
 		throw new Boom('Unknown message type', { data: stanza })
 	}
