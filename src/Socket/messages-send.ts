@@ -649,7 +649,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            }
            const content = getAdditionalNode(buttonType)
            const items = getBinaryNodeFilter(additionalNodes)
-           if(item && item.length > 0) {
+           if(items && items.length > 0) {
               (stanza.content as BinaryNode[]).push(...items)
            } else {
               (stanza.content as BinaryNode[]).push(...content)
@@ -744,7 +744,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       return 'payment_status'
 		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'payment_method') {
       return 'payment_method'
-		} else if(msg.interactiveMessage && message.interactiveMessage?.nativeFlowMessage) {
+		} else if(msg.interactiveMessage && msg.interactiveMessage?.nativeFlowMessage) {
 			return 'interactive'
 		} else if(msg.listMessage) {
 			return 'list'
