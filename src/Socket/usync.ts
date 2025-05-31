@@ -10,7 +10,7 @@ export const makeUSyncSocket = (config: SocketConfig) => {
 	const {
 		generateMessageTag,
 		query,
-	} = sock
+	} = felz
 
 	const executeUSyncQuery = async(usyncQuery: USyncQuery) => {
 		if(usyncQuery.protocols.length === 0) {
@@ -75,7 +75,7 @@ export const makeUSyncSocket = (config: SocketConfig) => {
 	}
 
 	return {
-		...sock,
+		...felz,
 		executeUSyncQuery,
 	}
 }

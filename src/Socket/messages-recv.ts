@@ -55,7 +55,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		getMessage,
 		shouldIgnoreJid
 	} = config
-	const sock = makeMessagesSocket(config)
+	const felz = makeMessagesSocket(config)
 	const {
 		ev,
 		authState,
@@ -74,7 +74,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		createParticipantNodes,
 		getUSyncDevices,
 		sendPeerDataOperationMessage,
-	} = sock
+	} = felz
 
 	/** this mutex ensures that each retryRequest will wait for the previous one to finish */
 	const retryMutex = makeMutex()
@@ -628,7 +628,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 				attrs: {
 					to: S_WHATSAPP_NET,
 					type: 'set',
-					id: sock.generateMessageTag(),
+					id: felz.generateMessageTag(),
 					xmlns: 'md'
 				},
 				content: [
@@ -1245,7 +1245,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	})
 
 	return {
-		...sock,
+		...felz,
 		sendMessageAck,
 		sendRetryRequest,
 		rejectCall,

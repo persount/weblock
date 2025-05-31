@@ -15,22 +15,22 @@ const validRegistrationOptions = (config: RegistrationOptions) => config?.phoneN
 	config.phoneNumberMobileCountryCode
 
 export const makeRegistrationSocket = (config: SocketConfig) => {
-	const sock = makeBusinessSocket(config)
+	const felz = makeBusinessSocket(config)
 
 	const register = async(code: string) => {
 		if(!validRegistrationOptions(config.auth.creds.registration)) {
 			throw new Error('please specify the registration options')
 		}
 
-		const result = await mobileRegister({ ...sock.authState.creds, ...sock.authState.creds.registration as RegistrationOptions, code }, config.options)
+		const result = await mobileRegister({ ...felz.authState.creds, ...felz.authState.creds.registration as RegistrationOptions, code }, config.options)
 
-		sock.authState.creds.me = {
+		felz.authState.creds.me = {
 			id: jidEncode(result.login!, 's.whatsapp.net'),
 			name: '~'
 		}
 
-		sock.authState.creds.registered = true
-		sock.ev.emit('creds.update', sock.authState.creds)
+		felz.authState.creds.registered = true
+		felz.ev.emit('creds.update', felz.authState.creds)
 
 		return result
 	}
@@ -41,15 +41,15 @@ export const makeRegistrationSocket = (config: SocketConfig) => {
 			throw new Error('Invalid registration options')
 		}
 
-		sock.authState.creds.registration = registrationOptions
+		felz.authState.creds.registration = registrationOptions
 
-		sock.ev.emit('creds.update', sock.authState.creds)
+		felz.ev.emit('creds.update', felz.authState.creds)
 
 		return mobileRegisterCode({ ...config.auth.creds, ...registrationOptions }, config.options)
 	}
 
 	return {
-		...sock,
+		...felz,
 		register,
 		requestRegistrationCode,
 	}

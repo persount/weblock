@@ -4,8 +4,8 @@ import { BinaryNode, getAllBinaryNodeChildren, getBinaryNodeChild, getBinaryNode
 import { makeGroupsSocket } from './groups'
 
 export const makeNewsletterSocket = (config: SocketConfig) => {
-	const sock = makeGroupsSocket(config)
-	const { authState, signalRepository, query, generateMessageTag } = sock
+	const felz = makeGroupsSocket(config)
+	const { authState, signalRepository, query, generateMessageTag } = felz
 
     const encoder = new TextEncoder()
 
@@ -92,7 +92,7 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
     }
 
     return {
-        ...sock,
+        ...felz,
         newsletterQuery,
         newsletterWMexQuery,
         subscribeNewsletterUpdates: async(jid: string) => {

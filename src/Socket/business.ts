@@ -5,12 +5,12 @@ import { getBinaryNodeChild } from '../WABinary/generic-utils'
 import { makeMessagesRecvSocket } from './messages-recv'
 
 export const makeBusinessSocket = (config: SocketConfig) => {
-	const sock = makeMessagesRecvSocket(config)
+	const felz = makeMessagesRecvSocket(config)
 	const {
 		authState,
 		query,
 		waUploadToServer
-	} = sock
+	} = felz
 
 	const getCatalog = async({ jid, limit, cursor }: GetCatalogOptions) => {
 		jid = jid || authState.creds.me?.id
@@ -269,7 +269,7 @@ export const makeBusinessSocket = (config: SocketConfig) => {
 	}
 
 	return {
-		...sock,
+		...felz,
 		logger: config.logger,
 		getOrderDetails,
 		getCatalog,

@@ -21,7 +21,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		patchMessageBeforeSending,
 		cachedGroupMetadata,
 	} = config
-	const sock = makeNewsletterSocket(config)
+	const felz = makeNewsletterSocket(config)
 	const {
 		ev,
 		authState,
@@ -35,7 +35,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		groupMetadata,
 		groupToggleEphemeral,
 		newsletterWMexQuery,
-	} = sock
+	} = felz
 
 	const userDevicesCache = config.userDevicesCache || new NodeCache({
 		stdTTL: DEFAULT_CACHE_TTLS.USER_DEVICES, // 5 minutes
@@ -180,7 +180,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			query.withUser(new USyncUser().withId(jid))
 		}
 
-		const result = await sock.executeUSyncQuery(query)
+		const result = await felz.executeUSyncQuery(query)
 
 		if(result) {
 			const extracted = extractDeviceJids(result?.list, authState.creds.me!.id, ignoreZeroDevices)
@@ -802,7 +802,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	const waitForMsgMediaUpdate = bindWaitForEvent(ev, 'messages.media-update')
 
 	return {
-		...sock,
+		...felz,
 		getPrivacyTokens,
 		assertSessions,
 		relayMessage,

@@ -5,8 +5,8 @@ import { BinaryNode, getBinaryNodeChild, getBinaryNodeChildren, getBinaryNodeChi
 import { makeChatsSocket } from './chats'
 
 export const makeGroupsSocket = (config: SocketConfig) => {
-	const sock = makeChatsSocket(config)
-	const { authState, ev, query, upsertMessage } = sock
+	const felz = makeChatsSocket(config)
+	const { authState, ev, query, upsertMessage } = felz
 
 	const groupQuery = async(jid: string, type: 'get' | 'set', content: BinaryNode[]) => (
 		query({
@@ -63,23 +63,23 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 			}
 		}
 
-		sock.ev.emit('groups.update', Object.values(data))
+		felz.ev.emit('groups.update', Object.values(data))
 
 		return data
 	}
 
-	sock.ws.on('CB:ib,,dirty', async(node: BinaryNode) => {
+	felz.ws.on('CB:ib,,dirty', async(node: BinaryNode) => {
 		const { attrs } = getBinaryNodeChild(node, 'dirty')!
 		if(attrs.type !== 'groups') {
 			return
 		}
 
 		await groupFetchAllParticipating()
-		await sock.cleanDirtyBits('groups')
+		await felz.cleanDirtyBits('groups')
 	})
 
 	return {
-		...sock,
+		...felz,
 		groupQuery,
 		groupMetadata,
 		groupCreate: async(subject: string, participants: string[]) => {
@@ -283,7 +283,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 				{
 					key: {
 						remoteJid: inviteMessage.groupJid,
-						id: generateMessageIDV2(sock.user?.id),
+						id: generateMessageIDV2(felz.user?.id),
 						fromMe: false,
 						participant: key.remoteJid,
 					},

@@ -21,7 +21,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		shouldIgnoreJid,
 		shouldSyncHistoryMessage,
 	} = config
-	const sock = makeUSyncSocket(config)
+	const felz = makeUSyncSocket(config)
 	const {
 		ev,
 		ws,
@@ -30,7 +30,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		sendNode,
 		query,
 		onUnexpectedError,
-	} = sock
+	} = felz
 
 	let privacySettings: { [_: string]: string } | undefined
 	let needToFlushWithAppStateSync = false
@@ -185,7 +185,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			usyncQuery.withUser(new USyncUser().withPhone(phone))
 		}
 
-		const results = await sock.executeUSyncQuery(usyncQuery)
+		const results = await felz.executeUSyncQuery(usyncQuery)
 
 		if(results) {
 			return results.list.filter((a) => !!a.contact).map(({ contact, id, lid }) => ({ jid: id, exists: contact, lid }))
@@ -200,7 +200,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			usyncQuery.withUser(new USyncUser().withId(jid))
 		}
 
-		const result = await sock.executeUSyncQuery(usyncQuery)
+		const result = await felz.executeUSyncQuery(usyncQuery)
 		if(result) {
 			return result.list
 		}
@@ -214,7 +214,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			usyncQuery.withUser(new USyncUser().withId(jid))
 		}
 
-		const result = await sock.executeUSyncQuery(usyncQuery)
+		const result = await felz.executeUSyncQuery(usyncQuery)
 		if(result) {
 			return result.list
 		}
@@ -228,7 +228,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			usyncQuery.withUser(new USyncUser().withId(jid))
 		}
 
-		const result = await sock.executeUSyncQuery(usyncQuery)
+		const result = await felz.executeUSyncQuery(usyncQuery)
 		if(result) {
 			return result.list
 		}
@@ -991,7 +991,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	})
 
 	return {
-		...sock,
+		...felz,
 		getBotListV2,
 		processingMutex,
 		fetchPrivacySettings,

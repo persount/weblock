@@ -755,7 +755,7 @@ export const makeSocket = (config: SocketConfig) => {
 	}
 
 	return {
-		type: 'md' as 'md',
+		type: 'felz-baileys' as 'felz-baileys',
 		ws,
 		ev,
 		authState: { creds, keys },
