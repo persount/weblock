@@ -642,61 +642,19 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             (stanza.content as BinaryNode[]).push(...additionalNodes)            
 				}
 				
-				
-        if(!isNewsletter) {
-           if(messageContent.interactiveMessage 
-              && (messageContent.interactiveMessage?.nativeFlowMessage 
-              && messageContent.interactiveMessage.nativeFlowMessage?.buttons 
-              && messageContent?.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay')) {
-              if(!stanza.content || !Array.isArray(stanza.content)) {
-                 stanza.content = []
-              }      
-              const nodes = getAdditionalNode('order')
-              const content = getBinaryNodeFilter(additionalNodes);
-              if(content && content.length > 0) {
-                 (stanza.content as BinaryNode[]).push(...content)
-              } else {
-                 (stanza.content as BinaryNode[]).push(...nodes)
-              }
-               
-           } else if(messageContent.interactiveMessage && messageContent.interactiveMessage?.nativeFlowMessage) {
-              if(!stanza.content || !Array.isArray(stanza.content)) {
-                 stanza.content = []
-              }      
-              const nodes = getAdditionalNode('interactive')
-              const content = getBinaryNodeFilter(additionalNodes);
-              if(content && content.length > 0) {
-                 (stanza.content as BinaryNode[]).push(...content)
-              } else {
-                 (stanza.content as BinaryNode[]).push(...nodes)
-              }
-                    
-           } else if(messageContent.buttonsMessage) {
-              if(!stanza.content || !Array.isArray(stanza.content)) {
-                 stanza.content = []
-              }      
-              const nodes = getAdditionalNode('buttons')
-              const content = getBinaryNodeFilter(additionalNodes);
-              if(content && content.length > 0) {
-                 (stanza.content as BinaryNode[]).push(...content)
-              } else {
-                 (stanza.content as BinaryNode[]).push(...nodes)
-              }
-                    
-           } else if(messageContent.listMessage) {
-              if(!stanza.content || !Array.isArray(stanza.content)) {
-                 stanza.content = []
-              }      
-              const nodes = getAdditionalNode('list')
-              const content = getBinaryNodeFilter(additionalNodes);
-              if(content && content.length > 0) {
-                 (stanza.content as BinaryNode[]).push(...content)
-              } else {
-                 (stanza.content as BinaryNode[]).push(...nodes)
-              }
-              
-              logger.debug({ jid }, 'adding business node')
+				const buttonType = getButtonType(messageContent)
+        if(!isNewsletter && buttonType) {
+           if(!stanza.content || !Array.isArray(stanza.content)) {
+              stanza.content = []
            }
+           const content = getAdditionalNode(buttonType)
+           const items = getBinaryNodeFilter(additionalNodes)
+           if(item && item.length > 0) {
+              (stanza.content as BinaryNode[]).push(...items)
+           } else {
+              (stanza.content as BinaryNode[]).push(...content)
+           }
+           logger.debug({ jid }, 'adding business node')
         } 
             
         if(isPerson) {
@@ -704,9 +662,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              stanza.content = []
            }
 				   const nodes = getAdditionalNode('bot')
-           const botsNode = getBinaryNodeFilter(additionalNodes);
-           if(botsNode && botsNode.length > 0) {
-             (stanza.content as BinaryNode[]).push(...botsNode)
+           const bots = getBinaryNodeFilter(additionalNodes)
+           if(bots && bots.length > 0) {
+             (stanza.content as BinaryNode[]).push(...bots)
            } else {
              (stanza.content as BinaryNode[]).push(...nodes)
            }
@@ -771,18 +729,25 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		}
 	}
 
-	const getButtonType = (message: proto.IMessage) => {
-		if(message.buttonsMessage) {
+	const getButtonType = (msg: proto.IMessage) => {
+		if(msg.buttonsMessage) {
 			return 'buttons'
-		} else if(message.buttonsResponseMessage) {
-			return 'buttons_response'
-		} else if(message.interactiveResponseMessage) {
-			return 'interactive_response'
-		} else if(message.listMessage) {
+		} else if(msg.templateMessage) {
+			return 'template'
+    } else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay') {
+      return 'review_and_pay'
+    } else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_order') {
+      return 'review_order'
+    } else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'payment_info') {
+      return 'payment_info'
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'payment_status') {
+      return 'payment_status'
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'payment_method') {
+      return 'payment_method'
+		} else if(msg.interactiveMessage && message.interactiveMessage?.nativeFlowMessage) {
+			return 'interactive'
+		} else if(msg.listMessage) {
 			return 'list'
-		} else if(message.listResponseMessage) {
-			return 'list_response'
-		}
 	}
 
 	const getButtonArgs = (message: proto.IMessage): BinaryNode['attrs'] => {
