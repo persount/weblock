@@ -51,9 +51,26 @@ export const getBinaryNodeChildUInt = (node: BinaryNode, childTag: string, lengt
 
 export const getBinaryNodeFilter = (node: BinaryNode[] | undefined) => {
    if(Array.isArray(node)) {
-		  return node.filter((value, index, self) =>
-         index === self.findIndex((t) => (t.tag === value.tag))
-      )
+		  return node.filter((item) => {
+         if(item?.tag === 'bot' && item?.attrs?.biz_bot === '1') {
+            return false;
+         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'order_details') {
+            return false;
+         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'order_status') {
+            return false;
+         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'payment_info') {
+            return false;
+         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'payment_status') {
+            return false;
+         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'payment_method') {
+            return false;
+         } else if(item?.tag === 'biz') {
+            return false;
+         }
+         return true;
+      })
+   } else {
+      return node
  	 }
 }
 
@@ -74,18 +91,36 @@ export const getAdditionalNode = (type: string) => {
 			   			 tag: 'native_flow',
 			   			 attrs: { 
 			   					name: 'mixed',
-			   				  v: '2',
+			   				  v: '9',
 			   		   },
 			   			 content: []
 					  }]
          }]
       }]
-   } else if(type === 'order') {
+   } else if(type === 'review_and_pay') {
       return [{
           tag: 'biz',
-          attrs: {
-             native_flow_name: 'order_details'
-          }
+          attrs: { native_flow_name: 'order_details' }
+      }]
+   } else if(type === 'review_order') {
+      return [{
+          tag: 'biz',
+          attrs: { native_flow_name: 'order_status' }
+      }]
+   } else if(type === 'payment_info') {
+      return [{
+          tag: 'biz',
+          attrs: { native_flow_name: 'payment_info' }
+      }]
+   } else if(type === 'payment_status') {
+      return [{
+          tag: 'biz',
+          attrs: { native_flow_name: 'payment_status' }
+      }]
+   } else if(type === 'payment_method') {
+      return [{
+          tag: 'biz',
+          attrs: { native_flow_name: 'payment_method' }
       }]
    } else if(type === 'list') {
       return [{
