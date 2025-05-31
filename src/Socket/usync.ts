@@ -5,7 +5,7 @@ import { USyncQuery } from '../WAUSync'
 import { makeSocket } from './socket'
 
 export const makeUSyncSocket = (config: SocketConfig) => {
-	const sock = makeSocket(config)
+	const felz = makeSocket(config)
 
 	const {
 		generateMessageTag,
