@@ -748,6 +748,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			return 'interactive'
 		} else if(msg.listMessage) {
 			return 'list'
+    }
 	}
 
 	const getButtonArgs = (message: proto.IMessage): BinaryNode['attrs'] => {
