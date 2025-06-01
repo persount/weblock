@@ -366,6 +366,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const meId = authState.creds.me!.id
 
 		let shouldIncludeDeviceIdentity = false
+    let didPushAdditional = false
 
 		const { user, server } = jidDecode(jid)!
 		const statusJid = 'status@broadcast'
@@ -635,13 +636,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 				const messageContent = normalizeMessageContent(message)! 
 				
-				if(additionalNodes && additionalNodes.length > 0) {
-				    if(!stanza.content || !Array.isArray(stanza.content)) {
-               stanza.content = []
-            }
-            (stanza.content as BinaryNode[]).push(...additionalNodes)            
-				}
-				
 				const buttonType = getButtonType(messageContent)
         if(!isNewsletter && buttonType) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
@@ -649,8 +643,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            }
            const content = getAdditionalNode(buttonType)
            const items = getBinaryNodeFilter(additionalNodes)
-           if(items && items.length > 0) {
-              (stanza.content as BinaryNode[]).push(...items)
+           if(items) {
+              (stanza.content as BinaryNode[]).push(...additionalNodes)
+              didPushAdditional = true
            } else {
               (stanza.content as BinaryNode[]).push(...content)
            }
@@ -662,13 +657,21 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              stanza.content = []
            }
 				   const nodes = getAdditionalNode('bot')
-           const bots = getBinaryNodeFilter(additionalNodes)
-           if(bots && bots.length > 0) {
-             (stanza.content as BinaryNode[]).push(...bots)
+           const bizBot = getBinaryNodeFilter(additionalNodes)
+           if(bizBot) {
+             (stanza.content as BinaryNode[]).push(...additionalNodes)
+             didPushAdditional = true
            } else {
              (stanza.content as BinaryNode[]).push(...nodes)
            }
 			  }
+			  
+			  if(!didPushAdditional && additionalNodes && additionalNodes.length > 0) {
+				   if(!stanza.content || !Array.isArray(stanza.content)) {
+              stanza.content = []
+           }
+           (stanza.content as BinaryNode[]).push(...additionalNodes)            
+				}
 				               
 				logger.debug({ msgId }, `sending message to ${participants.length} devices`)
 
