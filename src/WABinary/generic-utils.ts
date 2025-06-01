@@ -50,34 +50,34 @@ export const getBinaryNodeChildUInt = (node: BinaryNode, childTag: string, lengt
 }
 
 export const getBinaryNodeFilter = (node: BinaryNode[] | undefined) => {
-   if(Array.isArray(node)) {
-		  return node.filter((item) => {
-         if(item?.tag === 'bot' && item?.attrs?.biz_bot === '1') {
-            return false;
-         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'order_details') {
-            return false;
-         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'order_status') {
-            return false;
-         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'payment_info') {
-            return false;
-         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'payment_status') {
-            return false;
-         } else if(item?.tag === 'biz' && item?.attrs?.native_flow_name === 'payment_method') {
-            return false;
-         } else if(item?.tag === 'biz') {
-            return false;
-         }
-         return true;
-      })
-   } else {
-      return node
- 	 }
+   if(!Array.isArray(node)) return false
+   
+   return node.some(item => 
+      ['native_flow'].includes(item?.content?.[0]?.content?.[0]?.tag) ||
+      ['interactive', 'buttons', 'list'].includes(item?.content?.[0]?.tag) ||
+      ['hsm', 'biz'].includes(item?.tag) ||
+      ['bot'].includes(item?.tag) && item?.attrs?.biz_bot === '1'
+   )
 }
 
-
-export const getAdditionalNode = (type: string) => {
-   type = type.toLowerCase()
-   if(type === 'interactive' || type === 'buttons') {
+export const getAdditionalNode = (name: string) => {
+   name = name.toLowerCase()
+   const orderResponseName = {
+      review_and_pay: 'order_details',
+      review_order: 'order_status',
+      payment_info: 'payment_info',
+      payment_status: 'payment_status',
+      payment_method: 'payment_method'
+   }
+   
+   if(orderResponseName[name]) {
+      return [{
+          tag: 'biz',
+          attrs: { 
+             native_flow_name: orderResponseName[name] 
+          }
+      }]
+   } else if(name === 'interactive' || name === 'buttons') {
       return [{
          tag: 'biz',
          attrs: { },
@@ -97,32 +97,7 @@ export const getAdditionalNode = (type: string) => {
 					  }]
          }]
       }]
-   } else if(type === 'review_and_pay') {
-      return [{
-          tag: 'biz',
-          attrs: { native_flow_name: 'order_details' }
-      }]
-   } else if(type === 'review_order') {
-      return [{
-          tag: 'biz',
-          attrs: { native_flow_name: 'order_status' }
-      }]
-   } else if(type === 'payment_info') {
-      return [{
-          tag: 'biz',
-          attrs: { native_flow_name: 'payment_info' }
-      }]
-   } else if(type === 'payment_status') {
-      return [{
-          tag: 'biz',
-          attrs: { native_flow_name: 'payment_status' }
-      }]
-   } else if(type === 'payment_method') {
-      return [{
-          tag: 'biz',
-          attrs: { native_flow_name: 'payment_method' }
-      }]
-   } else if(type === 'list') {
+   } else if(name === 'list') {
       return [{
          tag: 'biz',
          attrs: { },
@@ -134,7 +109,7 @@ export const getAdditionalNode = (type: string) => {
             }
          }]
       }]
-   } else if(type === 'bot') {
+   } else if(name === 'bot') {
       return [{ 
 				 tag: 'bot', 
 			   attrs: { biz_bot: '1' }
