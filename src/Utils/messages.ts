@@ -587,8 +587,7 @@ export const generateWAMessageContent = async(
 		    pollVotes: message.pollResult.votes!.map((option) => ({
 		          optionName: option[0],
 		          optionVoteCount: option[1]
-		       })
-		    ),
+		    })),
 		}
 		
 		
@@ -852,7 +851,7 @@ export const generateWAMessageContent = async(
 	   m = { interactiveMessage }
    }
    
-   if('collection' in message && !!message.shop) {
+   if('collection' in message && !!message.collection) {
 	    const interactiveMessage: proto.Message.IInteractiveMessage = {
 	      collectionMessage: WAProto.Message.InteractiveMessage.CollectionMessage.fromObject({ 
 	         bizJid: message?.collection?.bizJid,
