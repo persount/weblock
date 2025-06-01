@@ -641,7 +641,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            if(!stanza.content || !Array.isArray(stanza.content)) {
               stanza.content = []
            }
-           if(!Array.isArray(additionalNodes)) {
+           if(additionalNodes && !Array.isArray(additionalNodes)) {
               return [additionalNodes]
            }
            const content = getAdditionalNode(buttonType)
@@ -658,6 +658,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
         if(isPerson) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
              stanza.content = []
+           }
+           if(additionalNodes && !Array.isArray(additionalNodes)) {
+              return [additionalNodes]
            }
 				   const nodes = getAdditionalNode('bot')
            const bizBot = getBinaryNodeFilter(additionalNodes ?? [])
