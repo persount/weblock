@@ -647,7 +647,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            const content = getAdditionalNode(buttonType)
            const items = getBinaryNodeFilter(additionalNodes ?? [])
            if(items) {
-              (stanza.content as BinaryNode[]).push(...additionalNodes)
+              (stanza.content as BinaryNode[]).push(...additionalNodes!)
               didPushAdditional = true
            } else {
               (stanza.content as BinaryNode[]).push(...content)
@@ -665,7 +665,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				   const nodes = getAdditionalNode('bot')
            const bizBot = getBinaryNodeFilter(additionalNodes ?? [])
            if(bizBot) {
-             (stanza.content as BinaryNode[]).push(...additionalNodes)
+             (stanza.content as BinaryNode[]).push(...additionalNodes!)
              didPushAdditional = true
            } else {
              (stanza.content as BinaryNode[]).push(...nodes)
