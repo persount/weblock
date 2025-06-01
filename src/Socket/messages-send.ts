@@ -641,6 +641,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            if(!stanza.content || !Array.isArray(stanza.content)) {
               stanza.content = []
            }
+           if(!Array.isArray(additionalNodes)) {
+              return [additionalNodes]
+           }
            const content = getAdditionalNode(buttonType)
            const items = getBinaryNodeFilter(additionalNodes ?? [])
            if(items) {
