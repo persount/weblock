@@ -49,12 +49,12 @@ export const getBinaryNodeChildUInt = (node: BinaryNode, childTag: string, lengt
 	}
 }
 
-export const getBinaryNodeFilter = (node: BinaryNode[] | []) => {
+export const getBinaryNodeFilter = (node) => {
    if(!Array.isArray(node)) return false
    
    return node.some(item => 
-      ['native_flow'].includes(item?.content?.[0] && item?.content?.[0]?.content?.[0]?.tag) ||
-      ['interactive', 'buttons', 'list'].includes(item?.content?.[0] && item?.content?.[0]?.tag) ||
+      ['native_flow'].includes(item?.content?.[0]?.content?.[0]?.tag) ||
+      ['interactive', 'buttons', 'list'].includes(item?.content?.[0]?.tag) ||
       ['hsm', 'biz'].includes(item?.tag) ||
       ['bot'].includes(item?.tag) && item?.attrs?.biz_bot === '1'
    )
