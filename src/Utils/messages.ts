@@ -372,7 +372,7 @@ export const generateWAMessageContent = async(
 
 		if(contactLen === 1) {
 			m.contactMessage = WAProto.Message.ContactMessage.fromObject(message.contacts.contacts[0])
-        } else {
+    } else {
 			m.contactsArrayMessage = WAProto.Message.ContactsArrayMessage.fromObject(message.contacts)
 		}
    } else if('location' in message) {
@@ -916,15 +916,15 @@ export const generateWAMessageContent = async(
                      { image: product.productImage, ...options }, 
                      options
                  );
-		         header = {
-		             productMesage: WAProto.Message.ProductMessage.fromObject({
-			             product: {
-			                ...product,
-				            productImage: imageMessage,
-			             },
-			             ...slide
-		             })
-		         }
+		             header = {
+		                 productMesage: WAProto.Message.ProductMessage.fromObject({
+			                   product: {
+			                       ...product,
+				                     productImage: imageMessage,
+			                   },
+			                   ...slide
+		                 })
+		             }
               } else if(image) {
                  header = await prepareWAMessageMedia(
                     { image: image, ...options }, 
@@ -1046,6 +1046,11 @@ export const generateWAMessageContent = async(
 		m[messageType] = m[messageType] || {}
 		m[messageType].contextInfo = message.contextInfo
 	}
+	
+	m.messageContextInfo = {
+     messageSecret: randomBytes(32),
+     ...m.messageContextInfo
+  }
 
 	return WAProto.Message.fromObject(m)
 }
