@@ -3,6 +3,7 @@ import { Boom } from '@hapi/boom'
 import NodeCache from '@cacheable/node-cache'
 import { Readable } from 'stream'
 import { proto } from '../../WAProto'
+import { randomBytes } from 'crypto'
 import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults'
 import { AnyMessageContent, Media, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
 import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, delay, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageID, generateWAMessage, generateWAMessageFromContent, getContentType, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, parseAndInjectE2ESessions, unixTimestampSeconds, normalizeMessageContent } from '../Utils'
@@ -636,7 +637,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				}
 
 				const messageContent = normalizeMessageContent(message)! 
-				
+				if(messageContent && !messageContent?.messageContextInfo?.messageSecret) {
+				  messageContent!.messageContextInfo = {
+            messageSecret: randomBytes(32),
+          }
+        }
 				const buttonType = getButtonType(messageContent)
         if(!isNewsletter && buttonType) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
@@ -978,6 +983,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              {
                 [type]: {
                    message: {
+                      messageContextInfo: {
+                         messageSecret: randomBytes(32),
+                      },
                       protocolMessage: {
                          key: msg.key,
                          type: 25,
@@ -1063,6 +1071,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 
           if(msg) {
              msg.message.messageContextInfo = {
+                messageSecret: randomBytes(32),
                 messageAssociation: {
                    associationType: 1,
                    parentMessageKey: album.key!
