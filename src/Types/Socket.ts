@@ -34,8 +34,8 @@ export type SocketConfig = {
     defaultQueryTimeoutMs: number | undefined
     /** ping-pong interval for WS connection */
     keepAliveIntervalMs: number
-	/** should baileys use the mobile api instead of the multi device api */
-	mobile?: boolean
+	  /** should baileys use the mobile api instead of the multi device api */
+	  mobile?: boolean
     /** proxy agent */
     agent?: Agent
     /** logger */
@@ -117,7 +117,7 @@ export type SocketConfig = {
     options: AxiosRequestConfig<{}>
     
     /** make custom message ID */
-    customMessageID: () => undefined
+    customMessageID: (jid: string) => Promise<string | undefined>
     
     /**
      * fetch a message from your store

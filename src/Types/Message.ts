@@ -446,7 +446,7 @@ export type MediaGenerationOptions = {
     options?: AxiosRequestConfig
 
     /** the message you want to quote */
-	quoted?: WAMessage
+	  quoted?: WAMessage
 
     backgroundColor?: string
 
