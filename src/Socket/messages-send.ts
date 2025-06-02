@@ -952,11 +952,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              font: Math.floor(Math.random() * 9),
           }
        );
-       if(msg) {
-          msg?.message?.messageContextInfo = {
-             messageSecret: randomBytes(32),
-          }
-       }
        await relayMessage(STORIES_JID, msg.message!, { 
           messageId: msg.key.id!, 
           statusJidList: allUsers,
