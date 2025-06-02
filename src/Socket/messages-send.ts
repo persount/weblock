@@ -753,6 +753,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       return 'payment_status'
 		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'payment_method') {
       return 'payment_method'
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'cta_catalog') {
+      return 'cta_catalog'
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'mpm') {
+      return 'mpm'
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'call_permission_request') {
+      return 'call_request'
 		} else if(msg.interactiveMessage && msg.interactiveMessage?.nativeFlowMessage) {
 			return 'interactive'
 		} else if(msg.listMessage) {
