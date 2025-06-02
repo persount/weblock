@@ -378,7 +378,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const isPerson = server === 's.whatsapp.net'
     const isBot = server === 'bot'
 
-		msgId = msgId || customMessageID() || generateMessageID()
+		msgId = msgId || customMessageID(meId) || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
 		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
@@ -1140,7 +1140,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						},
 						mediaCache: config.mediaCache,
 						options: config.options,
-						messageId: customMessageID() || generateMessageID(),
+						messageId: customMessageID(userJid) || generateMessageID(),
 						ephemeralExpiration: eph,
 						...options,
 					}
