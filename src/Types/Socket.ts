@@ -105,7 +105,7 @@ export type SocketConfig = {
     patchMessageBeforeSending: (
         msg: proto.IMessage,
         recipientJids?: string[],
-     ) => Promise<PatchedMessageWithRecipientJID[] | PatchedMessageWithRecipientJID> | PatchedMessageWithRecipientJID[] | PatchedMessageWithRecipientJID
+    ) => Promise<PatchedMessageWithRecipientJID[] | PatchedMessageWithRecipientJID> | PatchedMessageWithRecipientJID[] | PatchedMessageWithRecipientJID
 
     /** verify app state MACs */
     appStateMacVerification: {
@@ -117,7 +117,7 @@ export type SocketConfig = {
     options: AxiosRequestConfig<{}>
     
     /** make custom message ID */
-    customMessageID: () => Promise<string | undefined>
+    customMessageID: () => undefined
     
     /**
      * fetch a message from your store
