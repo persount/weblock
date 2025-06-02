@@ -953,7 +953,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           }
        );
        if(msg) {
-          msg.message.messageContextInfo = {
+          msg?.message?.messageContextInfo = {
              messageSecret: randomBytes(32),
           }
        }
