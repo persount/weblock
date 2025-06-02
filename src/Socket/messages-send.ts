@@ -311,7 +311,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				push_priority: 'high_force',
 			},
 		})
-		return msgId
+		return await msgId!
 	}
 
 	const createParticipantNodes = async(
@@ -378,7 +378,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const isPerson = server === 's.whatsapp.net'
     const isBot = server === 'bot'
 
-		msgId = msgId || customMessageID(meId) || generateMessageID()
+		msgId = msgId || await customMessageID(meId) || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
 		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
@@ -1140,7 +1140,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						},
 						mediaCache: config.mediaCache,
 						options: config.options,
-						messageId: customMessageID(userJid) || generateMessageID(),
+						messageId: await customMessageID(userJid) || generateMessageID(),
 						ephemeralExpiration: eph,
 						...options,
 					}
