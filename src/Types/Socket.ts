@@ -117,7 +117,7 @@ export type SocketConfig = {
     options: AxiosRequestConfig<{}>
     
     /** make custom message ID */
-    customMessageID: () => string | undefined
+    customMessageID: () => Promise<string | undefined>
     
     /**
      * fetch a message from your store
