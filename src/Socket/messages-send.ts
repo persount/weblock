@@ -638,10 +638,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 				const messageContent = normalizeMessageContent(message)! 
 				if(messageContent && !messageContent?.messageContextInfo?.messageSecret) {
-				  messageContent!.messageContextInfo = {
+				  messageContent.messageContextInfo = {
             messageSecret: randomBytes(32),
+            ...messageContent.messageContextInfo
           }
         }
+        
 				const buttonType = getButtonType(messageContent)
         if(!isNewsletter && buttonType) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
@@ -950,6 +952,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              font: Math.floor(Math.random() * 9),
           }
        );
+       if(msg) {
+          msg.message.messageContextInfo = {
+             messageSecret: randomBytes(32),
+          }
+       }
        await relayMessage(STORIES_JID, msg.message!, { 
           messageId: msg.key.id!, 
           statusJidList: allUsers,
@@ -1014,6 +1021,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        const album = await generateWAMessageFromContent(
           jid,
           {
+             messageContextInfo: {
+                messageSecret: randomBytes(32),
+             },
              albumMessage: {
                 expectedImageCount: medias.filter(media => media.image).length,
                 expectedVideoCount: medias.filter(media => media.video).length,
