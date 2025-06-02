@@ -75,8 +75,6 @@ export const getAdditionalNode = (name: string) => {
       cta_catalog: 'cta_catalog',
       mpm: 'mpm',
       call_request: 'call_permission_request',
-      interactive: 'mixed',
-      buttons: 'mixed'
    }
    
    if(order_response_name[name]) {
@@ -86,7 +84,7 @@ export const getAdditionalNode = (name: string) => {
              native_flow_name: order_response_name[name] 
           }
       }]
-   } else if(flow_name[name]) {
+   } else if(flow_name[name] || name === 'interactive' || name === 'buttons') {
       return [{
          tag: 'biz',
          attrs: { },
@@ -100,7 +98,7 @@ export const getAdditionalNode = (name: string) => {
 			   			 tag: 'native_flow',
 			   			 attrs: { 
 			   			    v: '9',
-			   					name: flow_name[name],
+			   					name: flow_name[name] ?? 'mixed',
 			   		   },
 			   			 content: []
 					  }]
