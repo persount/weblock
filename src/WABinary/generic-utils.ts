@@ -62,7 +62,8 @@ export const getBinaryNodeFilter = (node) => {
 
 export const getAdditionalNode = (name: string) => {
    name = name.toLowerCase()
-   const orderResponseName = {
+   
+   const order_response_name = {
       review_and_pay: 'order_details',
       review_order: 'order_status',
       payment_info: 'payment_info',
@@ -70,14 +71,20 @@ export const getAdditionalNode = (name: string) => {
       payment_method: 'payment_method'
    }
    
-   if(orderResponseName[name]) {
+   const flow_name = {
+      cta_catalog: 'cta_catalog',
+      mpm: 'mpm',
+      call_request: 'call_permission_request'
+   }
+   
+   if(order_response_name[name]) {
       return [{
           tag: 'biz',
           attrs: { 
-             native_flow_name: orderResponseName[name] 
+             native_flow_name: order_response_name[name] 
           }
       }]
-   } else if(name === 'interactive' || name === 'buttons') {
+   } else if(flow_name[name] || name === 'interactive' || name === 'buttons') {
       return [{
          tag: 'biz',
          attrs: { },
@@ -90,7 +97,7 @@ export const getAdditionalNode = (name: string) => {
 						content: [{
 			   			 tag: 'native_flow',
 			   			 attrs: { 
-			   					name: 'mixed',
+			   					name: flow_name[name] ?? 'mixed',
 			   				  v: '9',
 			   		   },
 			   			 content: []
