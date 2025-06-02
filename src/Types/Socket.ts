@@ -115,6 +115,10 @@ export type SocketConfig = {
 
     /** options for axios */
     options: AxiosRequestConfig<{}>
+    
+    /** make custom message ID */
+    customMessageID: () => string | undefined
+    
     /**
      * fetch a message from your store
      * implement this so that messages failed to send
