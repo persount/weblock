@@ -20,6 +20,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		options: axiosOptions,
 		patchMessageBeforeSending,
 		cachedGroupMetadata,
+		customMessageID
 	} = config
 	const felz = makeNewsletterSocket(config)
 	const {
@@ -377,7 +378,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const isPerson = server === 's.whatsapp.net'
     const isBot = server === 'bot'
 
-		msgId = msgId || generateMessageID()
+		msgId = msgId || customMessageID() || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
 		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
@@ -1139,7 +1140,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						},
 						mediaCache: config.mediaCache,
 						options: config.options,
-						messageId: generateMessageID(),
+						messageId: customMessageID() || generateMessageID(),
 						ephemeralExpiration: eph,
 						...options,
 					}
