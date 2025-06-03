@@ -636,12 +636,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					logger.debug({ jid }, 'adding device identity')
 				}
 
-				const messageContent = normalizeMessageContent(message)! 
-				if(messageContent && !messageContent?.messageContextInfo?.messageSecret) {
-				  messageContent.messageContextInfo = {
-            messageSecret: randomBytes(32),
-            ...messageContent.messageContextInfo
-          }
+				const messageContent: proto.IMessage = normalizeMessageContent(message)! 
+				
+				message.messageContextInfo = {
+          messageSecret: randomBytes(32),
+          ...message.messageContextInfo
         }
         
 				const buttonType = getButtonType(messageContent)
@@ -977,17 +976,17 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           id = jidNormalizedUser(id)!
 		      const { user, server } = jidDecode(id)!
           const isGroup = server === 'g.us'
-          let type = isGroup
+          let content: proto.IMessage = isGroup
              ? 'groupStatusMentionMessage' 
              : 'statusMentionMessage'
           await relayMessage(
              id, 
              {
-                [type]: {
+                messageContextInfo: {
+                   messageSecret: randomBytes(32),
+                },
+                [content]: {
                    message: {
-                      messageContextInfo: {
-                         messageSecret: randomBytes(32),
-                      },
                       protocolMessage: {
                          key: msg.key,
                          type: 25,
@@ -995,7 +994,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                    },
                 },
              }, 
-          { });
+          { messageId: await customMessageID(userJid) || generateMessageID() });
           await delay(2500)       
        });
        return msg
