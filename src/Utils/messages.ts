@@ -319,6 +319,11 @@ export const generateForwardMessageContent = (
 	} else {
 		content[key].contextInfo = {}
 	}
+	
+	content.messageContextInfo = {
+     messageSecret: randomBytes(32),
+     ...content.messageContextInfo
+  }
 
 	return content
 }
@@ -936,7 +941,7 @@ export const generateWAMessageContent = async(
                     options
                  )
               } 
-              const msg: proto.Message.IInteractiveMessage = {
+              let msg: proto.Message.IInteractiveMessage = {
                   header: {
                       title,
                       hasMediaAttachment: true,
@@ -948,10 +953,10 @@ export const generateWAMessageContent = async(
                   footer: {
                       text: footer
                   },
-	              nativeFlowMessage: { 
-	                  buttons,
-	              },
-	          } 
+	                nativeFlowMessage: { 
+	                    buttons,
+	                },
+	            } 
               return msg            
            }
        ))
@@ -1104,8 +1109,12 @@ export const generateWAMessageFromContent = (
 		if(jid !== quoted.key.remoteJid) {
 			contextInfo.remoteJid = quoted.key.remoteJid
 		}
-
-		    innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage ? innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage?.contextInfo : innerMessage.requestPaymentMessage?.noteMessage?.stickerMessage ? innerMessage.requestPaymentMessage?.noteMessage?.stickerMessage?.contextInfo : innerMessage[key].contextInfo = contextInfo        
+		
+		if(key === 'requestPaymentMessage' && requestPayment) {
+       requestPayment.contextInfo = contextInfo
+    } else {
+       innerMessage[key].contextInfo = contextInfo
+    }
 		    
 	}
 
@@ -1126,6 +1135,11 @@ export const generateWAMessageFromContent = (
 			disappearingMode: { initiator: 0, trigger: 2, initiatedByMe: false }
 		}		
 	}
+	
+	innerMessage.messageContextInfo = {
+     messageSecret: randomBytes(32),
+     ...innerMessage.messageContextInfo
+  }
 
 	message = WAProto.Message.fromObject(message)
 
