@@ -976,7 +976,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           id = jidNormalizedUser(id)!
 		      const { user, server } = jidDecode(id)!
           const isGroup = server === 'g.us'
-          let content: proto.IMessage = isGroup
+          let content = isGroup
              ? 'groupStatusMentionMessage' 
              : 'statusMentionMessage'
           await relayMessage(
