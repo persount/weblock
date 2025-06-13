@@ -49,11 +49,6 @@ export interface WAUrlInfo {
     originalThumbnailUrl?: string
 }
 
-export interface Media {
-   image?: WAMediaUpload
-   video?: WAMediaUpload
-}
-
 export interface Carousel {   
    image?: WAMediaUpload
    video?: WAMediaUpload
@@ -295,7 +290,7 @@ export type OrderInfo = {
 
 export type AnyRegularMessageContent = (
     ({
-	    text: string
+	      text: string
         linkPreview?: WAUrlInfo | null
     }
     & Mentionable & Contextable & Buttonable & Templatable & Interactiveable & Shopable & Collectionable & Cardsable & Listable & Editable)
@@ -324,7 +319,7 @@ export type AnyRegularMessageContent = (
         type: 'template' | 'plain' | 'interactive'
     }
     | {
-     groupInvite: GroupInviteInfo
+        groupInvite: GroupInviteInfo
     }    
     | {
         pin: WAMessageKey
