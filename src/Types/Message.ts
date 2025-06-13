@@ -50,19 +50,13 @@ export interface WAUrlInfo {
 }
 
 export type Content = {   
-   {
-      image: WAMediaUpload
-      caption?: string
-      jpegThumbnail?: string
-   }
-   | {
-      video: WAMediaUpload
-      caption?: string
-      gifPlayback?: boolean
-      jpegThumbnail?: string
-      /** if set to true, will send as a `video note` */
-      ptv?: boolean
-   }
+   image: WAMediaUpload
+   caption?: string
+   jpegThumbnail?: string
+   video: WAMediaUpload
+   gifPlayback?: boolean
+   /** if set to true, will send as a `video note` */
+   ptv?: boolean
 }
 
 export interface Carousel {   
