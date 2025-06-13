@@ -5,7 +5,7 @@ import { Readable } from 'stream'
 import { proto } from '../../WAProto'
 import { randomBytes } from 'crypto'
 import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults'
-import { AnyMessageContent, Content, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
+import { AnyMediaMessageContent, AnyMessageContent, Content, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
 import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, delay, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageID, generateWAMessage, generateWAMessageFromContent, getContentType, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, parseAndInjectE2ESessions, unixTimestampSeconds, normalizeMessageContent } from '../Utils'
 import { getUrlInfo } from '../Utils/link-preview'
 import { areJidsSameUser, BinaryNode, BinaryNodeAttributes, getAdditionalNode, getBinaryNodeChild, getBinaryNodeChildren, getBinaryNodeFilter, isJidGroup, isJidNewsletter, isJidUser, jidDecode, jidEncode, jidNormalizedUser, JidWithDevice, S_WHATSAPP_NET, STORIES_JID } from '../WABinary'
@@ -913,18 +913,18 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		      const isGroup = server === 'g.us'
           const isPerson = server === 's.whatsapp.net'
           if(isGroup) {
-             let metadata = await groupMetadata(id!)
+             let metadata = await groupMetadata(id)!
              let participants = await metadata.participants
-             let memberJid = participants.map(
+             const memberJid = participants.map(
                 b => jidNormalizedUser(b.id)
              )
-             (allUsers as string[]).push(...memberJid)
+             allUsers = [...allUsers, ...memberJid]
           } else if(isPerson) {
-             let personId = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
-             (allUsers as string[]).push(...personId)
+             const personId = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
+             allUsers = [...allUsers, ...personId]
           }
           if(!allUsers.includes(userJid)) {
-             (allUsers as string[]).push(userJid)
+             allUsers = [...allUsers, ...userJid]
           }
        };
        const getRandomHexColor = () => {
@@ -1045,18 +1045,19 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              }
           },
           { 
+            userJid,
 						ephemeralExpiration: eph,
 						...options 
 				  }
        );
 
        await relayMessage(jid, album.message!,
-          { messageId: customMessageID() || generateMessageID(), }
+          { messageId: customMessageID() || generateMessageID() }
        )
 
        let mediaHandle
        for (const i in medias) {
-          const media: Content = medias[i]
+          const media: AnyMediaMessageContent = medias[i]
           let msg = await generateWAMessage(
              jid, 
              media,
@@ -1091,7 +1092,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           )
                 
           if(msg) {
-             msg?.message?.messageContextInfo = {
+             msg.message.messageContextInfo = {
                 messageSecret: randomBytes(32),
                 messageAssociation: {
                    associationType: 1,
