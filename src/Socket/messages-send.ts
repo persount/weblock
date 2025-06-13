@@ -913,7 +913,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		      const isGroup = server === 'g.us'
           const isPerson = server === 's.whatsapp.net'
           if(isPerson) {
-             const personalJid: string[] = jids.filter(jid: string => jid.endsWith('s.whatsapp.net'))
+             const personalJid: string[] = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
              (allUsers as string[]).push(...personalJid)
           }
           if(isGroup) {
@@ -922,7 +922,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 let metadata = await groupMetadata(groupId)!
                 let participants = await metadata.participants
                 const memberId: string[] = participants.map(
-                   b: any => jidNormalizedUser(b.id)
+                   b => jidNormalizedUser(b.id)
                 )
                 (allUsers as string[]).push(...memberId)
              }
@@ -1043,8 +1043,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 messageSecret: randomBytes(32),
              },
              albumMessage: {
-                expectedImageCount: medias.filter(media: Content => media.image).length,
-                expectedVideoCount: medias.filter(media: Content => media.video).length,
+                expectedImageCount: medias.filter(media => media.image).length,
+                expectedVideoCount: medias.filter(media => media.video).length,
                 ...options
              }
           },
