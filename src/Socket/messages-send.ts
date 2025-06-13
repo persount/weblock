@@ -913,18 +913,18 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		      const isGroup = server === 'g.us'
           const isPerson = server === 's.whatsapp.net'
           if(isPerson) {
-             const personId = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
-             (allUsers as string[]).push(...personId)
+             const personalJid: string[] = jids.filter(jid: string => jid.endsWith('s.whatsapp.net'))
+             (allUsers as string[]).push(...personalJid)
           }
           if(isGroup) {
              let groupJids = jids.filter(jid => jid.endsWith('g.us'))
              for(const groupId of groupJids) {             
                 let metadata = await groupMetadata(groupId)!
                 let participants = await metadata.participants
-                const memberJid = participants.map(
-                   b => jidNormalizedUser(b.id)
+                const memberId: string[] = participants.map(
+                   b: any => jidNormalizedUser(b.id)
                 )
-                (allUsers as string[]).push(...memberJid)
+                (allUsers as string[]).push(...memberId)
              }
           }
           if(!allUsers.includes(userJid)) {
@@ -1043,8 +1043,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 messageSecret: randomBytes(32),
              },
              albumMessage: {
-                expectedImageCount: medias.filter(media => media.image).length,
-                expectedVideoCount: medias.filter(media => media.video).length,
+                expectedImageCount: medias.filter(media: Content => media.image).length,
+                expectedVideoCount: medias.filter(media: Content => media.video).length,
                 ...options
              }
           },
@@ -1064,7 +1064,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           const media: Content = medias[i]
           let msg = await generateWAMessage(
              jid, 
-             media,
+             { ...media },
              { 
 					    	logger,
 					    	userJid,
