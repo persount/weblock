@@ -912,6 +912,10 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		      const { user, server } = jidDecode(id)!
 		      const isGroup = server === 'g.us'
           const isPerson = server === 's.whatsapp.net'
+          if(isPerson) {
+             const personId = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
+             allUsers = [...allUsers, ...personId]
+          }
           if(isGroup) {
              let metadata = await groupMetadata(id)!
              let participants = await metadata.participants
@@ -919,9 +923,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 b => jidNormalizedUser(b.id)
              )
              allUsers = [...allUsers, ...memberJid]
-          } else if(isPerson) {
-             const personId = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
-             allUsers = [...allUsers, ...personId]
           }
           if(!allUsers.includes(userJid)) {
              allUsers = [...allUsers, ...userJid]
@@ -1039,8 +1040,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 messageSecret: randomBytes(32),
              },
              albumMessage: {
-                expectedImageCount: medias.filter(media => media.hasOwnProperty('image')).length,
-                expectedVideoCount: medias.filter(media => media.hasOwnProperty('video')).length,
+                expectedImageCount: medias.filter(media => media.image).length,
+                expectedVideoCount: medias.filter(media => media.video).length,
                 ...options
              }
           },
