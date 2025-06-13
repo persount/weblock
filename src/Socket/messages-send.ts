@@ -379,7 +379,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const isPerson = server === 's.whatsapp.net'
     const isBot = server === 'bot'
 
-		msgId = msgId || await customMessageID(meId) || generateMessageID()
+		msgId = msgId || customMessageID() || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
 		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
@@ -819,7 +819,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		return result
 	}
 	
-	const getEphemeralGroup = (jid: string) => {
+	const getEphemeralGroup = async(jid: string) => {
 	   const metadata = await groupQuery(
         jid,
         'get',
@@ -914,13 +914,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           const isPerson = server === 's.whatsapp.net'
           if(isGroup) {
              let metadata = await groupMetadata(id!)
-             let participant = await metadata.participants
-             let users = await Promise.all(
-                participant.map(
-                   ({ id }) => jidNormalizedUser(id)
-                )
+             let participants = await metadata.participants
+             let participant = participants.map(
+                ({ id }) => jidNormalizedUser(id)
              )
-             (allUsers as string[]).push(...users)
+             (allUsers as string[]).push(...participant)
           } else if(isPerson) {
              let users = jids.filter(jid === jid.endsWith(isPerson))
              (allUsers as string[]).push(...users)
