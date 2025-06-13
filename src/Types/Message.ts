@@ -49,19 +49,19 @@ export interface WAUrlInfo {
     originalThumbnailUrl?: string
 }
 
-export interface Content {   
+export type Content = {   
    {
-     image: WAMediaUpload
-     caption?: string
-     jpegThumbnail?: string
+      image: WAMediaUpload
+      caption?: string
+      jpegThumbnail?: string
    }
    | {
-     video: WAMediaUpload
-     caption?: string
-     gifPlayback?: boolean
-     jpegThumbnail?: string
-     /** if set to true, will send as a `video note` */
-     ptv?: boolean
+      video: WAMediaUpload
+      caption?: string
+      gifPlayback?: boolean
+      jpegThumbnail?: string
+      /** if set to true, will send as a `video note` */
+      ptv?: boolean
    }
 }
 
