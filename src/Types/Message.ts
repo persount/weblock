@@ -49,7 +49,21 @@ export interface WAUrlInfo {
     originalThumbnailUrl?: string
 }
 
-export interface Content = AnyMediaMessageContent
+export interface Content {   
+   {
+     image: WAMediaUpload
+     caption?: string
+     jpegThumbnail?: string
+   }
+   | {
+     video: WAMediaUpload
+     caption?: string
+     gifPlayback?: boolean
+     jpegThumbnail?: string
+     /** if set to true, will send as a `video note` */
+     ptv?: boolean
+   }
+}
 
 export interface Carousel {   
    image?: WAMediaUpload
