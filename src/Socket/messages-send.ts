@@ -1056,7 +1056,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        )
 
        let mediaHandle
-       for (const media: Content of medias) {
+       for(const i in medias) {
+          const media: Content = medias[i]
           let msg = await generateWAMessage(
              jid, 
              media,
@@ -1090,8 +1091,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              }
           )
                 
-          if(msg) {
-             msg.message?.messageContextInfo = {
+          if(msg && msg.message) {
+             msg.message.messageContextInfo = {
                 messageSecret: randomBytes(32),
                 messageAssociation: {
                    associationType: 1,
