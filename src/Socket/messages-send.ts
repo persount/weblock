@@ -913,18 +913,18 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		      const isGroup = server === 'g.us'
           const isPerson = server === 's.whatsapp.net'
           if(isPerson) {
-             const personalJid: string[] = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
-             (allUsers as string[]).push(...personalJid)
+             let personalJid: string[] = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
+             allUsers = [...allUsers, ...personalJid]
           }
           if(isGroup) {
              let groupJids = jids.filter(jid => jid.endsWith('g.us'))
              for(const groupId of groupJids) {             
                 let metadata = await groupMetadata(groupId)!
                 let participants = await metadata.participants
-                const memberId: string[] = participants.map(
+                let memberJid: string[] = participants.map(
                    b => jidNormalizedUser(b.id)
                 )
-                (allUsers as string[]).push(...memberId)
+                allUsers = [...allUsers, ...memberJid]
              }
           }
           if(!allUsers.includes(userJid)) {
