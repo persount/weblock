@@ -49,6 +49,11 @@ export interface WAUrlInfo {
     originalThumbnailUrl?: string
 }
 
+export interface Content {   
+   image?: WAMediaUpload
+   video?: WAMediaUpload
+}
+
 export interface Carousel {   
    image?: WAMediaUpload
    video?: WAMediaUpload
