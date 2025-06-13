@@ -5,7 +5,7 @@ import { Readable } from 'stream'
 import { proto } from '../../WAProto'
 import { randomBytes } from 'crypto'
 import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults'
-import { AnyMessageContent, Media, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
+import { AnyMediaMessageContent, AnyMessageContent, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
 import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, delay, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageID, generateWAMessage, generateWAMessageFromContent, getContentType, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, parseAndInjectE2ESessions, unixTimestampSeconds, normalizeMessageContent } from '../Utils'
 import { getUrlInfo } from '../Utils/link-preview'
 import { areJidsSameUser, BinaryNode, BinaryNodeAttributes, getAdditionalNode, getBinaryNodeChild, getBinaryNodeChildren, getBinaryNodeFilter, isJidGroup, isJidNewsletter, isJidUser, jidDecode, jidEncode, jidNormalizedUser, JidWithDevice, S_WHATSAPP_NET, STORIES_JID } from '../WABinary'
@@ -696,19 +696,19 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	}
 
 	const getTypeMessage = (msg: proto.IMessage) => {
-		if (msg.viewOnceMessage) {
+		if(msg.viewOnceMessage) {
 			return getTypeMessage(msg.viewOnceMessage.message!)
-		} else if (msg.viewOnceMessageV2) {
+		} else if(msg.viewOnceMessageV2) {
 			return getTypeMessage(msg.viewOnceMessageV2.message!)
-		} else if (msg.viewOnceMessageV2Extension) {
+		} else if(msg.viewOnceMessageV2Extension) {
 			return getTypeMessage(msg.viewOnceMessageV2Extension.message!)
-		} else if (msg.ephemeralMessage) {
+		} else if(msg.ephemeralMessage) {
 			return getTypeMessage(msg.ephemeralMessage.message!)
-		} else if (msg.documentWithCaptionMessage) {
+		} else if(msg.documentWithCaptionMessage) {
 			return getTypeMessage(msg.documentWithCaptionMessage.message!)
-		} else if (msg.reactionMessage) {
+		} else if(msg.reactionMessage) {
 			return 'reaction'
-		} else if (getMediaType(msg)) {
+		} else if(getMediaType(msg)) {
 			return 'media'
 		} else {
 			return 'text'
@@ -818,6 +818,17 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 		return result
 	}
+	
+	const getEphemeralGroup = (jid: string) => {
+	   const metadata = await groupQuery(
+        jid,
+        'get',
+        [{ tag: 'query', attrs: { request: 'interactive' } }]
+     )
+     let results = getBinaryNodeChild(metadata, 'group')!
+     let exp = getBinaryNodeChild(results, 'ephemeral')!
+     return exp?.attrs?.expiration
+	}
 
 	const waUploadToServer = getWAUploadToServer(config, refreshMediaConn)
 
@@ -902,15 +913,19 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		      const isGroup = server === 'g.us'
           const isPerson = server === 's.whatsapp.net'
           if(isGroup) {
-             let metadata = await groupMetadata(id)
+             let metadata = await groupMetadata(id!)
              let participant = await metadata.participants
-             let users = await Promise.all(participant.map(u => jidNormalizedUser(u.id))); 
-             allUsers = [...allUsers as string[], ...users as string[]];
+             let users = await Promise.all(
+                participant.map(
+                   ({ id }) => jidNormalizedUser(id)
+                )
+             )
+             (allUsers as string[]).push(...users)
           } else if(isPerson) {
-             let users = await Promise.all(jids.map(id => id.replace(/\b\d{18}@.{4}\b/g, '')));
-             allUsers = [...allUsers as string[], ...users as string[]];
+             let users = jids.filter(jid === jid.endsWith(isPerson))
+             (allUsers as string[]).push(...users)
           }
-          if(!allUsers.find(user => user.includes(userJid))) {
+          if(!allUsers.includes(userJid)) {
              (allUsers as string[]).push(userJid)
           }
        };
@@ -994,21 +1009,30 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                    },
                 },
              }, 
-          { messageId: await customMessageID(userJid) || generateMessageID() });
-          await delay(2500)       
+          { messageId: customMessageID() || generateMessageID() });
+          await delay(3000)       
        });
        return msg
     },
 		sendAlbumMessage: async(
 		  jid: string, 
-		  medias: Media[], 
+		  medias: AnyMediaMessageContent[], 
 		  options: MiscMessageGenerationOptions = { }
 		) => {
        const userJid = authState.creds.me!.id;
-       for (const media of medias) {
-         if (!media.image && !media.video) throw new TypeError(`medias[i] must have image or video property`)
+       /**
+       for(const { image, video } of medias) {
+         if (!image && !video) throw new TypeError(`medias[i] must have image or video property`)
        }
+       */
              
+       let eph
+		   if(isJidGroup(jid)) {
+		      if(options.ephemeralExpiration) return delete options.ephemeralExpiration
+          eph = getEphemeralGroup(jid)
+       } else {
+          eph = options.ephemeralExpiration || 0
+       }
        const time = options.delay || 500
        delete options.delay
 
@@ -1024,54 +1048,51 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 ...options
              }
           },
-          { userJid, ...options }
+          { 
+						ephemeralExpiration: eph,
+						...options 
+				  }
        );
 
        await relayMessage(jid, album.message!,
-          { messageId: album.key.id! }
+          { messageId: customMessageID() || generateMessageID(), }
        )
 
-       let mediaHandle;
-       let msg;
+       let mediaHandle
        for (const i in medias) {
-          const media = medias[i]
-          if(media.image) {
-             msg = await generateWAMessage(
-                 jid,
-                 { 
-                    image: media.image,
-                    ...media,
-                    ...options
-                 },
-                 { 
-                    userJid,
-                    upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
-                       mediaHandle = up.handle;
-                       return up;
-                    },
-                    ...options, 
-                 }
-             )
-          } else if(media.video) {
-             msg = await generateWAMessage(
-                 jid,
-                 { 
-                    video: media.video,
-                    ...media,
-                    ...options
-                 },
-                 { 
-                    userJid,
-                    upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
-                       mediaHandle = up.handle;
-                       return up;
-                    },
-                    ...options, 
-                 }
-             )
-          }
+          const media: AnyMediaMessageContent = medias[i]
+          let msg = await generateWAMessage(
+             jid, 
+             media,
+             { 
+					    	logger,
+					    	userJid,
+					    	getUrlInfo: text => getUrlInfo(
+					    	   text,
+							     {
+						     		  thumbnailWidth: linkPreviewImageThumbnailWidth,
+								      fetchOpts: {
+									       timeout: 3_000,
+									       ...axiosOptions || { }
+								      },
+								      logger,
+								      uploadImage: generateHighQualityLinkPreview
+									       ? waUploadToServer
+									       : undefined
+							     },
+						    ),
+					    	upload: async(readStream, opts) => {
+                   const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
+                   mediaHandle = up.handle;
+                   return up;
+					    	},
+					    	mediaCache: config.mediaCache,
+					    	options: config.options,						
+					    	messageId: customMessageID() || generateMessageID(),						
+					    	ephemeralExpiration: eph,						
+					    	...options 
+             }
+          )
                 
           if(msg) {
              msg.message.messageContextInfo = {
@@ -1111,18 +1132,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				let mediaHandle
         let eph
 		    if(isJidGroup(jid)) {
-		       delete options.ephemeralExpiration
-           const node = await groupQuery(
-              jid,
-              'get',
-              [{
-                 tag: 'query',
-                 attrs: { request: 'interactive' }
-			        }]
-           )
-           let data = getBinaryNodeChild(node, 'group')!
-           let exp = getBinaryNodeChild(data, 'ephemeral')!
-           eph = exp?.attrs?.expiration
+		       if(options.ephemeralExpiration) return delete options.ephemeralExpiration
+           eph = getEphemeralGroup(jid)
         } else {
            eph = options.ephemeralExpiration || 0
         }
@@ -1153,7 +1164,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						},
 						mediaCache: config.mediaCache,
 						options: config.options,
-						messageId: await customMessageID(userJid) || generateMessageID(),
+						messageId: customMessageID() || generateMessageID(),
 						ephemeralExpiration: eph,
 						...options,
 					}
@@ -1161,8 +1172,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				const isDeleteMsg = 'delete' in content && !!content.delete
 				const isEditMsg = 'edit' in content && !!content.edit
 				const isPinMsg = 'pin' in content && !!content.pin
-				const isKeepMsg = 'keep' in content && content.keep
-				const isPollMessage = 'poll' in content && !!content.poll
+				const isPollMsg = 'poll' in content && !!content.poll
 				const isAiMsg = 'ai' in content && !!content.ai
 				const additionalAttributes: BinaryNodeAttributes = { }
 				const additionalNodes: BinaryNode[] = []
@@ -1188,9 +1198,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						},
 						tag: "bot"
 					})
+					/**
           if(options.additionalNodes) {
             (additionalNodes as BinaryNode[]).push(...options.additionalNodes)
           }
+          */
 				}
 
 				if (mediaHandle) {
