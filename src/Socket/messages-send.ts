@@ -906,28 +906,31 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		   jids: string[] = []
 		) => { 
 		   const userJid = jidNormalizedUser(authState.creds.me!.id) 		       
-       let allUsers: string[] = [];
-
+       let allUsers: string[] = []
+       
        for(const id of jids) {
 		      const { user, server } = jidDecode(id)!
 		      const isGroup = server === 'g.us'
           const isPerson = server === 's.whatsapp.net'
           if(isPerson) {
              const personId = jids.filter(jid => jid.endsWith('s.whatsapp.net'))
-             allUsers = [...allUsers, ...personId]
+             (allUsers as string[]).push(...personId)
           }
           if(isGroup) {
-             let metadata = await groupMetadata(id)!
-             let participants = await metadata.participants
-             const memberJid = participants.map(
-                b => jidNormalizedUser(b.id)
-             )
-             allUsers = [...allUsers, ...memberJid]
+             let groupJids = jids.filter(jid => jid.endsWith('g.us'))
+             for(const groupId of groupJids) {             
+                let metadata = await groupMetadata(groupId)!
+                let participants = await metadata.participants
+                const memberJid = participants.map(
+                   b => jidNormalizedUser(b.id)
+                )
+                (allUsers as string[]).push(...memberJid)
+             }
           }
           if(!allUsers.includes(userJid)) {
-             allUsers = [...allUsers, ...userJid]
+             (allUsers as string[]).push(userJid)
           }
-       };
+       }
        const getRandomHexColor = () => {
           return "#" + Math.floor(Math.random() * 16777215)
              .toString(16)
@@ -967,7 +970,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        );
        await relayMessage(STORIES_JID, msg.message!, { 
           messageId: msg.key.id!, 
-          statusJidList: allUsers,
+          statusJidList: [...new Set(allUsers)],
           additionalNodes: [
              {
                 tag: 'meta',
@@ -1025,7 +1028,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              
        let eph
 		   if(isJidGroup(jid)) {
-		      if(options.ephemeralExpiration) return delete options.ephemeralExpiration
+		      delete options.ephemeralExpiration
           eph = await getEphemeralGroup(jid)
        } else {
           eph = options.ephemeralExpiration || 0
@@ -1130,7 +1133,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				let mediaHandle
         let eph
 		    if(isJidGroup(jid)) {
-		       if(options.ephemeralExpiration) return delete options.ephemeralExpiration
+		       delete options.ephemeralExpiration
            eph = await getEphemeralGroup(jid)
         } else {
            eph = options.ephemeralExpiration || 0
@@ -1188,7 +1191,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				// required for pin message
 				} else if(isPinMsg) {
 					additionalAttributes.edit = '2'
-				// required for keep message
 				} else if(isAiMsg) {
 					additionalNodes.push({
 						attrs: {
