@@ -1016,14 +1016,14 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        });
        return msg
     },
-		sendAlbumMessage: async(
-		  jid: string, 
-		  medias: Content[], 
-		  options: MiscMessageGenerationOptions = { }
+    sendAlbumMessage: async(
+		    jid: string, 
+		    medias: Content[], 
+		    options: MiscMessageGenerationOptions = { }
 		) => {
        const userJid = authState.creds.me!.id;
-       for(const { image, video } of medias) {
-         if (!image && !video) throw new TypeError(`medias[i] must have image or video property`)
+       for (const media of medias) {
+         if (!media.image && !media.video) throw new TypeError(`medias[i] must have image or video property`)
        }
              
        let eph
@@ -1039,101 +1039,70 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        const album = await generateWAMessageFromContent(
           jid,
           {
-             messageContextInfo: {
-                messageSecret: randomBytes(32),
-             },
              albumMessage: {
                 expectedImageCount: medias.filter(media => media.image).length,
                 expectedVideoCount: medias.filter(media => media.video).length,
                 ...options
              }
           },
-          { 
-            userJid,
-						ephemeralExpiration: eph,
-						...options 
-				  }
+          {
+             logger,
+             userJid, 
+             ephemeralExpiration: eph,
+             ...options 
+          }
        );
 
        await relayMessage(jid, album.message!,
-          { messageId: customMessageID() || generateMessageID() }
+          { messageId: album.key.id! }
        )
 
-       let mediaHandle
-       let msg
-       for(const i in medias) {
-          const media = medias[i]
+       let mediaHandle;
+       let msg;
+       for (const i in medias) {
+          const media: Content = medias[i]
           if(media.image) {
              msg = await generateWAMessage(
-                jid, 
-                { image: media.image, ...media },
-                { 
-					    	   logger,
-					    	   userJid,
-					    	   getUrlInfo: text => getUrlInfo(
-					    	      text,
-							        {
-						     		     thumbnailWidth: linkPreviewImageThumbnailWidth,
-								         fetchOpts: {
-									          timeout: 3_000,
-									          ...axiosOptions || { }
-								         },
-								         logger,
-								         uploadImage: generateHighQualityLinkPreview
-									          ? waUploadToServer
-									          : undefined
-							        },
-						       ),
-					    	   upload: async(readStream, opts) => {
-                      const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
-                      mediaHandle = up.handle;
-                      return up;
-					    	   },
-					    	   mediaCache: config.mediaCache,
-					    	   options: config.options,						
-					    	   messageId: customMessageID() || generateMessageID(),						
-					    	   ephemeralExpiration: eph,						
-					    	   ...options 
-                }
+                 jid,
+                 { image: media.image, ...media },
+                 { 
+                    userJid,
+                    logger,
+                    upload: async(readStream, opts) => {
+                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsLetter(jid) });
+                       mediaHandle = up.handle;
+                       return up;
+                    },
+					    	    mediaCache: config.mediaCache,
+					    	    options: config.options,						
+					    	    messageId: customMessageID() || generateMessageID(),						
+					    	    ephemeralExpiration: eph,
+                    ...options, 
+                 }
              )
           } else if(media.video) {
              msg = await generateWAMessage(
-                jid, 
-                { video: media.video, ...media },
-                { 
-					    	   logger,
-					    	   userJid,
-					    	   getUrlInfo: text => getUrlInfo(
-					    	      text,
-							        {
-						     		     thumbnailWidth: linkPreviewImageThumbnailWidth,
-								         fetchOpts: {
-									          timeout: 3_000,
-									          ...axiosOptions || { }
-								         },
-								         logger,
-								         uploadImage: generateHighQualityLinkPreview
-									          ? waUploadToServer
-									          : undefined
-							        },
-						       ),
-					    	   upload: async(readStream, opts) => {
-                      const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
-                      mediaHandle = up.handle;
-                      return up;
-					    	   },
-					    	   mediaCache: config.mediaCache,
-					    	   options: config.options,						
-					    	   messageId: customMessageID() || generateMessageID(),						
-					    	   ephemeralExpiration: eph,						
-					    	   ...options 
-                }
+                 jid,
+                 { video: media.video, ...media },
+                 { 
+                    userJid,
+                    logger,
+                    upload: async(readStream, opts) => {
+                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsLetter(jid) });
+                       mediaHandle = up.handle;
+                       return up;
+                    },
+					    	    mediaCache: config.mediaCache,
+					    	    options: config.options,						
+					    	    messageId: customMessageID() || generateMessageID(),						
+					    	    ephemeralExpiration: eph,
+                    ...options, 
+                 }
              )
           }
                 
-          if(msg && msg.message) {   
+          if(msg) {
              msg.message.messageContextInfo = {
-                messageSecret: randomBytes(32),
                 messageAssociation: {
                    associationType: 1,
                    parentMessageKey: album.key!
