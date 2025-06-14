@@ -1054,7 +1054,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        );
 
        await relayMessage(jid, album.message!,
-          { messageId: album.key.id! }
+          { messageId: customMessageID() || generateMessageID(), ...options }
        )
 
        let mediaHandle;
@@ -1067,9 +1067,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { image: media.image, ...media },
                  { 
                     userJid,
-                    logger,
                     upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsLetter(jid) });
+                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
                        mediaHandle = up.handle;
                        return up;
                     },
@@ -1086,9 +1085,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { video: media.video, ...media },
                  { 
                     userJid,
-                    logger,
                     upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsLetter(jid) });
+                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
                        mediaHandle = up.handle;
                        return up;
                     },
