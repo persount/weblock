@@ -49,14 +49,9 @@ export interface WAUrlInfo {
     originalThumbnailUrl?: string
 }
 
-export interface Content {   
+export interface Medias {
    image?: WAMediaUpload
-   caption?: string
-   jpegThumbnail?: string
    video?: WAMediaUpload
-   gifPlayback?: boolean
-   /** if set to true, will send as a `video note` */
-   ptv?: boolean
 }
 
 export interface Carousel {   
