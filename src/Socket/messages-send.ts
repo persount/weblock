@@ -1062,7 +1062,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        let mediaHandle
        let msg
        for(const i in medias) {
-          const media: Content = medias[i]
+          const media = medias[i]
           if(media.image) {
              msg = await generateWAMessage(
                 jid, 
