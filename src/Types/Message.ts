@@ -49,7 +49,7 @@ export interface WAUrlInfo {
     originalThumbnailUrl?: string
 }
 
-export type Content = {   
+export interface Content {   
    image: WAMediaUpload
    caption?: string
    jpegThumbnail?: string
