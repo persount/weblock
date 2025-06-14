@@ -1095,7 +1095,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              }
           )
                 
-          if(msg) {   
+          if(msg && msg.message) {   
              msg.message.messageContextInfo = {
                 messageSecret: randomBytes(32),
                 messageAssociation: {
