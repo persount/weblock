@@ -1095,6 +1095,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              }
           )
                 
+          if(msg) {   
              msg.message.messageContextInfo = {
                 messageSecret: randomBytes(32),
                 messageAssociation: {
@@ -1102,6 +1103,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                    parentMessageKey: album.key!
                 }
              }
+          }
 
           await relayMessage(jid, msg.message!,
              { messageId: msg.key.id! }
