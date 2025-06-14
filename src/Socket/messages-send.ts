@@ -1060,40 +1060,76 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        )
 
        let mediaHandle
+       let msg
        for(const i in medias) {
           const media: Content = medias[i]
-          let msg = await generateWAMessage(
-             jid, 
-             media,
-             { 
-					    	logger,
-					    	userJid,
-					    	getUrlInfo: text => getUrlInfo(
-					    	   text,
-							     {
-						     		  thumbnailWidth: linkPreviewImageThumbnailWidth,
-								      fetchOpts: {
-									       timeout: 3_000,
-									       ...axiosOptions || { }
-								      },
-								      logger,
-								      uploadImage: generateHighQualityLinkPreview
-									       ? waUploadToServer
-									       : undefined
-							     },
-						    ),
-					    	upload: async(readStream, opts) => {
-                   const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
-                   mediaHandle = up.handle;
-                   return up;
-					    	},
-					    	mediaCache: config.mediaCache,
-					    	options: config.options,						
-					    	messageId: customMessageID() || generateMessageID(),						
-					    	ephemeralExpiration: eph,						
-					    	...options 
-             }
-          )
+          if(media.image) {
+             msg = await generateWAMessage(
+                jid, 
+                { image: media.image, ...media },
+                { 
+					    	   logger,
+					    	   userJid,
+					    	   getUrlInfo: text => getUrlInfo(
+					    	      text,
+							        {
+						     		     thumbnailWidth: linkPreviewImageThumbnailWidth,
+								         fetchOpts: {
+									          timeout: 3_000,
+									          ...axiosOptions || { }
+								         },
+								         logger,
+								         uploadImage: generateHighQualityLinkPreview
+									          ? waUploadToServer
+									          : undefined
+							        },
+						       ),
+					    	   upload: async(readStream, opts) => {
+                      const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
+                      mediaHandle = up.handle;
+                      return up;
+					    	   },
+					    	   mediaCache: config.mediaCache,
+					    	   options: config.options,						
+					    	   messageId: customMessageID() || generateMessageID(),						
+					    	   ephemeralExpiration: eph,						
+					    	   ...options 
+                }
+             )
+          } else if(media.video) {
+             msg = await generateWAMessage(
+                jid, 
+                { video: media.video, ...media },
+                { 
+					    	   logger,
+					    	   userJid,
+					    	   getUrlInfo: text => getUrlInfo(
+					    	      text,
+							        {
+						     		     thumbnailWidth: linkPreviewImageThumbnailWidth,
+								         fetchOpts: {
+									          timeout: 3_000,
+									          ...axiosOptions || { }
+								         },
+								         logger,
+								         uploadImage: generateHighQualityLinkPreview
+									          ? waUploadToServer
+									          : undefined
+							        },
+						       ),
+					    	   upload: async(readStream, opts) => {
+                      const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
+                      mediaHandle = up.handle;
+                      return up;
+					    	   },
+					    	   mediaCache: config.mediaCache,
+					    	   options: config.options,						
+					    	   messageId: customMessageID() || generateMessageID(),						
+					    	   ephemeralExpiration: eph,						
+					    	   ...options 
+                }
+             )
+          }
                 
           if(msg && msg.message) {   
              msg.message.messageContextInfo = {
