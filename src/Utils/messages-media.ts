@@ -175,31 +175,32 @@ export const mediaMessageSHA256B64 = (message: WAMessageContent) => {
 	return media?.fileSha256 && Buffer.from(media.fileSha256).toString ('base64')
 }
 
-export async function getAudioDuration(buffer: Buffer | string | Readable) {
-	const musicMetadata = await import('music-metadata')
-	let metadata: IAudioMetadata
-	if(Buffer.isBuffer(buffer)) {
-		metadata = await musicMetadata.parseBuffer(buffer, undefined, { duration: true })
-	} else if(typeof buffer === 'string') {
-		const rStream = createReadStream(buffer)
-		try {
-			metadata = await musicMetadata.parseStream(rStream, undefined, { duration: true })
-		} finally {
-			rStream.destroy()
-		}
-	} else {
-		metadata = await musicMetadata.parseStream(buffer, undefined, { duration: true })
-	}
 
-	return metadata.format.duration
+export async function getAudioDuration(buffer: Buffer | string | Readable) {
+    const musicMetadata = await Promise.resolve().then(() => __importStar(require('music-metadata')))
+    let metadata: IAudioMetadata
+    if(Buffer.isBuffer(buffer)) {
+        metadata = await musicMetadata.parseBuffer(buffer, undefined, { duration: true })
+    } else if(typeof buffer === 'string') {
+        const rStream = createReadStream(buffer)
+        try {
+            metadata = await musicMetadata.parseStream(rStream, undefined, { duration: true })
+        } finally {
+            rStream.destroy()
+        }
+    } else {
+        metadata = await musicMetadata.parseStream(buffer, undefined, { duration: true })
+    }
+    
+    return metadata.format.duration
 }
 
 /**
   referenced from and modifying https://github.com/wppconnect-team/wa-js/blob/main/src/chat/functions/prepareAudioWaveform.ts
  */
-export async function getAudioWaveform(buffer: Buffer | string | Readable, logger?: ILogger) {
+ export async function getAudioWaveform(buffer: Buffer | string | Readable, logger?: ILogger) {
 	try {
-		const { default: decoder } = await eval('import(\'audio-decode\')')
+		const { default: audioDecode } = await eval('import(\'audio-decode\')')
 		let audioData: Buffer
 		if(Buffer.isBuffer(buffer)) {
 			audioData = buffer
@@ -210,7 +211,7 @@ export async function getAudioWaveform(buffer: Buffer | string | Readable, logge
 			audioData = await toBuffer(buffer)
 		}
 
-		const audioBuffer = await decoder(audioData)
+		const audioBuffer = await audioDecode(audioData)
 
 		const rawData = audioBuffer.getChannelData(0) // We only need to work with one channel of data
 		const samples = 64 // Number of samples we want to have in our final data set
@@ -240,7 +241,6 @@ export async function getAudioWaveform(buffer: Buffer | string | Readable, logge
 		logger?.debug('Failed to generate waveform: ' + e)
 	}
 }
-
 
 export const toReadable = (buffer: Buffer) => {
 	const readable = new Readable({ read: () => {} })
