@@ -50,10 +50,10 @@ export interface WAUrlInfo {
 }
 
 export interface Content {   
-   image: WAMediaUpload
+   image?: WAMediaUpload
    caption?: string
    jpegThumbnail?: string
-   video: WAMediaUpload
+   video?: WAMediaUpload
    gifPlayback?: boolean
    /** if set to true, will send as a `video note` */
    ptv?: boolean
