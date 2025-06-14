@@ -1064,7 +1064,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           const media: Content = medias[i]
           let msg = await generateWAMessage(
              jid, 
-             { ...media },
+             media,
              { 
 					    	logger,
 					    	userJid,
@@ -1095,7 +1095,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              }
           )
                 
-          if(msg && msg.message) {
              msg.message.messageContextInfo = {
                 messageSecret: randomBytes(32),
                 messageAssociation: {
@@ -1103,7 +1102,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                    parentMessageKey: album.key!
                 }
              }
-          }
 
           await relayMessage(jid, msg.message!,
              { messageId: msg.key.id! }
