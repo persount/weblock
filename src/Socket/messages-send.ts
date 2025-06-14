@@ -1046,7 +1046,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
              }
           },
           {
-             logger,
              userJid, 
              ephemeralExpiration: eph,
              ...options 
@@ -1067,6 +1066,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { image: media.image, ...media },
                  { 
                     userJid,
+                    logger,
                     upload: async(readStream, opts) => {
                        const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
                        mediaHandle = up.handle;
@@ -1085,6 +1085,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { video: media.video, ...media },
                  { 
                     userJid,
+                    logger,
                     upload: async(readStream, opts) => {
                        const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
                        mediaHandle = up.handle;
