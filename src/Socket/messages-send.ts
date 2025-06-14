@@ -5,7 +5,7 @@ import { Readable } from 'stream'
 import { proto } from '../../WAProto'
 import { randomBytes } from 'crypto'
 import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults'
-import { AnyMessageContent, Content, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
+import { AnyMessageContent, Medias, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
 import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, delay, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageID, generateWAMessage, generateWAMessageFromContent, getContentType, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, parseAndInjectE2ESessions, unixTimestampSeconds, normalizeMessageContent } from '../Utils'
 import { getUrlInfo } from '../Utils/link-preview'
 import { areJidsSameUser, BinaryNode, BinaryNodeAttributes, getAdditionalNode, getBinaryNodeChild, getBinaryNodeChildren, getBinaryNodeFilter, isJidGroup, isJidNewsletter, isJidUser, jidDecode, jidEncode, jidNormalizedUser, JidWithDevice, S_WHATSAPP_NET, STORIES_JID } from '../WABinary'
@@ -1018,12 +1018,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     },
     sendAlbumMessage: async(
 		    jid: string, 
-		    medias: Content[], 
+		    medias: Medias[], 
 		    options: MiscMessageGenerationOptions = { }
 		) => {
        const userJid = authState.creds.me!.id;
-       for (const media of medias) {
-         if (!media.image && !media.video) throw new TypeError(`medias[i] must have image or video property`)
+       for (const { image, video } of medias) {
+         if (!image && !video) throw new TypeError(`medias[i] must have image or video property`)
        }
              
        let eph
@@ -1053,13 +1053,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        );
 
        await relayMessage(jid, album.message!,
-          { messageId: customMessageID() || generateMessageID(), ...options }
+          { messageId: album.key.id!, ...options }
        )
 
        let mediaHandle;
        let msg;
        for (const i in medias) {
-          const media: Content = medias[i]
+          const media: Medias = medias[i]
           if(media.image) {
              msg = await generateWAMessage(
                  jid,
