@@ -150,7 +150,7 @@ type ProductListable = {
     footer?: string
     buttonText?: string
     bizJid?: string
-    thumbnail?: Readable | Buffer | string
+    thumbnail?: Buffer
 }
 type WithDimensions = {
     width?: number
