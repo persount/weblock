@@ -223,7 +223,7 @@ export type ButtonReplyInfo = {
     id: string
     index: number
     text: string
-    format: number | string
+    format: proto.Message.InteractiveResponseMessage.Body.Format
     nativeFlow: proto.Message.InteractiveResponseMessage.NativeFlowResponseMessage
 }
 
@@ -308,7 +308,7 @@ export type AnyRegularMessageContent = (
 	      text: string
         linkPreview?: WAUrlInfo | null
     }
-    & Mentionable & Contextable & Buttonable & Templatable & Interactiveable & Shopable & Collectionable & Cardsable & Listable & Editable)
+    & Mentionable & Contextable & Buttonable & Templatable & Interactiveable & Shopable & Collectionable & Cardsable & Listable & ProductListable & Editable)
     | AnyMediaMessageContent
     | ({
         poll: PollMessageOptions
