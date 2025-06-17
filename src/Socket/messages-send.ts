@@ -496,7 +496,10 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 							senderKeyDistributionMessage: {
 								axolotlSenderKeyDistributionMessage: senderKeyDistributionMessage,
 								groupId: destinationJid
-							}
+							},
+							messageContextInfo: {
+                messageSecret: randomBytes(32),
+              },
 						}
 
 						await assertSessions(senderKeyJids, false)
@@ -637,11 +640,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				}
 
 				const messageContent: proto.IMessage = normalizeMessageContent(message)! 
-				
-				message.messageContextInfo = {
-          messageSecret: randomBytes(32),
-          ...message.messageContextInfo
-        }
         
 				const buttonType = getButtonType(messageContent)
         if(!isNewsletter && buttonType) {
@@ -827,7 +825,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
      )
      let results = getBinaryNodeChild(metadata, 'group')!
      let exp = getBinaryNodeChild(results, 'ephemeral')!
-     return exp?.attrs?.expiration
+     return exp?.attrs?.expiration || 0
 	}
 
 	const waUploadToServer = getWAUploadToServer(config, refreshMediaConn)

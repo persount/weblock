@@ -411,6 +411,30 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			]
 		})
 	}
+	
+	const getBusinessCoverPhoto = async(jid: string) => {
+    const results = await query({
+		  tag: 'iq',
+		  attrs: {
+			  to: 's.whatsapp.net',
+			  xmlns: 'w:biz',
+				type: 'get'
+		  },
+		  content: [{
+				 tag: 'business_profile',
+				 attrs: { v: '244' },
+				 content: [{
+			 		 tag: 'profile',
+					 attrs: { jid }
+				 }]
+			}]
+	  })
+	 
+    const profileNode = getBinaryNodeChild(results, 'business_profile')
+	  const profiles = getBinaryNodeChild(profileNode, 'profile')
+    const cover = getBinaryNodeChild(profiles, 'cover_photo')
+    return cover ? cover.content.toString() : null
+  }
 
 	const newAppStateChunkHandler = (isInitialSync: boolean) => {
 		return {
@@ -1019,6 +1043,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		updateGroupsAddPrivacy,
 		updateDefaultDisappearingMode,
 		getBusinessProfile,
+		getBusinessCoverPhoto,
 		resyncAppState,
 		chatModify,
 		cleanDirtyBits,
