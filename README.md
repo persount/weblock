@@ -56,11 +56,11 @@ const { default: makeWASocket } = require("@kangfarrel/felzar-baileys")
         - [Mention User](#mention-user-works-with-most-types)
         - [Mention Status](#mention-status)
         - [Result Poll From Newsletter](#result-poll-from-newsletter)
-        - [SendAlbumMessage](#send-album-message)
         - [Interactive Response](#interactive-response)
         - [Request Payment](#request-payment)
         - [Event Message](#event-message)
-        - [Interactive](#interactive)
+        - [Product List](#product-list)
+        - [Interactive](#interactive-message)
         - [Forward Messages](#forward-messages)
         - [Location Message](#location-message)
         - [Contact Message](#contact-message)
@@ -74,6 +74,7 @@ const { default: makeWASocket } = require("@kangfarrel/felzar-baileys")
         - [Video Message](#video-message)
         - [Audio Message](#audio-message)
         - [Image Message](#image-message)
+        - [Album Message](#album-message)
         - [ViewOnce Message](#view-once-message)
 - [Modify Messages](#modify-messages)
     - [Delete Messages (for everyone)](#deleting-messages-for-everyone)
@@ -468,7 +469,6 @@ await sock.sendMessage(
 ```
 
 #### Mention Status
-- [ jid ] If the Jid Group and Jid Private Chat are included in the JID list, try to make the JID group first starting from the Jid Private Chat or Jid Private Chat in the middle between the group Jid
 ```javascript
 await sock.sendStatusMentions(
      {
@@ -495,7 +495,7 @@ await sock.sendMessage(
 )
 ```
 
-#### Send Album Message
+#### Album Message
 - url or buffer ( image or video ) 
 ```javascript
 await sock.sendAlbumMessage(
@@ -525,6 +525,7 @@ await sock.sendMessage(
     {
         buttonReply: {
              text: 'Text',
+             format: 1,
              nativeFlow: { 
                 version: 3,
              },
@@ -606,7 +607,38 @@ await sock.sendMessage(
 )
 ```
 
-#### Interactive
+#### Product List
+```javascript
+await sock.sendMessage(
+   m.chat,
+   {
+       text: "Description Message",
+       title: "Title Of Message",
+       footer: "Footer Message",
+       bizJid: "628xxxx@s.whatsapp.net", // business jid
+       thumbnail: URL, // Buffer or null
+       productSections: [{
+           title: "Title Of Section Product List",
+           products: [{
+               productId: "91695396207539618", // id product
+           },{
+               productId: "91695396207539618", // id product
+           }]
+       },{
+           title: "Title Of Section Product List",
+           products: [{
+               productId: "91695396207539618", // id product
+           },{
+               productId: "91695396207539619", // id product
+           }]
+       }]
+   },
+   { quoted : message }
+)
+```
+
+
+#### Interactive Message
 ```javascript
 - Example non header media
 await sock.sendMessage(
