@@ -143,6 +143,15 @@ type Listable = {
     /** Text of the button on the list (required) */
     buttonText?: string
 }
+
+type ProductListable = {
+    productSections?: proto.Message.ListMessage.IProductSection[]
+    title?: string
+    footer?: string
+    buttonText?: string
+    bizJid?: string
+    thumbnail?: Readable | Buffer | string
+}
 type WithDimensions = {
     width?: number
     height?: number
@@ -214,6 +223,7 @@ export type ButtonReplyInfo = {
     id: string
     index: number
     text: string
+    format: number | string
     nativeFlow: proto.Message.InteractiveResponseMessage.NativeFlowResponseMessage
 }
 
