@@ -497,10 +497,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 								axolotlSenderKeyDistributionMessage: senderKeyDistributionMessage,
 								groupId: destinationJid
 							},
-							messageContextInfo: {
-                messageSecret: randomBytes(32),
-              },
 						}
+						
+						
 
 						await assertSessions(senderKeyJids, false)
 
