@@ -1009,16 +1009,6 @@ export const generateWAMessageContent = async(
 	}
 	
 	if('productSections' in message && !!message.productSections) {	
-	    let mediaType: typeof MEDIA_KEYS[number] | undefined
-	    for(const key of MEDIA_KEYS) {
-		      if(key in message) {
-		      	  mediaType = key
-		      }
-	    }
-		  const { thumbnail } = message.thumbnail!
-		      ? await generateThumbnail(message.thumbnail!, mediaType as 'image', options)
-          : null
-
 	    const listMessage: proto.Message.IListMessage = {
 		   	  buttonText: message.buttonText,
 			    title: message.title,
@@ -1032,7 +1022,7 @@ export const generateWAMessageContent = async(
 			           productId: message.productSections[0]?.products 
 			               ? message.productSections[0]?.products[0]?.productId 
 			               : null,
-			           jpegThumbnail: thumbnail
+			           jpegThumbnail: message.thumbnail || null
 			       }
 			    }
 		  }
