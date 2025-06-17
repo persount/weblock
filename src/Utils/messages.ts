@@ -26,7 +26,7 @@ import {
 } from '../Types'
 import { isJidGroup, isJidNewsletter, isJidStatusBroadcast, jidNormalizedUser } from '../WABinary'
 import { sha256 } from './crypto'
-import { generateMessageID, getKeyAuthor, unixTimestampSeconds } from './generics'
+import { delay, generateMessageID, getKeyAuthor, unixTimestampSeconds } from './generics'
 import { downloadContentFromMessage, encryptedStream, generateThumbnail, getAudioDuration, getAudioWaveform, MediaDownloadOptions, prepareStream } from './messages-media'
 
 type MediaUploadData = {
@@ -479,7 +479,7 @@ export const generateWAMessageContent = async(
             m.interactiveResponseMessage = {
                  body: {
                     text: message.buttonReply.text,
-                    format: proto.Message.InteractiveResponseMessage.Body.Format.EXTENSIONS_1 
+                    format: message.buttonReply.format, 
                  }, 
                  nativeFlowResponseMessage: {
                     name: message.buttonReply.nativeFlow.name, 
@@ -524,7 +524,7 @@ export const generateWAMessageContent = async(
             totalCurrencyCode: message.order.currency
         }) 
    } else if('listReply' in message) {
-		m.listResponseMessage = { ...message.listReply }
+		   m.listResponseMessage = { ...message.listReply }
    } else if('poll' in message) {
 		message.poll.selectableCount ||= 0
 		message.poll.toAnnouncementGroup ||= false
@@ -573,9 +573,9 @@ export const generateWAMessageContent = async(
         
    } else if('pollResult' in message) {
    
-        if(!Array.isArray(message.pollResult.votes)) {
-			throw new Boom('Invalid poll votes result', { statusCode: 400 })
-		}
+     if(!Array.isArray(message.pollResult.votes)) {
+			  throw new Boom('Invalid poll votes result', { statusCode: 400 })
+		 }
 		
 		m.messageContextInfo = {
 			// encKey
@@ -599,7 +599,7 @@ export const generateWAMessageContent = async(
         	pollResultSnapshotMessage.contextInfo = { mentionedJid: message.mentions }
         }
         
-     m.pollResultSnapshotMessage = pollResultSnapshotMessage
+        m.pollResultSnapshotMessage = pollResultSnapshotMessage
 		
    } else if('event' in message) {
       m.messageContextInfo = {
@@ -993,15 +993,44 @@ export const generateWAMessageContent = async(
 
    if('sections' in message && !!message.sections) {
 	    const listMessage: proto.Message.IListMessage = {
-			sections: message.sections,
-			buttonText: message.buttonText,
-			title: message.title,
-			footerText: message.footer,
-			description: message.text,
-			listType: proto.Message.ListMessage.ListType.SINGLE_SELECT
-		}
+			   sections: message.sections,
+		   	 buttonText: message.buttonText,
+			   title: message.title,
+			   footerText: message.footer,
+			   description: message.text,
+			   listType: proto.Message.ListMessage.ListType.SINGLE_SELECT
+		  }
 
-		m = { listMessage }
+		  m = { listMessage }
+	}
+	
+	if('productSections' in message && !!message.productSections) {
+	    const { thumbnail } = message.thumbnail 
+	        ? await generateThumbnail(
+	            message.thumbnail, 
+	            'image', 
+	            options
+	        ) 
+	        : null
+	    const listMessage: proto.Message.IListMessage = {
+		   	  buttonText: message.buttonText,
+			    title: message.title,
+		  	  footerText: message.footer,
+			    description: message.text,
+			    listType: proto.Message.ListMessage.ListType.PRODUCT_LIST,
+			    productListInfo: {
+			       productSections: message.productSections,
+			       businessOwnerJid: message.bizJid,
+			       headerImage: {
+			           productId: message.productSections[0]?.products 
+			               ? message.productSections[0]?.products[0]?.productId 
+			               : null,
+			           jpegThumbnail: thumbnail
+			       }
+			    }
+		  }
+
+		  m = { listMessage }
 	}
 
 	if('viewOnce' in message && !!message.viewOnce) {
@@ -1046,11 +1075,6 @@ export const generateWAMessageContent = async(
 		m[messageType] = m[messageType] || {}
 		m[messageType].contextInfo = message.contextInfo
 	}
-	
-	m.messageContextInfo = {
-     messageSecret: randomBytes(32),
-     ...m.messageContextInfo
-  }
 
 	return WAProto.Message.fromObject(m)
 }
@@ -1131,9 +1155,11 @@ export const generateWAMessageFromContent = (
 		}		
 	}
 	
-	innerMessage.messageContextInfo = {
-     messageSecret: randomBytes(32),
-     ...innerMessage.messageContextInfo
+	if(!isJidNewsletter(jid)) {
+	   innerMessage.messageContextInfo = {
+        messageSecret: randomBytes(32),
+        ...innerMessage.messageContextInfo
+     }
   }
 
 	message = WAProto.Message.fromObject(message)
@@ -1160,6 +1186,12 @@ export const generateWAMessage = async(
 ) => {
 	// ensure msg ID is with every log
 	options.logger = options?.logger?.child({ msgId: options.messageId })
+	if(!isJidNewsletter(jid)) {
+	   content.messageContextInfo = {
+        messageSecret: randomBytes(32),
+        ...content.messageContextInfo
+     }
+  }
 	return generateWAMessageFromContent(
 		jid,
 		await generateWAMessageContent(
