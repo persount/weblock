@@ -389,28 +389,6 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			}
 		}
 	}
-
-	const cleanDirtyBits = async(type: 'account_sync' | 'groups', fromTimestamp?: number | string) => {
-		logger.info({ fromTimestamp }, 'clean dirty bits ' + type)
-		await sendNode({
-			tag: 'iq',
-			attrs: {
-				to: S_WHATSAPP_NET,
-				type: 'set',
-				xmlns: 'urn:xmpp:whatsapp:dirty',
-				id: generateMessageTag(),
-			},
-			content: [
-				{
-					tag: 'clean',
-					attrs: {
-						type,
-						...(fromTimestamp ? { timestamp: fromTimestamp.toString() } : null),
-					}
-				}
-			]
-		})
-	}
 	
 	const getBusinessCoverPhoto = async(jid: string) => {
     const results = await query({
@@ -433,8 +411,30 @@ export const makeChatsSocket = (config: SocketConfig) => {
     const profileNode = getBinaryNodeChild(results, 'business_profile')
 	  const profiles = getBinaryNodeChild(profileNode, 'profile')
     const cover = getBinaryNodeChild(profiles, 'cover_photo')
-    return cover ? cover.content.toString() : null
+    return cover ? cover?.content!.toString() : null
   }
+
+	const cleanDirtyBits = async(type: 'account_sync' | 'groups', fromTimestamp?: number | string) => {
+		logger.info({ fromTimestamp }, 'clean dirty bits ' + type)
+		await sendNode({
+			tag: 'iq',
+			attrs: {
+				to: S_WHATSAPP_NET,
+				type: 'set',
+				xmlns: 'urn:xmpp:whatsapp:dirty',
+				id: generateMessageTag(),
+			},
+			content: [
+				{
+					tag: 'clean',
+					attrs: {
+						type,
+						...(fromTimestamp ? { timestamp: fromTimestamp.toString() } : null),
+					}
+				}
+			]
+		})
+	}
 
 	const newAppStateChunkHandler = (isInitialSync: boolean) => {
 		return {
