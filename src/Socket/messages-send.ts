@@ -1037,6 +1037,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        const album = await generateWAMessageFromContent(
           jid,
           {
+             messageContextInfo: {
+                messageSecret: randomBytes(32),
+             }, 
              albumMessage: {
                 expectedImageCount: medias.filter(media => media.image).length,
                 expectedVideoCount: medias.filter(media => media.video).length,
@@ -1100,6 +1103,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                 
           if(msg) {
              msg.message.messageContextInfo = {
+                messageSecret: randomBytes(32),
                 messageAssociation: {
                    associationType: 1,
                    parentMessageKey: album.key!
