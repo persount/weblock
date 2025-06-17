@@ -59,7 +59,7 @@ const MessageTypeProto = {
 	'video': WAProto.Message.VideoMessage,
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
-   	'document': WAProto.Message.DocumentMessage,
+  'document': WAProto.Message.DocumentMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -362,6 +362,10 @@ export const generateWAMessageContent = async(
 		if(options.font) {
 			extContent.font = options.font
 		}
+		
+		if('viewOnce' in message && !!message.viewOnce) {
+      extContent.viewOnce = message.viewOnce
+    }
 
 		m.extendedTextMessage = extContent
     } else if('contacts' in message) {
@@ -1004,14 +1008,17 @@ export const generateWAMessageContent = async(
 		  m = { listMessage }
 	}
 	
-	if('productSections' in message && !!message.productSections) {
-	    const { thumbnail } = message.thumbnail 
-	        ? await generateThumbnail(
-	            message.thumbnail, 
-	            'image', 
-	            options
-	        ) 
-	        : null
+	if('productSections' in message && !!message.productSections) {	
+	    let mediaType: typeof MEDIA_KEYS[number] | undefined
+	    for(const key of MEDIA_KEYS) {
+		      if(key in message) {
+		      	  mediaType = key
+		      }
+	    }
+		  const { thumbnail } = message.thumbnail!
+		      ? await generateThumbnail(message.thumbnail!, mediaType as 'image', options)
+          : null
+
 	    const listMessage: proto.Message.IListMessage = {
 		   	  buttonText: message.buttonText,
 			    title: message.title,
