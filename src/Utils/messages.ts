@@ -1186,12 +1186,6 @@ export const generateWAMessage = async(
 ) => {
 	// ensure msg ID is with every log
 	options.logger = options?.logger?.child({ msgId: options.messageId })
-	if(!isJidNewsletter(jid)) {
-	   content.messageContextInfo = {
-        messageSecret: randomBytes(32),
-        ...content.messageContextInfo
-     }
-  }
 	return generateWAMessageFromContent(
 		jid,
 		await generateWAMessageContent(
