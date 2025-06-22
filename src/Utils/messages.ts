@@ -1,6 +1,6 @@
 import { Boom } from '@hapi/boom'
 import axios from 'axios'
-import { randomBytes } from 'crypto'
+import { createHash, randomBytes } from 'crypto'
 import { promises as fs } from 'fs'
 import { ILogger } from './logger'
 import { type Transform } from 'stream'
@@ -550,12 +550,27 @@ export const generateWAMessageContent = async(
 		m.messageContextInfo = {
 			// encKey
 			messageSecret: message.poll.messageSecret || randomBytes(32),
-		}
-
+		}	
+		
+	  function generateHash(buffer) {
+       return createHash('sha256').update(buffer).digest('hex').toString('hex')
+    }	
+		
+    let options
+    
+    if(message.pollV4) {
+       options = message.poll.values.map(option => ({
+           optionName: option[0],
+           optionHash: generateHash(option[1])
+       }))
+    } else {
+       if(message.poll.values) {
+       options = message.poll.values.map(optionName => ({ optionName }))
+    }
 		const pollCreationMessage: proto.Message.IPollCreationMessage = {
 			name: message.poll.name,
 			selectableOptionsCount: message.poll.selectableCount,
-			options: message.poll.values.map(optionName => ({ optionName })),
+			options: options,
 		}
 
 		if(message.poll.toAnnouncementGroup) {
@@ -581,10 +596,10 @@ export const generateWAMessageContent = async(
 			  throw new Boom('Invalid poll votes result', { statusCode: 400 })
 		 }
 		
-		m.messageContextInfo = {
+		 m.messageContextInfo = {
 			// encKey
-			messageSecret: message.pollResult.messageSecret || randomBytes(32),
-		}
+			  messageSecret: message.pollResult.messageSecret || randomBytes(32),
+		 }
 		
 		const pollResultSnapshotMessage: proto.Message.IPollResultSnapshotMessage = {
 		    name: message.pollResult.name,
@@ -684,234 +699,232 @@ export const generateWAMessageContent = async(
 		)
 	}
 
-	if('buttons' in message && !!message.buttons) {
-		const buttonsMessage: proto.Message.IButtonsMessage = {
-			buttons: message.buttons!.map(b => ({ ...b, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE }))
-		}
-		if('text' in message) {
-			buttonsMessage.contentText = message.text
-			buttonsMessage.headerType = ButtonType.EMPTY
-		} else {
-			if('caption' in message) {
-				buttonsMessage.contentText = message.caption
-			}
+	  if('buttons' in message && !!message.buttons) {
+		    const buttonsMessage: proto.Message.IButtonsMessage = {
+			      buttons: message.buttons!.map(b => ({ ...b, type: proto.Message.ButtonsMessage.Button.Type.RESPONSE }))
+		    }
+		    if('text' in message) {
+			      buttonsMessage.contentText = message.text
+			      buttonsMessage.headerType = ButtonType.EMPTY
+		    } else {
+			      if('caption' in message) {
+				       buttonsMessage.contentText = message.caption
+			      }
 
-			const type = Object.keys(m)[0].replace('Message', '').toUpperCase()
-			buttonsMessage.headerType = ButtonType[type]
+			      const type = Object.keys(m)[0].replace('Message', '').toUpperCase()
+			      buttonsMessage.headerType = ButtonType[type]
 
-			Object.assign(buttonsMessage, m)
-		}
+			      Object.assign(buttonsMessage, m)
+		    }
 
-		if('footer' in message && !!message.footer) {
-			buttonsMessage.footerText = message.footer
-		}
+		    if('footer' in message && !!message.footer) {
+			      buttonsMessage.footerText = message.footer
+		    }
 		
         if('title' in message && !!message.title) {
-        	buttonsMessage.text = message.title,
+        	  buttonsMessage.text = message.title,
 			buttonsMessage.headerType = ButtonType.TEXT
         }
         
         if('contextInfo' in message && !!message.contextInfo) {
-        	buttonsMessage.contextInfo = message.contextInfo
+          	buttonsMessage.contextInfo = message.contextInfo
         }
         
         if('mentions' in message && !!message.mentions) {
-        	buttonsMessage.contextInfo = { mentionedJid: message.mentions }
+        	  buttonsMessage.contextInfo = { mentionedJid: message.mentions }
         }
 
-		m = { buttonsMessage }
-	} else if('templateButtons' in message && !!message.templateButtons) {
-		const msg: proto.Message.TemplateMessage.IHydratedFourRowTemplate = {
-			hydratedButtons: message.hasOwnProperty("templateButtons") ? message.templateButtons : message.templateButtons
-		}
+		    m = { buttonsMessage }
+	  } else if('templateButtons' in message && !!message.templateButtons) {
+		    const msg: proto.Message.TemplateMessage.IHydratedFourRowTemplate = {
+			      hydratedButtons: message.hasOwnProperty("templateButtons") ? message.templateButtons : message.templateButtons
+		    }
 
-		if('text' in message) {
-			msg.hydratedContentText = message.text
-		} else {
+		    if('text' in message) {
+			      msg.hydratedContentText = message.text
+		    } else {
 
-			if('caption' in message) {
-				msg.hydratedContentText = message.caption
-			}
+			      if('caption' in message) {
+				        msg.hydratedContentText = message.caption
+			      }
 
-			Object.assign(msg, m)
-		}
+			      Object.assign(msg, m)
+		    }
 
-		if('footer' in message && !!message.footer) {
-			msg.hydratedFooterText = message.footer
-		}
+		    if('title' in message && !!message.title) {
+			      msg.hydratedTitleText = message.title
+		    }
 
-		m = {
-			templateMessage: {
-				fourRowTemplate: msg,
-				hydratedTemplate: msg
-			}
-		}
+		    if('footer' in message && !!message.footer) {
+			      msg.hydratedFooterText = message.footer
+		    }
+
+		    m = {
+			      templateMessage: {
+			        	fourRowTemplate: msg,
+			       	  hydratedTemplate: msg
+			      }
+		    }
     }
 	
-	if('interactiveButtons' in message && !!message.interactiveButtons) {
-	   const interactiveMessage: proto.Message.IInteractiveMessage = {
-	      nativeFlowMessage: WAProto.Message.InteractiveMessage.NativeFlowMessage.fromObject({ 
-	         buttons: message.interactiveButtons,
-	      })
-	   }
+    if('interactiveButtons' in message && !!message.interactiveButtons) {
+	      const interactiveMessage: proto.Message.IInteractiveMessage = {
+	          nativeFlowMessage: WAProto.Message.InteractiveMessage.NativeFlowMessage.fromObject({ 
+	              buttons: message.interactiveButtons,
+	          })
+	      }
 	   
-	   if('text' in message) {
-	       body: interactiveMessage.body = { 
-	           text: message.text
-	       }
-	       
-	       header: interactiveMessage.header = {
-	          title: message.title,
-	          subtitle: message.subtitle,
-	          hasMediaAttachment: message?.media ?? false,
-	       }
-
-	   } else {
-	   
-	      if('caption' in message) {
-	          body: interactiveMessage.body = {
-	              text: message.caption
+	      if('text' in message) {
+	          body: interactiveMessage.body = { 
+	              text: message.text
 	          }
-	          
+	       
 	          header: interactiveMessage.header = {
 	              title: message.title,
 	              subtitle: message.subtitle,
 	              hasMediaAttachment: message?.media ?? false,
-	          }	
-	       		  
-		      Object.assign(interactiveMessage.header, m)
-	      
-	      }	            
-	   }
+	          }
+	       
+	      } else {
 	   
-	   if('footer' in message && !!message.footer) {
-		   footer: interactiveMessage.footer = {
-		      text: message.footer
-		   }
-	   }		      
+	          if('caption' in message) {
+	              body: interactiveMessage.body = {
+	                 text: message.caption
+	              }
+	          
+	              header: interactiveMessage.header = {
+	                 title: message.title,
+	                 subtitle: message.subtitle,
+	                 hasMediaAttachment: message?.media ?? false,
+	              }	       		  
+		            Object.assign(interactiveMessage.header, m)
+	          }
+	      }
 	   
-       if('contextInfo' in message && !!message.contextInfo) {
-        	interactiveMessage.contextInfo = message.contextInfo
-       }
+	      if('footer' in message && !!message.footer) {
+		        footer: interactiveMessage.footer = {
+		           text: message.footer
+		        }
+	      }	   
+	   
+        if('contextInfo' in message && !!message.contextInfo) {
+          	interactiveMessage.contextInfo = message.contextInfo
+        }
         
-       if('mentions' in message && !!message.mentions) {
-        	interactiveMessage.contextInfo = { mentionedJid: message.mentions }
-       }
+        if('mentions' in message && !!message.mentions) {
+        	  interactiveMessage.contextInfo = { mentionedJid: message.mentions }
+        }
        
-	   m = { interactiveMessage }
-	}
+	      m = { interactiveMessage }
+    }
 	
-	if('shop' in message && !!message.shop) {
-	    const interactiveMessage: proto.Message.IInteractiveMessage = {
-	      shopStorefrontMessage: WAProto.Message.InteractiveMessage.ShopMessage.fromObject({ 
-	         surface: message.shop,
-	         id: message.id
-	      })
-	   }
+   	if('shop' in message && !!message.shop) {
+	      const interactiveMessage: proto.Message.IInteractiveMessage = {
+	          shopStorefrontMessage: WAProto.Message.InteractiveMessage.ShopMessage.fromObject({ 
+	              surface: message.shop,
+	              id: message.id
+	          })
+	      }
 	   
-	   if('text' in message) {
-	       body: interactiveMessage.body = { 
-	           text: message.text
-	       }
-	       
-	       header: interactiveMessage.header = {
-	          title: message.title,
-	          subtitle: message.subtitle,
-	          hasMediaAttachment: message?.media ?? false,
-	       }
-	       
-	   } else {
-	   
-	      if('caption' in message) {
-	          body: interactiveMessage.body = {
-	              text: message.caption
+	      if('text' in message) {
+	          body: interactiveMessage.body = { 
+	              text: message.text
 	          }
-	          
+	       
 	          header: interactiveMessage.header = {
 	              title: message.title,
 	              subtitle: message.subtitle,
 	              hasMediaAttachment: message?.media ?? false,
 	          }
-	       		  
-		      Object.assign(interactiveMessage.header, m)
-		      
-	      }
-	   }
-	   
-	   if('footer' in message && !!message.footer) {
-		   footer: interactiveMessage.footer = {
-		      text: message.footer
-		   }
-	   }	   
-	   
-       if('contextInfo' in message && !!message.contextInfo) {
-        	interactiveMessage.contextInfo = message.contextInfo
-       }
-        
-       if('mentions' in message && !!message.mentions) {
-        	interactiveMessage.contextInfo = { mentionedJid: message.mentions }
-       }
-       
-	   m = { interactiveMessage }
-   }
-   
-   if('collection' in message && !!message.collection) {
-	    const interactiveMessage: proto.Message.IInteractiveMessage = {
-	      collectionMessage: WAProto.Message.InteractiveMessage.CollectionMessage.fromObject({ 
-	         bizJid: message?.collection?.bizJid,
-	         id: message?.collection?.id,
-	         messageVersion: message?.collection?.version
-	      })
-	   }
-	   
-	   if('text' in message) {
-	       body: interactiveMessage.body = { 
-	           text: message.text
-	       }
 	       
-	       header: interactiveMessage.header = {
-	          title: message.title,
-	          subtitle: message.subtitle,
-	          hasMediaAttachment: message?.media ?? false,
-	       }
-	       
-	   } else {
+	      } else {
 	   
-	      if('caption' in message) {
-	          body: interactiveMessage.body = {
-	              text: message.caption
-	          }
+	          if('caption' in message) {
+	              body: interactiveMessage.body = {
+	                 text: message.caption
+	              }
 	          
+	              header: interactiveMessage.header = {
+	                 title: message.title,
+	                 subtitle: message.subtitle,
+	                 hasMediaAttachment: message?.media ?? false,
+	              }	       		  
+		            Object.assign(interactiveMessage.header, m)
+	          }
+	      }
+	   
+	      if('footer' in message && !!message.footer) {
+		        footer: interactiveMessage.footer = {
+		           text: message.footer
+		        }
+	      }	   
+	   
+        if('contextInfo' in message && !!message.contextInfo) {
+          	interactiveMessage.contextInfo = message.contextInfo
+        }
+        
+        if('mentions' in message && !!message.mentions) {
+        	  interactiveMessage.contextInfo = { mentionedJid: message.mentions }
+        }
+       
+	      m = { interactiveMessage }
+    }
+   
+    if('collection' in message && !!message.collection) {
+	      const interactiveMessage: proto.Message.IInteractiveMessage = {
+	          collectionMessage: WAProto.Message.InteractiveMessage.CollectionMessage.fromObject({ 
+	              bizJid: message?.collection?.bizJid,
+	              id: message?.collection?.id,
+	              messageVersion: message?.collection?.version
+	          })
+	      }
+	   
+	      if('text' in message) {
+	          body: interactiveMessage.body = { 
+	              text: message.text
+	          }
+	       
 	          header: interactiveMessage.header = {
 	              title: message.title,
 	              subtitle: message.subtitle,
 	              hasMediaAttachment: message?.media ?? false,
 	          }
-	       		  
-		      Object.assign(interactiveMessage.header, m)
-		      
+	       
+	      } else {
+	   
+	          if('caption' in message) {
+	              body: interactiveMessage.body = {
+	                 text: message.caption
+	              }
+	          
+	              header: interactiveMessage.header = {
+	                 title: message.title,
+	                 subtitle: message.subtitle,
+	                 hasMediaAttachment: message?.media ?? false,
+	              }	       		  
+		            Object.assign(interactiveMessage.header, m)
+	          }
 	      }
-	   }
 	   
-	   if('footer' in message && !!message.footer) {
-		   footer: interactiveMessage.footer = {
-		      text: message.footer
-		   }
-	   }	   
+	      if('footer' in message && !!message.footer) {
+		        footer: interactiveMessage.footer = {
+		           text: message.footer
+		        }
+	      }	   
 	   
-       if('contextInfo' in message && !!message.contextInfo) {
-        	interactiveMessage.contextInfo = message.contextInfo
-       }
+        if('contextInfo' in message && !!message.contextInfo) {
+          	interactiveMessage.contextInfo = message.contextInfo
+        }
         
-       if('mentions' in message && !!message.mentions) {
-        	interactiveMessage.contextInfo = { mentionedJid: message.mentions }
-       }
+        if('mentions' in message && !!message.mentions) {
+        	  interactiveMessage.contextInfo = { mentionedJid: message.mentions }
+        }
        
-	   m = { interactiveMessage }
-   }
+	      m = { interactiveMessage }
+    }
    
-   if('cards' in message && !!message.cards) {
-       const slides = await Promise.all(
+    if('cards' in message && !!message.cards) {
+        const slides = await Promise.all(
            message.cards.map(async slide => {              
               const { image, video, product, title, caption, footer, buttons } = slide           
               let header
@@ -958,58 +971,58 @@ export const generateWAMessageContent = async(
 	            } 
               return msg            
            }
-       ))
-       const interactiveMessage: proto.Message.IInteractiveMessage = {
+        ))
+        const interactiveMessage: proto.Message.IInteractiveMessage = {
             carouselMessage: WAProto.Message.InteractiveMessage.CarouselMessage.fromObject({
                  cards: slides
             })
-       }
+        }
 	   
-	   if('text' in message) {
-	       body: interactiveMessage.body = { 
-	           text: message.text
-	       }
+	      if('text' in message) {
+	         body: interactiveMessage.body = { 
+	             text: message.text
+	         }
 	       
-	       header: interactiveMessage.header = {
-	          title: message.title,
-	          subtitle: message.subtitle,
-	          hasMediaAttachment: message?.media ?? false,
-	       }
+	         header: interactiveMessage.header = {
+	             title: message.title,
+	             subtitle: message.subtitle,
+	             hasMediaAttachment: message?.media ?? false,
+	         }
 	       
-	   }
+	      }
 	   
-	   if('footer' in message && !!message.footer) {
-		   footer: interactiveMessage.footer = {
-		      text: message.footer
-		   }
-	   }	   
+	      if('footer' in message && !!message.footer) {
+		       footer: interactiveMessage.footer = {
+		           text: message.footer
+		       }
+	      }	   
 	   
-       if('contextInfo' in message && !!message.contextInfo) {
-        	interactiveMessage.contextInfo = message.contextInfo
-       }
+        if('contextInfo' in message && !!message.contextInfo) {
+        	  interactiveMessage.contextInfo = message.contextInfo
+        }
         
-       if('mentions' in message && !!message.mentions) {
-        	interactiveMessage.contextInfo = { mentionedJid: message.mentions }
-       }
+        if('mentions' in message && !!message.mentions) {
+        	  interactiveMessage.contextInfo = { mentionedJid: message.mentions }
+        }
        
-       m = { interactiveMessage }
-   }
+        m = { interactiveMessage }
+    }
 
-   if('sections' in message && !!message.sections) {
-	    const listMessage: proto.Message.IListMessage = {
-			   sections: message.sections,
-		   	 buttonText: message.buttonText,
-			   title: message.title,
-			   footerText: message.footer,
-			   description: message.text,
-			   listType: proto.Message.ListMessage.ListType.SINGLE_SELECT
-		  }
+    if('sections' in message && !!message.sections) {
+	      const listMessage: proto.Message.IListMessage = {
+			      sections: message.sections,
+		   	    buttonText: message.buttonText,
+			      title: message.title,
+			      footerText: message.footer,
+			      description: message.text,
+			      listType: proto.Message.ListMessage.ListType.SINGLE_SELECT
+		    }
 
-		  m = { listMessage }
-	}
+		    m = { listMessage }
+	  }
 	
-	if('productSections' in message && !!message.productSections) {	
-	    const listMessage: proto.Message.IListMessage = {
+	  if('productSections' in message && !!message.productSections) {	
+	     const listMessage: proto.Message.IListMessage = {
 		   	  buttonText: message.buttonText,
 			    title: message.title,
 		  	  footerText: message.footer,
@@ -1025,53 +1038,63 @@ export const generateWAMessageContent = async(
 			           jpegThumbnail: message.thumbnail || null
 			       }
 			    }
-		  }
+		   }
 
-		  m = { listMessage }
-	}
+		   m = { listMessage }
+	  }
 
-	if('viewOnce' in message && !!message.viewOnce) {
-		m = { viewOnceMessage: { message: m } }
-	}
-	
+  	if('viewOnce' in message && !!message.viewOnce) {
+		   m = { viewOnceMessage: { message: m } }
+	  }
+ 	
     if('viewOnceV2' in message && !!message.viewOnceV2) {
-        m = { viewOnceMessageV2: { message: m } };
+       m = { viewOnceMessageV2: { message: m } };
     }
     
-    if('viewOnceV2Extension' in message && !!message.viewOnceV2Extension) {
-        m = { viewOnceMessageV2Extension: { message: m } };
+    if('viewOnceV2Ext' in message && !!message.viewOnceV2Ext) {
+       m = { viewOnceMessageV2Extension: { message: m } };
     }
     
     if('ephemeral' in message && !!message.ephemeral) {
-    	m = { ephemeralMessage: { message: m } };
+    	 m = { ephemeralMessage: { message: m } };
     }
     
     if('lottie' in message && !!message.lottie) {
-    	m = { lottieStickerMessage: { message: m } };
+    	 m = { lottieStickerMessage: { message: m } };
     }
+    
+    if('pollV4' in message && !!message.pollV4) {
+       m = { pollCreationMessageV4: { message: m } };
+    }
+    
 
-	if('mentions' in message && message.mentions?.length) {
-		const [messageType] = Object.keys(m)
-		m[messageType].contextInfo = m[messageType] || { }
-		m[messageType].contextInfo.mentionedJid = message.mentions
-	}
+	  if('mentions' in message && message.mentions?.length) {
+		   const [messageType] = Object.keys(m)
+		   m[messageType].contextInfo = m[messageType] || { }
+		   m[messageType].contextInfo.mentionedJid = message.mentions
+	  }
 
-	if('edit' in message) {
-		m = {
-			protocolMessage: {
-				key: message.edit,
-				editedMessage: m,
-				timestampMs: Date.now(),
-				type: WAProto.Message.ProtocolMessage.Type.MESSAGE_EDIT
-			}
-		}
-	}
+  	if('edit' in message) {
+		   m = {
+			     protocolMessage: {
+				      key: message.edit,
+				      editedMessage: m,
+				      timestampMs: Date.now(),
+				      type: WAProto.Message.ProtocolMessage.Type.MESSAGE_EDIT
+			     }
+		   }
+	  }
 
-	if('contextInfo' in message && !!message.contextInfo) {
-		const [messageType] = Object.keys(m)
-		m[messageType] = m[messageType] || {}
-		m[messageType].contextInfo = message.contextInfo
-	}
+	  if('contextInfo' in message && !!message.contextInfo) {
+		   const [messageType] = Object.keys(m)
+	   	 m[messageType] = m[messageType] || {}
+		   m[messageType].contextInfo = message.contextInfo
+	  }
+	
+	  m.messageContextInfo: proto.IMessageContextInfo = {
+       messageSecret: randomBytes(32),
+       ...m.messageContextInfo
+    }
 
 	return WAProto.Message.fromObject(m)
 }
@@ -1152,11 +1175,9 @@ export const generateWAMessageFromContent = (
 		}		
 	}
 	
-	if(!isJidNewsletter(jid)) {
-	   innerMessage.messageContextInfo = {
-        messageSecret: randomBytes(32),
-        ...innerMessage.messageContextInfo
-     }
+	innerMessage.messageContextInfo: proto.IMessageContextInfo = {
+     messageSecret: randomBytes(32),
+     ...innerMessage.messageContextInfo
   }
 
 	message = WAProto.Message.fromObject(message)
