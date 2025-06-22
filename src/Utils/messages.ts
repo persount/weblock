@@ -1090,7 +1090,7 @@ export const generateWAMessageContent = async(
 		   m[messageType].contextInfo = message.contextInfo
 	  }
 	
-	  m.messageContextInfo: proto.IMessageContextInfo = {
+	  m.messageContextInfo = {
        messageSecret: randomBytes(32),
        ...m.messageContextInfo
     }
@@ -1174,7 +1174,7 @@ export const generateWAMessageFromContent = (
 		}		
 	}
 	
-	innerMessage.messageContextInfo: proto.IMessageContextInfo = {
+	innerMessage.messageContextInfo = {
      messageSecret: randomBytes(32),
      ...innerMessage.messageContextInfo
   }
