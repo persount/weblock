@@ -172,6 +172,7 @@ export type PollMessageOptions = {
     name: string
     selectableCount?: number
     values: OptionsPoll[] | string[]
+    contentType: proto.Message.PollContentType
     /** 32 byte message secret to encrypt poll selections */
     messageSecret?: Uint8Array
     toAnnouncementGroup?: boolean
