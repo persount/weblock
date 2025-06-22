@@ -564,7 +564,6 @@ export const generateWAMessageContent = async(
            optionHash: generateHash(option[1])
        }))
     } else {
-       if(message.poll.values) {
        options = message.poll.values.map(optionName => ({ optionName }))
     }
 		const pollCreationMessage: proto.Message.IPollCreationMessage = {
