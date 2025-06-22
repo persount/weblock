@@ -552,16 +552,12 @@ export const generateWAMessageContent = async(
 			messageSecret: message.poll.messageSecret || randomBytes(32),
 		}	
 		
-	  function generateHash(buffer) {
-       return createHash('sha256').update(buffer).digest('hex').toString('hex')
-    }	
-		
     let options
     
-    if(message.pollV4) {
+    if(m.pollCreationMessageV4) {
        options = message.poll.values.map(option => ({
            optionName: option[0],
-           optionHash: generateHash(option[1])
+           optionHash: option[1]
        }))
     } else {
        options = message.poll.values.map(optionName => ({ optionName }))
