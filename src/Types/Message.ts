@@ -64,6 +64,11 @@ export interface Carousel {
    buttons?: proto.Message.InteractiveMessage.NativeFlowMessage.NativeFlowButton[]
 }
 
+interface OptionsPoll {
+   optionName?: string
+   optionHash?: string
+}
+
 // types to generate WA messages
 type Mentionable = {
     /** list of jids that are mentioned in the accompanying text */
@@ -81,11 +86,15 @@ type ViewOnceV2 = {
      viewOnceV2?: boolean;
 }
 type ViewOnceV2Extension = {
-     viewOnceV2Extension?: boolean;
+     viewOnceV2Ext?: boolean;
 }
 
 type Ephemeral = {
-      ephemeral?: boolean;
+     ephemeral?: boolean;
+}
+
+type PollV4 = {
+     pollV4?: boolean;
 }
 
 type Buttonable = {
@@ -96,6 +105,8 @@ type Buttonable = {
 type Templatable = {
     /** add buttons to the message (conflicts with normal buttons)*/
     templateButtons?: proto.IHydratedTemplateButton[]
+    
+    title?: string
 
     footer?: string
 }
@@ -160,7 +171,7 @@ type WithDimensions = {
 export type PollMessageOptions = {
     name: string
     selectableCount?: number
-    values: string[]
+    values: OptionsPoll[] | string[]
     /** 32 byte message secret to encrypt poll selections */
     messageSecret?: Uint8Array
     toAnnouncementGroup?: boolean
