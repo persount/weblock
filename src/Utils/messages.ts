@@ -566,6 +566,7 @@ export const generateWAMessageContent = async(
 			name: message.poll.name,
 			selectableOptionsCount: message.poll.selectableCount,
 			options: options,
+			pollContentType: message.poll.contentType || (m.pollCreationMessageV4 ? 2 : 1)
 		}
 
 		if(message.poll.toAnnouncementGroup) {
@@ -1249,6 +1250,19 @@ export const normalizeMessageContent = (content: WAMessageContent | null | undef
 			 || message?.viewOnceMessageV2
 			 || message?.viewOnceMessageV2Extension
 			 || message?.editedMessage
+       || message?.groupMentionedMessage
+       || message?.botInvokeMessage
+       || message?.lottieStickerMessage
+       || message?.eventCoverImage
+       || message?.statusMentionMessage
+       || message?.pollCreationOptionImageMessage
+       || message?.pollCreationMessageV4
+       || message?.pollCreationMessageV5
+       || message?.statusAddYours
+       || message?.groupStatusMessage
+       || message?.associatedChildMessage
+       || message?.questionMessage
+       || message?.botTaskMessage
 		 )
 	 }
 }
