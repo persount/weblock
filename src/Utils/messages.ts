@@ -555,7 +555,7 @@ export const generateWAMessageContent = async(
     let options
     
     if(m.pollCreationMessageV4) {
-       options = message.poll.values.map(option => ({
+       options = message.poll.options.map(option => ({
            optionName: option[0],
            optionHash: option[1]
        }))

@@ -1,4 +1,4 @@
-import type { Logger } from 'pino'
+import { ILogger } from './logger'
 import { proto } from '../../WAProto'
 import type { AuthenticationCreds, AuthenticationState, SignalDataTypeMap } from '../Types'
 import { initAuthCreds } from './auth-utils'
@@ -20,7 +20,7 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
  *
  * DO NOT USE IN A PROD ENVIRONMENT, only meant to serve as an example
  * */
-export const useSingleFileAuthState = (filename: string, logger?: Logger): { state: AuthenticationState, saveState: () => void } => {
+export const useSingleFileAuthState = (filename: string, logger?: ILogger): { state: AuthenticationState, saveState: () => void } => {
 	// require fs here so that in case "fs" is not available -- the app does not crash
 	const { readFileSync, writeFileSync, existsSync } = require('fs')
 	let creds: AuthenticationCreds
