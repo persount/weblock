@@ -99,18 +99,19 @@ export function decodeMessageNode(
 		fromMe,
 		id: msgId,
 		participant,
-		server_id: stanza.attrs?.server_id
 	}
 
 	const fullMessage: proto.IWebMessageInfo = {
 		key,
 		messageTimestamp: +stanza.attrs.t,
 		pushName: pushname,
-		broadcast: isJidBroadcast(from)
+		broadcast: isJidBroadcast(from),
+		newsletter: isJidNewsletter(from)
 	}
 	
 	if (msgType === 'newsletter') {
 		fullMessage.newsletterServerId = +stanza.attrs?.server_id
+		key.server_id = +stanza.attrs?.server_id
 	}
 
 	if(key.fromMe) {
@@ -145,7 +146,26 @@ export const decryptMessageNode = (
 						const details = proto.VerifiedNameCertificate.Details.decode(cert.details!)
 						fullMessage.verifiedBizName = details.verifiedName
 					}
-
+          if (tag === 'multicast' && content instanceof Uint8Array) {
+            fullMessage.multicast = true
+          }
+          if (tag === 'meta' && content instanceof Uint8Array) {
+             fullMessage.metaInfo = {
+                targetID: attrs.target_id
+             }
+             if (attrs.target_sender_jid) {
+                fullMessage.metaInfo.targetSender = WABinary_1.jidNormalizedUser(attrs.target_sender_jid)
+             }
+          }
+          if (tag === 'bot' && content instanceof Uint8Array) {
+             if (attrs.edit) {
+                fullMessage.botInfo = {
+                   editType: attrs.edit, 
+                   editTargetID: attrs.edit_target_id, 
+                   editSenderTimestampMS: attrs.sender_timestamp_ms
+                }
+             }
+          }
 					if(tag !== 'enc' && tag !== 'plaintext') {
 						continue
 					}

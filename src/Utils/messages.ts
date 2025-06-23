@@ -533,7 +533,7 @@ export const generateWAMessageContent = async(
 		message.poll.selectableCount ||= 0
 		message.poll.toAnnouncementGroup ||= false
 
-		if(!Array.isArray(message.poll.values)) {
+		if(!Array.isArray(message.poll.values) || !Array.isArray(message.poll.options)) {
 			throw new Boom('Invalid poll values', { statusCode: 400 })
 		}
 
