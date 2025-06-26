@@ -606,11 +606,7 @@ export const generateWAMessageContent = async(
        if('contextInfo' in message && !!message.contextInfo) {
         	pollCreationMessage.contextInfo = message.contextInfo
        }
-       
-       if('mentions' in message && !!message.mentions) {
-        	pollCreationMessage.contextInfo = { mentionedJid: message.mentions }
-       }
-        
+               
    } else if('pollResult' in message) {
    
      if(!Array.isArray(message.pollResult.votes)) {
