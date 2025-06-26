@@ -530,61 +530,86 @@ export const generateWAMessageContent = async(
    } else if('listReply' in message) {
 		   m.listResponseMessage = { ...message.listReply }
    } else if('poll' in message) {
-		message.poll.selectableCount ||= 0
-		message.poll.toAnnouncementGroup ||= false
+		   message.poll.selectableCount ||= 0
+		   message.poll.toAnnouncementGroup ||= false
 
-		if(!Array.isArray(message.poll.values) || !Array.isArray(message.poll.options)) {
-			throw new Boom('Invalid poll values', { statusCode: 400 })
-		}
-
-		if(
-			message.poll.selectableCount < 0
-			|| message.poll.selectableCount > message.poll.values.length
-		) {
-			throw new Boom(
-				`poll.selectableCount in poll should be >= 0 and <= ${message.poll.values.length}`,
-				{ statusCode: 400 }
-			)
-		}
-
-		m.messageContextInfo = {
-			// encKey
-			messageSecret: message.poll.messageSecret || randomBytes(32),
-		}	
+		   m.messageContextInfo = {
+		    	// encKey
+			    messageSecret: message.poll.messageSecret || randomBytes(32),
+		   }	
 		
-    let options
+       let pollCreationMessage: proto.Message.IPollCreationMessage
     
-    if(m.pollCreationMessageV4) {
-       options = message.poll?.options?.map(option => ({
-           optionName: option[0],
-           optionHash: option[1]
-       }))
-    } else {
-       options = message.poll.values.map(optionName => ({ optionName }))
-    }
-		const pollCreationMessage: proto.Message.IPollCreationMessage = {
-			name: message.poll.name,
-			selectableOptionsCount: message.poll.selectableCount,
-			options: options,
-			pollContentType: message.poll.contentType || (m.pollCreationMessageV4 ? 2 : 1)
-		}
+       if(m.pollCreationMessageV4) {    
+           if!Array.isArray(message.poll.options)) {
+			         throw new Boom('Invalid poll values', { statusCode: 400 })
+		       }
+		    
+		       if(
+			         message.poll.selectableCount < 0
+			         || message.poll.selectableCount > message.poll.options.length
+		       ) {
+			         throw new Boom(
+			     	      `poll.selectableCount in poll should be >= 0 and <= ${message.poll.values.length}`,
+				          { statusCode: 400 }
+		           )
+		       }
+		    
+		    
+		       pollCreationMessage = {
+		      	   name: message.poll.name,
+			         selectableOptionsCount: message.poll.selectableCount,
+			         options: message.poll?.options?.map(option => ({
+                   optionName: option[0],
+                   optionHash: option[1]
+               })),
+			         pollContentType: 2,
+			         pollType: 0
+	   	     }
+	   	  
+       } else {
+           if(!Array.isArray(message.poll.values)) {
+			         throw new Boom('Invalid poll values', { statusCode: 400 })
+		       }
+		    
+		       if(
+			         message.poll.selectableCount < 0
+			         || message.poll.selectableCount > message.poll.values.length
+		       ) {
+			         throw new Boom(
+			     	      `poll.selectableCount in poll should be >= 0 and <= ${message.poll.values.length}`,
+				          { statusCode: 400 }
+		           )
+		       }
 
-		if(message.poll.toAnnouncementGroup) {
-			// poll v2 is for community announcement groups (single select and multiple)
-			m.pollCreationMessageV2 = pollCreationMessage
-		} else {
-			if(message.poll.selectableCount > 0) {
-				//poll v3 is for single select polls
-				m.pollCreationMessageV3 = pollCreationMessage
-			} else {
-				// poll v3 for multiple choice polls
-				m.pollCreationMessage = pollCreationMessage
-			}
-		}
+
+		       pollCreationMessage = {
+		      	    name: message.poll.name,
+			          selectableOptionsCount: message.poll.selectableCount,
+			          options: message.poll.values.map(optionName => ({ optionName })),
+	   	     }
+       }
+
+	   	 if(message.poll.toAnnouncementGroup) {
+			     // poll v2 is for community announcement groups (single select and multiple)
+			     m.pollCreationMessageV2 = pollCreationMessage
+		   } else {
+			     if(message.poll.selectableCount > 0) {
+			        //poll v3 is for single select polls
+				      m.pollCreationMessageV3 = pollCreationMessage
+			     } else {
+				      // poll v3 for multiple choice polls
+				      m.pollCreationMessage = pollCreationMessage
+			     }
+		   }
 		
-        if('contextInfo' in message && !!message.contextInfo) {
+       if('contextInfo' in message && !!message.contextInfo) {
         	pollCreationMessage.contextInfo = message.contextInfo
-        }
+       }
+       
+       if('mentions' in message && !!message.mentions) {
+        	pollCreationMessage.contextInfo = { mentionedJid: message.mentions }
+       }
         
    } else if('pollResult' in message) {
    
