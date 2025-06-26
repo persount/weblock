@@ -541,7 +541,7 @@ export const generateWAMessageContent = async(
        let pollCreationMessage: proto.Message.IPollCreationMessage
     
        if(m.pollCreationMessageV4) {    
-           if!Array.isArray(message.poll.options)) {
+           if(!Array.isArray(message.poll.options)) {
 			         throw new Boom('Invalid poll values', { statusCode: 400 })
 		       }
 		    
