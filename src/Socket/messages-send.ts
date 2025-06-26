@@ -378,13 +378,14 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const isLid = server === 'lid'
     const isPerson = server === 's.whatsapp.net'
     const isBot = server === 'bot'
+    const isBroadcast = server === 'broadcast'
 
 		msgId = msgId || customMessageID() || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
 		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
 		const participants: BinaryNode[] = []
-		const destinationJid = (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
+		const destinationJid = (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBroadcast ? 'broadcast' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
 		const binaryNodeContent: BinaryNode[] = []
 		const devices: JidWithDevice[] = []
 
@@ -419,7 +420,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					extraAttrs['decrypt-fail'] = 'hide'
 				}
 
-				if(isGroup || isStatus) {
+				if(isGroup || isStatus || isBroadcast) {
 					const [groupData, senderKeyMap] = await Promise.all([
 						(async() => {
 							let groupData = useCachedGroupMetadata && cachedGroupMetadata ? await cachedGroupMetadata(jid) : undefined
@@ -444,7 +445,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					if(!participant) {
 						const participantsList = (groupData && !isStatus) ? groupData.participants.map(p => p.id) : []
-						if(isStatus && statusJidList) {
+						if((isStatus || isBroadcast) && statusJidList) {
 							participantsList.push(...statusJidList)
 						}
 
@@ -1201,7 +1202,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						attrs: {
 							biz_bot: '1'
 						},
-						tag: "bot"
+						tag: 'bot'
 					})
 					/**
           if(options.additionalNodes) {
