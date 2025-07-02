@@ -175,7 +175,7 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
                     description: description ?? null,
                     picture: picture ? (await generateProfilePicture(picture)).img.toString('base64') : null,
                     settings: {
-                        reaction_codes: { value: mode || 'ALL' }
+                        reaction_codes: mode || 'ALL'
                     }
                 }
             })
