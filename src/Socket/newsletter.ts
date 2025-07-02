@@ -276,7 +276,7 @@ export const extractNewsletterMetadata = (node: BinaryNode, isCreate?: boolean) 
         handle: metadataPath.thread_metadata.handle,
         picture: metadataPath.thread_metadata.picture?.direct_path || null,
         preview: metadataPath.thread_metadata.preview?.direct_path || null,
-        reaction_codes: metadataPath.thread_metadata.settings.reaction_codes.value,
+        reaction_codes: metadataPath.thread_metadata?.settings?.reaction_codes?.value,
         subscribers: +metadataPath.thread_metadata.subscribers_count,
         verification: metadataPath.thread_metadata.verification,
         viewer_metadata: metadataPath.viewer_metadata
