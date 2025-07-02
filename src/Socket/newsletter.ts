@@ -149,7 +149,7 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
             await newsletterWMexQuery(jid, QueryIds.MUTE)
         },
 
-        newsletterCreate: async(name: string, description?: string, picture?: WAMediaUpload) => {
+        newsletterCreate: async(name: string, description?: string, mode?: NewsletterReactionMode, picture?: WAMediaUpload) => {
             await query({
                 tag: 'iq',
                 attrs: {
@@ -175,7 +175,7 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
                     description: description ?? null,
                     picture: picture ? (await generateProfilePicture(picture)).img.toString('base64') : null,
                     settings: {
-                        reaction_codes: { value: 'ALL' }
+                        reaction_codes: { value: mode || 'ALL' }
                     }
                 }
             })
