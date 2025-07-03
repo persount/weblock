@@ -382,7 +382,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 		msgId = msgId || customMessageID() || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
-		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
+		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus && !isBroadcast
 
 		const participants: BinaryNode[] = []
 		const destinationJid = (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBroadcast ? 'broadcast' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
@@ -402,7 +402,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			// when the retry request is not for a group
 			// only send to the specific device that asked for a retry
 			// otherwise the message is sent out to every device that should be a recipient
-			if(!isGroup && !isStatus) {
+			if(!isGroup && !isStatus && !isBroadcast) {
 				additionalAttributes = { ...additionalAttributes, 'device_fanout': 'false' }
 			}
 
@@ -428,13 +428,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 								logger.trace({ jid, participants: groupData.participants.length }, 'using cached group metadata')
 							
 								} else if(!isStatus) {
-								groupData = await groupMetadata(jid)
-							}
+								   groupData = await groupMetadata(jid)
+							  }
 
 							return groupData
 						})(),
 						(async() => {
-							if(!participant && !isStatus) {
+							if(!participant && !isStatus && !isBroadcast) {
 								const result = await authState.keys.get('sender-key-memory', [jid])
 								return result[jid] || { }
 							}
@@ -444,7 +444,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					])
 
 					if(!participant) {
-						const participantsList = (groupData && !isStatus) ? groupData.participants.map(p => p.id) : []
+						const participantsList = (groupData && !isStatus && !isBroadcast) ? groupData.participants.map(p => p.id) : []
 						if((isStatus || isBroadcast) && statusJidList) {
 							participantsList.push(...statusJidList)
 						}
@@ -660,7 +660,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            logger.debug({ jid }, 'adding business node')
         } 
             
-        if(isPerson) {
+        if(isPerson || isLid || isBroadcast || isBot) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
              stanza.content = []
            }

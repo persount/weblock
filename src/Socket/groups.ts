@@ -343,16 +343,18 @@ export const extractGroupMetadata = (result: BinaryNode) => {
 	const groupId = group.attrs.id.includes('@') ? group.attrs.id : jidEncode(group.attrs.id, 'g.us')
 	const eph = getBinaryNodeChild(group, 'ephemeral')?.attrs.expiration
 	const memberAddMode = getBinaryNodeChildString(group, 'member_add_mode') === 'all_member_add'
+	const mode = group.attrs.addressing_mode as "pn" | "lid"
 	const metadata: GroupMetadata = {
 		id: groupId,
-		addressingMode: group.attrs.addressing_mode as "pn" | "lid",
+		addressingMode: mode,
 		subject: group.attrs.subject,
-		subjectOwner: group.attrs.s_o,
+		subjectOwner: mode === 'lid' ? group.attrs.s_o_pn : group.attrs.s_o,
 		subjectOwnerPhoneNumber: group.attrs.s_o_pn,
 		subjectTime: +group.attrs.s_t,
 		size: groupSize || getBinaryNodeChildren(group, 'participant').length,
 		creation: +group.attrs.creation,
-		owner: group.attrs.creator ? jidNormalizedUser(group.attrs.creator) : undefined,
+		owner: group.attrs.creator ? jidNormalizedUser(mode === 'lid' ? group.attrs.creator_pn : group.attrs.creator) : undefined,
+    ownerCountry: group.attrs.creator_country_code, 
 		desc,
 		descId,
 		descOwner,
@@ -368,13 +370,13 @@ export const extractGroupMetadata = (result: BinaryNode) => {
 		participants: getBinaryNodeChildren(group, 'participant').map(
 			({ attrs }) => {
 				return {
-					id: attrs.jid,
-					phoneNumber: attrs.phone_number || attrs.jid,
+					id: mode === 'lid' ? attrs.phone_number : attrs.jid,
+					lid: mode === 'lid' ? attrs.jid : attrs.lid,
 					admin: (attrs.type || null) as GroupParticipant['admin'],
 				}
 			}
 		),
-		ephemeralDuration: eph ? +eph : undefined
+		ephemeralDuration: eph ? +eph : 0
 	}
 	return metadata
 }
