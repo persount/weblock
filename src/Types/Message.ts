@@ -54,6 +54,17 @@ export interface Medias {
    video?: WAMediaUpload
 }
 
+export interface StickerPack {
+    stickers: Sticker[]
+    cover: WAMediaUpload
+    name: string
+    caption?: string
+    publisher: string
+    description?: string
+    packId?: string
+    fileLength?: number
+}
+
 export interface Carousel {   
    image?: WAMediaUpload
    video?: WAMediaUpload
@@ -62,11 +73,6 @@ export interface Carousel {
    caption?: string
    footer?: string
    buttons?: proto.Message.InteractiveMessage.NativeFlowMessage.NativeFlowButton[]
-}
-
-interface OptionsPoll {
-   optionName?: string
-   optionHash?: string
 }
 
 // types to generate WA messages
@@ -156,7 +162,7 @@ type Listable = {
 }
 
 type ProductListable = {
-    productSections?: proto.Message.ListMessage.IProductSection[]
+    productList?: proto.Message.ListMessage.IProductSection[]
     title?: string
     footer?: string
     buttonText?: string
@@ -168,12 +174,16 @@ type WithDimensions = {
     height?: number
 }
 
+export type Sticker = { 
+    sticker: WAMediaUpload
+    emojis?: string[]
+    accessibilityLabel?: string
+}
+
 export type PollMessageOptions = {
     name: string
     selectableCount?: number
-    options?: OptionsPoll[]
     values: string[]
-    contentType: proto.Message.PollContentType
     /** 32 byte message secret to encrypt poll selections */
     messageSecret?: Uint8Array
     toAnnouncementGroup?: boolean
@@ -385,6 +395,9 @@ export type AnyRegularMessageContent = (
     }
     | {
         listReply: Omit<proto.Message.IListResponseMessage, 'contextInfo'>
+    }
+    | {
+        stickerPack: StickerPack
     }
     | ({
         product: WASendableProduct
