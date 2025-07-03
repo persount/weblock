@@ -27,7 +27,7 @@ import {
 import { isJidGroup, isJidNewsletter, isJidStatusBroadcast, jidNormalizedUser } from '../WABinary'
 import { sha256 } from './crypto'
 import { delay, generateMessageID, getKeyAuthor, unixTimestampSeconds } from './generics'
-import { downloadContentFromMessage, encryptedStream, generateThumbnail, getAudioDuration, getAudioWaveform, MediaDownloadOptions, prepareStream } from './messages-media'
+import { downloadContentFromMessage, encryptedStream, generateThumbnail, getAudioDuration, getAudioWaveform, getStream, MediaDownloadOptions, prepareStream, toBuffer } from './messages-media'
 
 type MediaUploadData = {
 	media: WAMediaUpload
@@ -530,65 +530,34 @@ export const generateWAMessageContent = async(
    } else if('listReply' in message) {
 		   m.listResponseMessage = { ...message.listReply }
    } else if('poll' in message) {
+		   		   
 		   message.poll.selectableCount ||= 0
 		   message.poll.toAnnouncementGroup ||= false
+    
+       if(!Array.isArray(message.poll.values)) {
+			    throw new Boom('Invalid poll values', { statusCode: 400 })
+		   }
+		    
+		   if(
+			    message.poll.selectableCount < 0
+			    || message.poll.selectableCount > message.poll.values.length
+		   ) {
+			    throw new Boom(
+			     	 `poll.selectableCount in poll should be >= 0 and <= ${message.poll.values.length}`,
+				     { statusCode: 400 }
+		      )
+		   }
 
 		   m.messageContextInfo = {
 		    	// encKey
 			    messageSecret: message.poll.messageSecret || randomBytes(32),
 		   }	
 		
-       let pollCreationMessage: proto.Message.IPollCreationMessage
-    
-       if(m.pollCreationMessageV4) {    
-           if(!Array.isArray(message.poll.options)) {
-			         throw new Boom('Invalid poll values', { statusCode: 400 })
-		       }
-		    
-		       if(
-			         message.poll.selectableCount < 0
-			         || message.poll.selectableCount > message.poll.options.length
-		       ) {
-			         throw new Boom(
-			     	      `poll.selectableCount in poll should be >= 0 and <= ${message.poll.values.length}`,
-				          { statusCode: 400 }
-		           )
-		       }
-		    
-		    
-		       pollCreationMessage = {
-		      	   name: message.poll.name,
-			         selectableOptionsCount: message.poll.selectableCount,
-			         options: message.poll?.options?.map(option => ({
-                   optionName: option[0],
-                   optionHash: option[1]
-               })),
-			         pollContentType: 2,
-			         pollType: 0
-	   	     }
-	   	  
-       } else {
-           if(!Array.isArray(message.poll.values)) {
-			         throw new Boom('Invalid poll values', { statusCode: 400 })
-		       }
-		    
-		       if(
-			         message.poll.selectableCount < 0
-			         || message.poll.selectableCount > message.poll.values.length
-		       ) {
-			         throw new Boom(
-			     	      `poll.selectableCount in poll should be >= 0 and <= ${message.poll.values.length}`,
-				          { statusCode: 400 }
-		           )
-		       }
-
-
-		       pollCreationMessage = {
-		      	    name: message.poll.name,
-			          selectableOptionsCount: message.poll.selectableCount,
-			          options: message.poll.values.map(optionName => ({ optionName })),
-	   	     }
-       }
+       let pollCreationMessage: proto.Message.IPollCreationMessage = {
+		      name: message.poll.name,
+			    selectableOptionsCount: message.poll.selectableCount,
+			    options: message.poll.values.map(optionName => ({ optionName })),
+	   	 }
 
 	   	 if(message.poll.toAnnouncementGroup) {
 			     // poll v2 is for community announcement groups (single select and multiple)
@@ -652,34 +621,115 @@ export const generateWAMessageContent = async(
         //TODO: use built-in interface and get disappearing mode info etc.
         //TODO: cache / use store!?
         if(options.getProfilePicUrl) {
-			let pfpUrl;
-			try {
-			   pfpUrl = await options.getProfilePicUrl(message.inviteAdmin.jid, 'preview');
-			} catch {
-			   pfpUrl = null
-			}
-			if(pfpUrl) {
-				const resp = await axios.get(pfpUrl, { responseType: 'arraybuffer' })
-				if(resp.status === 200) {
-					m.newsletterAdminInviteMessage.jpegThumbnail = resp.data
-				}
-			} else {
-			    m.newsletterAdminInviteMessage.jpegThumbnail = null
-			}
-		}
-   } else if ('requestPayment' in message) {  
+			     let pfpUrl;
+			     try {
+			        pfpUrl = await options.getProfilePicUrl(message.inviteAdmin.jid, 'preview');
+			     } catch {
+			        pfpUrl = null
+			     }
+			     if(pfpUrl) {
+				       const resp = await axios.get(pfpUrl, { responseType: 'arraybuffer' })
+				       if(resp.status === 200) {
+					         m.newsletterAdminInviteMessage.jpegThumbnail = resp.data
+				       }
+			     } else {
+			         m.newsletterAdminInviteMessage.jpegThumbnail = null
+			     }
+		   }
+   } else if('stickerPack' in message) {
+       if(!Array.isArray(message.stickerPack.stickers)) {
+			     throw new Boom('Invalid sticker pack data', { statusCode: 400 })
+		   }
+		   
+		   const { stickers, cover, name, publisher, packId, description, caption, fileLength } = message.stickerPack
+
+       const { zip } = require('fflate') 
+
+       const stickerData = {}
+       const stickerPromises = stickers.map(async (s, i) => {
+           const { stream } = await getStream(s.sticker, options.options) 
+           const buffer = await toBuffer(stream) 
+           const hash = sha256(buffer).toString('base64url') 
+           const fileName = `${i.toString().padStart(2, '0')}_${hash}.webp`
+           stickerData[fileName] = [new Uint8Array(buffer), { level: 0 }]
+
+           return {
+               fileName, 
+               mimetype: 'image/webp', 
+               isAnimated: s.isAnimated || false, 
+               isLottie: s.isLottie || false, 
+               emojis: s.emojis || [], 
+               accessibilityLabel: s.accessibilityLabel || ''
+           }
+       }) 
+
+       const stickerMetadata = await Promise.all(stickerPromises) 
+
+       const zipBuffer = await new Promise((resolve, reject) => {
+           zip(stickerData, (err, data) => {
+               if (err) {
+                   reject(err) 
+               } else {
+                   resolve(Buffer.from(data)) 
+               }
+           }) 
+       }) 
+
+       const coverBuffer = await toBuffer((await getStream(cover, options.options)).stream) 
+
+       const [stickerPackUpload, coverUpload] = await Promise.all([
+           encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }), 
+           prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
+       ]) 
+
+      const stickerPackUploadResult = await options.upload(stickerPackUpload.encFilePath, {
+          fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'), 
+          mediaType: 'sticker-pack', 
+          timeoutMs: options.mediaUploadTimeoutMs
+      }) 
+
+
+       const coverImage = coverUpload.imageMessage
+       const imageDataHash = sha256(coverBuffer).toString('base64') 
+       const stickerPackId = packId ?? generateMessageID() 
+
+       m.stickerPackMessage = WAProto.Message.StickerPackMessage.fromObject({
+            name, 
+            publisher, 
+            caption,
+            stickerPackId, 
+            packDescription: description, 
+            stickerPackOrigin: proto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY, 
+            stickerPackSize: fileLength || stickerPackUpload.fileLength, 
+            stickers: stickerMetadata, 
+            fileSha256: stickerPackUpload.fileSha256, 
+            fileEncSha256: stickerPackUpload.fileEncSha256, 
+            mediaKey: stickerPackUpload.mediaKey, 
+            directPath: stickerPackUploadResult.directPath, 
+            fileLength: fileLength || stickerPackUpload.fileLength, 
+            mediaKeyTimestamp: unixTimestampSeconds(), 
+            trayIconFileName: `${stickerPackId}.png`, 
+            imageDataHash, 
+            thumbnailDirectPath: coverImage.directPath, 
+            thumbnailFileSha256: coverImage.fileSha256, 
+            thumbnailFileEncSha256: coverImage.fileEncSha256, 
+            thumbnailHeight: coverImage.height, 
+            thumbnailWidth: coverImage.width
+        })
+   } else if('requestPayment' in message) {  
        const sticker = message?.requestPayment?.sticker ?
           await prepareWAMessageMedia(
-	       { sticker: message?.requestPayment?.sticker, ...options },
-		   options
-	      )
-	      : null	
+	           { sticker: message?.requestPayment?.sticker, ...options 
+	           },
+		         options
+	        )
+	        : null	
 	   let notes = {}
 	   if(message?.requestPayment?.sticker) {
 	      notes = {
 	          stickerMessage: {
 	             ...sticker?.stickerMessage,
-	             contextInfo: message?.requestPayment?.contextInfo
+	             contextInfo: message?.contextInfo
 	          }
 	      }
 	   } else if(message.requestPayment.note) {
@@ -690,19 +740,19 @@ export const generateWAMessageContent = async(
 		             stanzaId: options?.quoted?.key?.id,
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
-		             ...message?.requestPayment?.contextInfo,
+		             ...message?.contextInfo,
 		          }
 		      }
 	      }
 	   }
-       m.requestPaymentMessage = WAProto.Message.RequestPaymentMessage.fromObject({
-	       expiryTimestamp: message.requestPayment.expiry,
-           amount1000: message.requestPayment.amount,
-           currencyCodeIso4217: message.requestPayment.currency,
-           requestFrom: message.requestPayment.from,
-		   noteMessage: { ...notes },
-           background: message.requestPayment.background ?? null,
-       })
+     m.requestPaymentMessage = WAProto.Message.RequestPaymentMessage.fromObject({
+	      expiryTimestamp: message.requestPayment.expiry,
+        amount1000: message.requestPayment.amount,
+        currencyCodeIso4217: message.requestPayment.currency,
+        requestFrom: message.requestPayment.from,
+		    noteMessage: { ...notes },
+        background: message.requestPayment.background ?? null,
+     })
    } else if('sharePhoneNumber' in message) {
 		m.protocolMessage = {
 			type: proto.Message.ProtocolMessage.Type.SHARE_PHONE_NUMBER
@@ -1038,7 +1088,7 @@ export const generateWAMessageContent = async(
 		    m = { listMessage }
 	  }
 	
-	  if('productSections' in message && !!message.productSections) {	
+	  if('productList' in message && !!message.productList) {	
 	     const listMessage: proto.Message.IListMessage = {
 		   	  buttonText: message.buttonText,
 			    title: message.title,
@@ -1046,11 +1096,11 @@ export const generateWAMessageContent = async(
 			    description: message.text,
 			    listType: proto.Message.ListMessage.ListType.PRODUCT_LIST,
 			    productListInfo: {
-			       productSections: message.productSections,
+			       productSections: message.productList,
 			       businessOwnerJid: message.bizJid,
 			       headerImage: {
-			           productId: message.productSections[0]?.products 
-			               ? message.productSections[0]?.products[0]?.productId 
+			           productId: message.productList[0]?.products 
+			               ? message.productList[0]?.products[0]?.productId 
 			               : null,
 			           jpegThumbnail: message.thumbnail || null
 			       }
