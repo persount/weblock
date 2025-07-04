@@ -744,10 +744,16 @@ export const generateWAMessageContent = async(
 	   let notes = {}
 	   if(message?.requestPayment?.sticker) {
 	      notes = {
-	          stickerMessage: {
+	         stickerMessage: {
 	             ...sticker?.stickerMessage,
-	             contextInfo: message?.contextInfo
-	          }
+		           contextInfo: {
+		             stanzaId: options?.quoted?.key?.id,
+		             participant: options?.quoted?.key?.participant,
+		             quotedMessage: options?.quoted?.message,
+		             ...(message.mentions ? { mentionedJid: message?.mentions } : {}),
+		             ...(message?.contextInfo ? { message?.contextInfo } : {}),
+		          }
+	         }
 	      }
 	   } else if(message.requestPayment.note) {
 	      notes = {
@@ -757,12 +763,10 @@ export const generateWAMessageContent = async(
 		             stanzaId: options?.quoted?.key?.id,
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
-		             ...(message.mentions
-		                ? { mentionedJid: message?.mentions } 
-		                : { message?.contextInfo }
-		             ),
+		             ...(message.mentions ? { mentionedJid: message?.mentions } : {}),
+		             ...(message?.contextInfo ? { message?.contextInfo } : {}),
 		          }
-		      }
+		       }
 	      }
 	   }
      m.requestPaymentMessage = WAProto.Message.RequestPaymentMessage.fromObject({
