@@ -385,11 +385,19 @@ export const generateWAMessageContent = async(
           if('contextInfo' in message && !!message.contextInfo) {
         	   m.liveLocationMessage.contextInfo = message.contextInfo
           }
+          
+          if('mentions' in message && !!message.mentions) {
+        	   m.liveLocationMessage.contextInfo = { mentionedJid: message.mentions }
+          }
        } else {
 		      m.locationMessage = WAProto.Message.LocationMessage.fromObject(message.location)
 		
           if('contextInfo' in message && !!message.contextInfo) {
         	   m.locationMessage.contextInfo = message.contextInfo
+          }
+          
+          if('mentions' in message && !!message.mentions) {
+        	   m.locationMessage.contextInfo = { mentionedJid: message.mentions }
           }
        }
    } else if('react' in message) {
@@ -679,7 +687,7 @@ export const generateWAMessageContent = async(
        const coverBuffer = await toBuffer(await (await getStream(cover, options.options)).stream) 
 
        const [stickerPackUpload, coverUpload] = await Promise.all([
-           encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }), 
+           encryptedStream(zipBuffer!, 'sticker-pack', { logger: options.logger, opts: options.options }), 
            prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
        ]) 
 
@@ -690,11 +698,19 @@ export const generateWAMessageContent = async(
       }) 
 
 
-       const coverImage = coverUpload.imageMessage
-       const imageDataHash = sha256(coverBuffer).toString('base64') 
-       const stickerPackId = packId ?? generateMessageID() 
+      const coverImage = coverUpload.imageMessage
+      const imageDataHash = sha256(coverBuffer).toString('base64') 
+      const stickerPackId = packId ?? generateMessageID() 
+       
+      if('contextInfo' in message && !!message.contextInfo) {
+        	m.stickerPackMessage.contextInfo = message.contextInfo
+      }
+        
+      if('mentions' in message && !!message.mentions) {
+        	m.stickerPackMessage.contextInfo = { mentionedJid: message.mentions }
+      }
 
-       m.stickerPackMessage = WAProto.Message.StickerPackMessage.fromObject({
+      m.stickerPackMessage = WAProto.Message.StickerPackMessage.fromObject({
             name, 
             publisher, 
             caption,
@@ -735,13 +751,16 @@ export const generateWAMessageContent = async(
 	      }
 	   } else if(message.requestPayment.note) {
 	      notes = {
-	          extendedTextMessage: {
+	         extendedTextMessage: {
 		          text: message.requestPayment.note,
 		          contextInfo: {
 		             stanzaId: options?.quoted?.key?.id,
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
-		             ...message?.contextInfo,
+		             ...(message.mentions
+		                ? { mentionedJid: message?.mentions } 
+		                : { message?.contextInfo }
+		             ),
 		          }
 		      }
 	      }
@@ -751,7 +770,7 @@ export const generateWAMessageContent = async(
         amount1000: message.requestPayment.amount,
         currencyCodeIso4217: message.requestPayment.currency,
         requestFrom: message.requestPayment.from,
-		    noteMessage: { ...notes },
+		    noteMessage: notes,
         background: message.requestPayment.background ?? null,
      })
    } else if('sharePhoneNumber' in message) {
