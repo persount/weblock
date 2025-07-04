@@ -284,15 +284,13 @@ export type PaymentInviteInfo = {
 }
 
 export type RequestPaymentInfo = {    
-	expiry: number;
+  	expiry: number;
     amount: number;
     currency: string;
     from: string;
     note?: string;
     sticker?: WAMediaUpload;
     background: string;
-    /** add contextInfo to the message */
-    contextInfo?: proto.IContextInfo;
 }
 
 
@@ -376,9 +374,9 @@ export type AnyRegularMessageContent = (
     | {
      paymentInvite: PaymentInviteInfo
     }
-    | {
+    | ({
      requestPayment: RequestPaymentInfo
-    }
+    } & Mentionable & Contextable)
     | {
      event: EventsInfo
     }
