@@ -1,6 +1,6 @@
 import { Contact } from './Contact'
 
-export type GroupParticipant = (Contact & { isAdmin?: boolean, isSuperAdmin?: boolean, admin?: 'admin' | 'superadmin' | null, phoneNumber?: string | undefined })
+export type GroupParticipant = (Contact & { isAdmin?: boolean, isSuperAdmin?: boolean, admin?: 'admin' | 'superadmin' | null, lid?: string | undefined })
 
 export type ParticipantAction = 'add' | 'remove' | 'promote' | 'demote' | 'modify'
 
@@ -13,10 +13,10 @@ export interface GroupMetadata {
     /** group uses 'lid' or 'pn' to send messages */
     addressingMode: "pn" | "lid"
     owner: string | undefined
+    ownerCountry: string
     subject: string
     /** group subject owner */
     subjectOwner?: string
-    subjectOwnerPhoneNumber?: string
     /** group subject modification date */
     subjectTime?: number
     creation?: number

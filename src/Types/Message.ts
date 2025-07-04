@@ -18,7 +18,6 @@ export type WAMessageKey = proto.IMessageKey & {server_id?: string}
 export type WATextMessage = proto.Message.IExtendedTextMessage
 export type WAContextInfo = proto.IContextInfo
 export type WALocationMessage = proto.Message.ILocationMessage
-export type WALiveLocationMessage = proto.Message.ILiveLocationMessage
 export type WAGenericMediaMessage = proto.Message.IVideoMessage | proto.Message.IImageMessage | proto.Message.IAudioMessage | proto.Message.IDocumentMessage | proto.Message.IStickerMessage
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 export import WAMessageStubType = proto.WebMessageInfo.StubType
@@ -177,6 +176,8 @@ type WithDimensions = {
 export type Sticker = { 
     sticker: WAMediaUpload
     emojis?: string[]
+    isAnimated: boolean
+    isLottie: boolean
     accessibilityLabel?: string
 }
 
@@ -347,9 +348,6 @@ export type AnyRegularMessageContent = (
     }
     | {
         location: WALocationMessage
-    }
-    | {
-        liveLocation: WALiveLocationMessage
     }
     | { react: proto.Message.IReactionMessage }
     | {
