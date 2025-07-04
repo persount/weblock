@@ -380,16 +380,17 @@ export const generateWAMessageContent = async(
 			m.contactsArrayMessage = WAProto.Message.ContactsArrayMessage.fromObject(message.contacts)
 		}
    } else if('location' in message) {
-		m.locationMessage = WAProto.Message.LocationMessage.fromObject(message.location)
+       if(message.location.isLive) {
+          m.liveLocationMessage = WAProto.Message.LiveLocationMessage.fromObject(message.location)		
+          if('contextInfo' in message && !!message.contextInfo) {
+        	   m.liveLocationMessage.contextInfo = message.contextInfo
+          }
+       } else {
+		      m.locationMessage = WAProto.Message.LocationMessage.fromObject(message.location)
 		
-       if('contextInfo' in message && !!message.contextInfo) {
-        	m.locationMessage.contextInfo = message.contextInfo
-       }
-   } else if('liveLocation' in message) {
-		m.liveLocationMessage = WAProto.Message.LiveLocationMessage.fromObject(message.liveLocation)
-		
-       if('contextInfo' in message && !!message.contextInfo) {
-        	m.liveLocationMessage.contextInfo = message.contextInfo
+          if('contextInfo' in message && !!message.contextInfo) {
+        	   m.locationMessage.contextInfo = message.contextInfo
+          }
        }
    } else if('react' in message) {
 		if(!message.react.senderTimestampMs) {
@@ -675,14 +676,14 @@ export const generateWAMessageContent = async(
            }) 
        }) 
 
-       const coverBuffer = await toBuffer((await getStream(cover, options.options)).stream) 
+       const coverBuffer = await toBuffer(await (await getStream(cover, options.options)).stream) 
 
        const [stickerPackUpload, coverUpload] = await Promise.all([
            encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }), 
            prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
        ]) 
 
-      const stickerPackUploadResult = await options.upload(stickerPackUpload.encFilePath, {
+      const stickerPackUploadResult = await options.upload(stickerPackUpload.bodyPath, {
           fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'), 
           mediaType: 'sticker-pack', 
           timeoutMs: options.mediaUploadTimeoutMs
@@ -710,11 +711,11 @@ export const generateWAMessageContent = async(
             mediaKeyTimestamp: unixTimestampSeconds(), 
             trayIconFileName: `${stickerPackId}.png`, 
             imageDataHash, 
-            thumbnailDirectPath: coverImage.directPath, 
-            thumbnailFileSha256: coverImage.fileSha256, 
-            thumbnailFileEncSha256: coverImage.fileEncSha256, 
-            thumbnailHeight: coverImage.height, 
-            thumbnailWidth: coverImage.width
+            thumbnailDirectPath: coverImage?.directPath, 
+            thumbnailFileSha256: coverImage?.fileSha256, 
+            thumbnailFileEncSha256: coverImage?.fileEncSha256, 
+            thumbnailHeight: coverImage?.height, 
+            thumbnailWidth: coverImage?.width
         })
    } else if('requestPayment' in message) {  
        const sticker = message?.requestPayment?.sticker ?
