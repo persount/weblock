@@ -349,7 +349,6 @@ export const extractGroupMetadata = (result: BinaryNode) => {
 		addressingMode: mode,
 		subject: group.attrs.subject,
 		subjectOwner: mode === 'lid' ? group.attrs.s_o_pn : group.attrs.s_o,
-		subjectOwnerPhoneNumber: group.attrs.s_o_pn,
 		subjectTime: +group.attrs.s_t,
 		size: groupSize || getBinaryNodeChildren(group, 'participant').length,
 		creation: +group.attrs.creation,
