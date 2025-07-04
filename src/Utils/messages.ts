@@ -751,7 +751,7 @@ export const generateWAMessageContent = async(
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
 		             ...(message.mentions ? { mentionedJid: message?.mentions } : {}),
-		             ...(message?.contextInfo ? { message?.contextInfo } : {}),
+		             ...(message.contextInfo ? { message.contextInfo } : {}),
 		          }
 	         }
 	      }
@@ -764,7 +764,7 @@ export const generateWAMessageContent = async(
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
 		             ...(message.mentions ? { mentionedJid: message?.mentions } : {}),
-		             ...(message?.contextInfo ? { message?.contextInfo } : {}),
+		             ...(message.contextInfo ? { message.contextInfo } : {}),
 		          }
 		       }
 	      }
