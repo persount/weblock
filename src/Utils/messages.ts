@@ -740,6 +740,7 @@ export const generateWAMessageContent = async(
 		             stanzaId: options?.quoted?.key?.id,
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
+		             ...message.contextInfo,
 		          }
 	         }
 	      }
@@ -751,6 +752,7 @@ export const generateWAMessageContent = async(
 		             stanzaId: options?.quoted?.key?.id,
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
+		             ...message.contextInfo,
 		          }
 		       }
 	      }
@@ -764,14 +766,6 @@ export const generateWAMessageContent = async(
         background: message.requestPayment.background ?? null,
      })
      
-     let key = Object.keys(notes)[0]
-     if('contextInfo' in message && !!message.contextInfo) {
-        m?.requestPaymentMessage?.noteMessage?[key]?.contextInfo = message.contextInfo
-     }
-        
-     if('mentions' in message && !!message.mentions) {
-        m?.requestPaymentMessage?.noteMessage?[key]?.contextInfo = { mentionedJid: message.mentions }
-     }
    } else if('sharePhoneNumber' in message) {
 		m.protocolMessage = {
 			type: proto.Message.ProtocolMessage.Type.SHARE_PHONE_NUMBER
