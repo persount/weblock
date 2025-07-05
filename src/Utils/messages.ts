@@ -1,6 +1,7 @@
 import { Boom } from '@hapi/boom'
 import axios from 'axios'
 import { createHash, randomBytes } from 'crypto'
+import { zip } from 'fflate'
 import { promises as fs } from 'fs'
 import { ILogger } from './logger'
 import { type Transform } from 'stream'
@@ -154,7 +155,7 @@ export const prepareWAMessageMedia = async(
 
 	const requiresDurationComputation = mediaType === 'audio' && typeof uploadData.seconds === 'undefined'
 	const requiresThumbnailComputation = (mediaType === 'image' || mediaType === 'video') &&
-										(typeof uploadData['jpegThumbnail'] === 'undefined')
+	  	(typeof uploadData['jpegThumbnail'] === 'undefined')
 	const requiresWaveformProcessing = mediaType === 'audio' && uploadData.ptt === true
 	const requiresAudioBackground = options.backgroundColor && mediaType === 'audio' && uploadData.ptt === true
 	const requiresOriginalForSomeProcessing = requiresDurationComputation || requiresThumbnailComputation
@@ -386,9 +387,6 @@ export const generateWAMessageContent = async(
         	   m.liveLocationMessage.contextInfo = message.contextInfo
           }
           
-          if('mentions' in message && !!message.mentions) {
-        	   m.liveLocationMessage.contextInfo = { mentionedJid: message.mentions }
-          }
        } else {
 		      m.locationMessage = WAProto.Message.LocationMessage.fromObject(message.location)
 		
@@ -396,9 +394,6 @@ export const generateWAMessageContent = async(
         	   m.locationMessage.contextInfo = message.contextInfo
           }
           
-          if('mentions' in message && !!message.mentions) {
-        	   m.locationMessage.contextInfo = { mentionedJid: message.mentions }
-          }
        }
    } else if('react' in message) {
 		if(!message.react.senderTimestampMs) {
@@ -652,8 +647,6 @@ export const generateWAMessageContent = async(
 		   
 		   const { stickers, cover, name, publisher, packId, description, caption, fileLength } = message.stickerPack
 
-       const { zip } = require('fflate') 
-
        const stickerData = {}
        const stickerPromises = stickers.map(async (s, i) => {
            const { stream } = await getStream(s.sticker, options.options) 
@@ -701,6 +694,30 @@ export const generateWAMessageContent = async(
       const coverImage = coverUpload.imageMessage
       const imageDataHash = sha256(coverBuffer).toString('base64') 
       const stickerPackId = packId ?? generateMessageID() 
+
+      m.stickerPackMessage = WAProto.Message.StickerPackMessage.fromObject({
+          name, 
+          publisher, 
+          caption,
+          stickerPackId, 
+          packDescription: description, 
+          stickerPackOrigin: proto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY, 
+          stickerPackSize: fileLength || stickerPackUpload.fileLength, 
+          stickers: stickerMetadata, 
+          fileSha256: stickerPackUpload.fileSha256, 
+          fileEncSha256: stickerPackUpload.fileEncSha256, 
+          mediaKey: stickerPackUpload.mediaKey, 
+          directPath: stickerPackUploadResult.directPath, 
+          fileLength: fileLength || stickerPackUpload.fileLength, 
+          mediaKeyTimestamp: unixTimestampSeconds(), 
+          trayIconFileName: `${stickerPackId}.png`, 
+          imageDataHash, 
+          thumbnailDirectPath: coverImage?.directPath, 
+          thumbnailFileSha256: coverImage?.fileSha256, 
+          thumbnailFileEncSha256: coverImage?.fileEncSha256, 
+          thumbnailHeight: coverImage?.height, 
+          thumbnailWidth: coverImage?.width
+      })
        
       if('contextInfo' in message && !!message.contextInfo) {
         	m.stickerPackMessage.contextInfo = message.contextInfo
@@ -709,30 +726,6 @@ export const generateWAMessageContent = async(
       if('mentions' in message && !!message.mentions) {
         	m.stickerPackMessage.contextInfo = { mentionedJid: message.mentions }
       }
-
-      m.stickerPackMessage = WAProto.Message.StickerPackMessage.fromObject({
-            name, 
-            publisher, 
-            caption,
-            stickerPackId, 
-            packDescription: description, 
-            stickerPackOrigin: proto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY, 
-            stickerPackSize: fileLength || stickerPackUpload.fileLength, 
-            stickers: stickerMetadata, 
-            fileSha256: stickerPackUpload.fileSha256, 
-            fileEncSha256: stickerPackUpload.fileEncSha256, 
-            mediaKey: stickerPackUpload.mediaKey, 
-            directPath: stickerPackUploadResult.directPath, 
-            fileLength: fileLength || stickerPackUpload.fileLength, 
-            mediaKeyTimestamp: unixTimestampSeconds(), 
-            trayIconFileName: `${stickerPackId}.png`, 
-            imageDataHash, 
-            thumbnailDirectPath: coverImage?.directPath, 
-            thumbnailFileSha256: coverImage?.fileSha256, 
-            thumbnailFileEncSha256: coverImage?.fileEncSha256, 
-            thumbnailHeight: coverImage?.height, 
-            thumbnailWidth: coverImage?.width
-        })
    } else if('requestPayment' in message) {  
        const sticker = message?.requestPayment?.sticker ?
           await prepareWAMessageMedia(
@@ -776,11 +769,11 @@ export const generateWAMessageContent = async(
      
      let key = Object.keys(notes)[0]
      if('contextInfo' in message && !!message.contextInfo) {
-        m.requestPaymentMessage.noteMessage[key].contextInfo = message.contextInfo
+        m?.requestPaymentMessage?.noteMessage[key].contextInfo = message.contextInfo
      }
         
      if('mentions' in message && !!message.mentions) {
-        m.requestPaymentMessage.noteMessage[key].contextInfo = { mentionedJid: message.mentions }
+        m?.requestPaymentMessage?.noteMessage[key].contextInfo = { mentionedJid: message.mentions }
      }
    } else if('sharePhoneNumber' in message) {
 		m.protocolMessage = {
