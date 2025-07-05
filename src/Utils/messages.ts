@@ -680,8 +680,8 @@ export const generateWAMessageContent = async(
        const coverBuffer = await toBuffer(await (await getStream(cover, options.options)).stream) 
 
        const [stickerPackUpload, coverUpload] = await Promise.all([
-           encryptedStream(zipBuffer!, 'sticker-pack', { logger: options.logger, opts: options.options }), 
-           prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
+           await encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }), 
+           await prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
        ]) 
 
       const stickerPackUploadResult = await options.upload(stickerPackUpload.bodyPath, {
@@ -722,10 +722,7 @@ export const generateWAMessageContent = async(
       if('contextInfo' in message && !!message.contextInfo) {
         	m.stickerPackMessage.contextInfo = message.contextInfo
       }
-        
-      if('mentions' in message && !!message.mentions) {
-        	m.stickerPackMessage.contextInfo = { mentionedJid: message.mentions }
-      }
+       
    } else if('requestPayment' in message) {  
        const sticker = message?.requestPayment?.sticker ?
           await prepareWAMessageMedia(
@@ -769,11 +766,11 @@ export const generateWAMessageContent = async(
      
      let key = Object.keys(notes)[0]
      if('contextInfo' in message && !!message.contextInfo) {
-        m?.requestPaymentMessage?.noteMessage[key].contextInfo = message.contextInfo
+        m?.requestPaymentMessage?.noteMessage?[key]?.contextInfo = message.contextInfo
      }
         
      if('mentions' in message && !!message.mentions) {
-        m?.requestPaymentMessage?.noteMessage[key].contextInfo = { mentionedJid: message.mentions }
+        m?.requestPaymentMessage?.noteMessage?[key]?.contextInfo = { mentionedJid: message.mentions }
      }
    } else if('sharePhoneNumber' in message) {
 		m.protocolMessage = {
