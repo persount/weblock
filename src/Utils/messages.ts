@@ -667,8 +667,8 @@ export const generateWAMessageContent = async(
 
        const stickerMetadata = await Promise.all(stickerPromises) 
 
-       const zipBuffer = await new Promise((resolve, reject) => {
-           zip(stickerData, (err, data) => {
+       const zipBuffer = await new Promise(async (resolve, reject) => {
+           await zip(stickerData, (err, data) => {
                if (err) {
                    reject(err) 
                } else {
