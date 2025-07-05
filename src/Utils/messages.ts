@@ -679,16 +679,18 @@ export const generateWAMessageContent = async(
 
        const coverBuffer = await toBuffer(await (await getStream(cover, options.options)).stream) 
 
-       const [stickerPackUpload, coverUpload] = await Promise.all([
-           await encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }), 
-           await prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
-       ]) 
+       if(zipBuffer) {
+           const [stickerPackUpload, coverUpload] = await Promise.all([
+                await encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }), 
+                await prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
+           ]) 
 
-      const stickerPackUploadResult = await options.upload(stickerPackUpload.bodyPath, {
-          fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'), 
-          mediaType: 'sticker-pack', 
-          timeoutMs: options.mediaUploadTimeoutMs
-      }) 
+           const stickerPackUploadResult = await options.upload(stickerPackUpload.bodyPath, {
+               fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'), 
+               mediaType: 'sticker-pack', 
+               timeoutMs: options.mediaUploadTimeoutMs
+           }) 
+       }
 
 
       const coverImage = coverUpload.imageMessage
