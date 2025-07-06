@@ -650,15 +650,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					logger.debug({ jid }, 'adding device identity')
 				}
-				
-        const regexGroupOld = /^(\d{1,15})-(\d+)@g\.us$/
-        
-        if(isGroup && regexGroupOld.test(jid) && !message.reactionMessage) {
-          (stanza.content as BinaryNode[]).push({
-            tag: 'multicast',
-            attrs: {}
-          }) 
-        }
 
 				const messageContent: proto.IMessage = normalizeMessageContent(message)! 
          
