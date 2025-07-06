@@ -680,8 +680,8 @@ export const generateWAMessageContent = async(
 	 	  const imageDataHash = sha256(coverBuffer).toString('base64')
 		  
 	  	const [stickerPackUpload, coverUpload] = await Promise.all([
-			    encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }),
-			    prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
+			    await encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }),
+			    await prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
 		  ])
 
 		  const stickerPackId = packId || generateMessageID()

@@ -412,6 +412,85 @@ type EncryptedStreamOptions = {
 	opts?: AxiosRequestConfig
 }
 
+export const prepareStream = async(
+	media: WAMediaUpload,
+	mediaType: MediaType,
+	{ logger, saveOriginalFileIfRequired, opts }: EncryptedStreamOptions = {}
+) => {
+
+    const { stream, type } = await getStream(media, opts)
+    logger?.debug('fetched media stream')
+
+    const encFilePath = path_1.join(tmpdir(), mediaType + generateMessageID() + '-plain')
+    const encFileWriteStream = fs_1.createWriteStream(encFilePath)
+
+    let originalFilePath: string | undefined
+    let originalFileStream: string | undefined
+
+    if (type === 'file') {
+        originalFilePath = media.url.toString()
+    } else if (saveOriginalFileIfRequired) {
+        originalFilePath = join(tmpdir(), mediaType + generateMessageID() + '-original')
+        originalFileStream = createWriteStream(originalFilePath)
+    }
+
+    let fileLength = 0
+    const sha256 = Crypto.createHash('sha256')
+
+    try {
+        for await (const data of stream) {
+            fileLength += data.length
+
+            if (type === 'remote'
+                && opts?.maxContentLength
+                && fileLength + data.length > opts.maxContentLength) {
+                throw new boom_1.Boom(`content length exceeded when preparing "${type}"`, {
+                    data: { media, type }
+                })
+            }
+
+            sha256.update(data)
+            encFileWriteStream.write(data)
+
+            if (originalFileStream && !originalFileStream.write(data)) {
+                await events_1.once(originalFileStream, 'drain')
+            }
+        }
+
+        const fileSha256 = sha256.digest()
+        encFileWriteStream.end()
+        originalFileStream?.end?.call(originalFileStream)
+        stream.destroy()
+
+        logger?.debug('prepared plain stream successfully')
+
+        return {
+            mediaKey: undefined,
+            originalFilePath,
+            encFilePath,
+            mac: undefined,
+            fileEncSha256: undefined,
+            fileSha256,
+            fileLength
+        }
+    }
+    catch (error) {
+        encFileWriteStream.destroy()
+        originalFileStream?.destroy?.call(originalFileStream)
+        sha256.destroy()
+        stream.destroy()
+        try {
+            await promises.unlink(encFilePath)
+            if (originalFilePath && didSaveToTmpPath) {
+                await promises.unlink(originalFilePath)
+            }
+        } catch (err) {
+            logger?.error({ err }, 'failed deleting tmp files')
+        }
+        throw error
+    }
+}
+
 export const encryptedStream = async (
 	media: WAMediaUpload,
 	mediaType: MediaType,
