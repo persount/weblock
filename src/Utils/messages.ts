@@ -112,7 +112,7 @@ const assertColor = async(color) => {
 
 export const prepareWAMessageMedia = async(
 	message: AnyMediaMessageContent,
-	options: MediaGenerationOptions
+	options: MessageContentGenerationOptions
 ) => {
 	const logger = options.logger
 
