@@ -75,6 +75,9 @@ export const getAdditionalNode = (name: string) => {
       cta_catalog: 'cta_catalog',
       mpm: 'mpm',
       call_request: 'call_permission_request',
+      view_catalog: 'automated_greeting_message_view_catalog',
+      wa_pay_detail: 'wa_payment_transaction_details',
+      send_location: 'send_location',
    }
    
    if(order_response_name[name]) {
