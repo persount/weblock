@@ -464,7 +464,10 @@ export type MessageGenerationOptionsFromContent = MiscMessageGenerationOptions &
 
 export type WAMediaUploadFunctionOpts = { fileEncSha256B64: string, mediaType: MediaType, newsletter?: boolean, timeoutMs?: number }
 
-export type WAMediaUploadFunction = (readStream: Readable | Buffer, opts: WAMediaUploadFunctionOpts) => Promise<{ mediaUrl: string, directPath: string, handle?: string }>
+export type WAMediaUploadFunction = (
+	encFilePath: string,
+	opts: WAMediaUploadFunctionOpts
+) => Promise<{ mediaUrl: string; directPath: string, handle?: string }>
 
 export type MediaGenerationOptions = {
 	logger?: ILogger
