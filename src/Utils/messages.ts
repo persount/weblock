@@ -162,11 +162,10 @@ export const prepareWAMessageMedia = async(
 	const {
 		mediaKey,
 		encWriteStream,
-		bodyPath,
+		encFilePath,
 		fileEncSha256,
 		fileSha256,
 		fileLength,
-		didSaveToTmpPath,
 	} = await (options.newsletter ? prepareStream : encryptedStream)(
 		uploadData.media,
 		options.mediaTypeOverride || mediaType,
@@ -193,7 +192,7 @@ export const prepareWAMessageMedia = async(
 					const {
 						thumbnail,
 						originalImageDimensions
-					} = await generateThumbnail(bodyPath!, mediaType as 'image' | 'video', options)
+					} = await generateThumbnail(encFilePath!, mediaType as 'image' | 'video', options)
 					uploadData.jpegThumbnail = thumbnail
 					if(!uploadData.width && originalImageDimensions) {
 						uploadData.width = originalImageDimensions.width
@@ -205,12 +204,12 @@ export const prepareWAMessageMedia = async(
 				}
 
 				if(requiresDurationComputation) {
-					uploadData.seconds = await getAudioDuration(bodyPath!)
+					uploadData.seconds = await getAudioDuration(encFilePath!)
 					logger?.debug('computed audio duration')
 				}
 
 				if(requiresWaveformProcessing) {
-					uploadData.waveform = await getAudioWaveform(bodyPath!, logger)
+					uploadData.waveform = await getAudioWaveform(encFilePath!, logger)
 					logger?.debug('processed waveform')
 				}
 
@@ -230,8 +229,8 @@ export const prepareWAMessageMedia = async(
 				}
 
 				// remove tmp files
-				if(didSaveToTmpPath && bodyPath) {
-					await fs.unlink(bodyPath)
+				if(encFilePath) {
+					await fs.unlink(encFilePath)
 					logger?.debug('removed tmp files')
 				}
 			}
@@ -687,14 +686,13 @@ export const generateWAMessageContent = async(
 
 		  const stickerPackId = packId || generateMessageID()
   		const coverImage = coverUpload.imageMessage!
-		  const stickerPackUploadResult = await options.upload(stickerPackUpload.bodyPath, {
+		  const stickerPackUploadResult = await options.upload(stickerPackUpload.encFilePath, {
 			   fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'),
 			   mediaType: 'sticker-pack',
 			   timeoutMs: options.mediaUploadTimeoutMs,
 		  })
 
 		  const stickerPackSize = fileLength || stickerPackUpload.fileLength
-		  await fs.unlink(stickerPackUpload.bodyPath)
 
 		  m.stickerPackMessage = {
 			    name,
@@ -708,7 +706,7 @@ export const generateWAMessageContent = async(
 		    	fileSha256: stickerPackUpload.fileSha256,
 		    	fileEncSha256: stickerPackUpload.fileEncSha256,
 			    mediaKey: stickerPackUpload.mediaKey,
-		    	directPath: stickerPackUpload.directPath,
+		    	directPath: stickerPackUploadResult.directPath,
 			    fileLength: stickerPackSize,
 			    mediaKeyTimestamp: unixTimestampSeconds(),
 			    trayIconFileName: `${stickerPackId}.png`,
