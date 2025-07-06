@@ -731,7 +731,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	}
 
 	const getTypeMessage = (message: proto.IMessage) => {
-	  const msg = normalizeMessageContent(message!)
+	  const msg = normalizeMessageContent(message)!
 		if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3) {
       return 'poll'
     } else if(msg.reactionMessage) {
