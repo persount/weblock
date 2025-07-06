@@ -25,13 +25,21 @@ export import WAMessageStubType = proto.WebMessageInfo.StubType
 export import WAMessageStatus = proto.WebMessageInfo.Status
 export type WAMediaPayloadURL = { url: URL | string }
 export type WAMediaPayloadStream = { stream: Readable }
-export type WAMediaUpload = Buffer | WAMediaPayloadStream | WAMediaPayloadURL
+export type WAMediaUpload = WAMediaPayloadURL | Buffer | WAMediaPayloadStream
 /** Set of message types that are supported by the library */
 export type MessageType = keyof proto.Message
 
 export type DownloadableMessage = { mediaKey?: Uint8Array | null, directPath?: string | null, url?: string | null }
 
-export type MessageReceiptType = 'read' | 'read-self' | 'hist_sync' | 'peer_msg' | 'sender' | 'inactive' | 'played' | undefined
+export type MessageReceiptType =
+  'read' 
+  | 'read-self' 
+  | 'hist_sync' 
+  | 'peer_msg' 
+  | 'sender' 
+  | 'inactive' 
+  | 'played' 
+  | undefined
 
 export type MediaConnInfo = {
     auth: string
