@@ -768,13 +768,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			return 'buttons_response'
 		} else if(message.orderMessage) {
 			return 'order'
-		} else if(message.productMessage) {
-			return 'product'
 		} else if(message.interactiveResponseMessage) {
 			return 'native_flow_response'
-    } else if(message.extendedTextMessage && /https:\/\/wa\.me\/c\/\d+/.test(message.extendedTextMessage?.text)) {
+    } else if(message.extendedTextMessage && /https:\/\/wa\.me\/c\/\d+/.test(message?.extendedTextMessage?.text)) {
       return 'cataloglink'
-    } else if (message.extendedTextMessage && /https:\/\/wa\.me\/p\/\d+\/\d+/.test(message.extendedTextMessage?.text)) {
+    } else if (message.extendedTextMessage && /https:\/\/wa\.me\/p\/\d+\/\d+/.test(message?.extendedTextMessage?.text)) {
       return 'productlink'
 		} else if(message.extendedTextMessage?.matchedText || message.groupInviteMessage) {
 			return 'url'
