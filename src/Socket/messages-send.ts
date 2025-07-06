@@ -617,7 +617,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					tag: 'message',
 					attrs: {
 						id: msgId!,
-						type: getTypeMessage(message),
+						type: isNewsletter ? getTypeMessage(message) : getMessageType(message),
 						...(additionalAttributes || {})
 					},
 					content: binaryNodeContent
@@ -727,6 +727,21 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		return msgId
 	}
 
+	const getMessageType = (message: proto.IMessage) => {
+	  const msg = normalizeMessageContent(message)!
+		if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3) {
+      return 'poll'
+    } else if(msg.reactionMessage) {
+      return 'reaction'
+    } else if(msg.eventMessage) {
+      return 'event'
+		} else if(msg.listMessage) {
+      return 'list'
+		} else {
+			return 'text'
+		}
+	}
+	
 	const getTypeMessage = (message: proto.IMessage) => {
 	  const msg = normalizeMessageContent(message)!
 		if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3) {
