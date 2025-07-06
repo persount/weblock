@@ -650,9 +650,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					logger.debug({ jid }, 'adding device identity')
 				}
+				
+        const regexGroupOld = /^(\d{1,15})-(\d+)@g\.us$/
         
         if(isGroup && regexGroupOld.test(jid) && !message.reactionMessage) {
-          stanza.content.push({
+          (stanza.content as BinaryNode[]).push({
             tag: 'multicast',
             attrs: {}
           }) 
@@ -660,11 +662,10 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 				const messageContent: proto.IMessage = normalizeMessageContent(message)! 
          
-        const regexGroupOld = /^(\d{1,15})-(\d+)@g\.us$/
-        const pollMessage = messages.pollCreationMessage || messages.pollCreationMessageV2 || messages.pollCreationMessageV3
+        const pollMessage = messageContent.pollCreationMessage || messageContent.pollCreationMessageV2 || messageContent.pollCreationMessageV3
 
         if(pollMessage || messageContent.eventMessage) {
-          stanza.content.push({
+          (stanza.content as BinaryNode[]).push({
             tag: 'meta', 
             attrs: messageContent.eventMessage ? {
                 event_type: 'creation'
@@ -730,7 +731,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	}
 
 	const getTypeMessage = (message: proto.IMessage) => {
-	  const msg: proto.IMessage = normalizeMessageContent(message!)
+	  const msg = normalizeMessageContent(message!)
 		if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3) {
       return 'poll'
     } else if(msg.reactionMessage) {
