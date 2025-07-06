@@ -640,89 +640,102 @@ export const generateWAMessageContent = async(
 			         m.newsletterAdminInviteMessage.jpegThumbnail = null
 			     }
 		   }
-   } else if('stickerPack' in message) {
-       if(!Array.isArray(message.stickerPack.stickers)) {
-			     throw new Boom('Invalid sticker pack data', { statusCode: 400 })
-		   }
-		   
-		   const { stickers, cover, name, publisher, packId, description, caption, fileLength } = message.stickerPack
+   } else if ('stickerPack' in message) {
+		  const { stickers, cover, name, caption, publisher, packId, description, fileLength } = message.stickerPack
 
-       const stickerData = {}
-       const stickerPromises = stickers.map(async (s, i) => {
-           const { stream } = await getStream(s.sticker, options.options) 
-           const buffer = await toBuffer(stream) 
-           const hash = sha256(buffer).toString('base64url') 
-           const fileName = `${i.toString().padStart(2, '0')}_${hash}.webp`
-           stickerData[fileName] = [new Uint8Array(buffer), { level: 0 }]
+		  const stickerData: Record<string, [Uint8Array, { level: 0 }]> = {}
+		  const stickerPromises = stickers.map(async (s, i) => {
+			    const { stream } = await getStream(s.sticker)
+			    const buffer = await toBuffer(stream)
+			    const hash = sha256(buffer).toString('base64url')
+			    const fileName = `${i.toString().padStart(2, '0')}_${hash}.webp`
+			    stickerData[fileName] = [new Uint8Array(buffer), { level: 0 as 0 }]
+		    	return {
+			      	fileName,
+				      mimetype: 'image/webp',
+              isAnimated: s.isAnimated || false, 
+              isLottie: s.isLottie || false, 
+				      emojis: s.emojis || [],
+				      accessibilityLabel: s.accessibilityLabel
+			    }
+		  })
 
-           return {
-               fileName, 
-               mimetype: 'image/webp', 
-               isAnimated: s.isAnimated || false, 
-               isLottie: s.isLottie || false, 
-               emojis: s.emojis || [], 
-               accessibilityLabel: s.accessibilityLabel || ''
-           }
-       }) 
+		  const stickerMetadata = await Promise.all(stickerPromises)
 
-       const stickerMetadata = await Promise.all(stickerPromises) 
+		  const zipBuffer = await new Promise<Buffer>((resolve, reject) => {
+			    zip(stickerData, (err, data) => {
+				      if (err) {
+					        reject(err)
+				      } else {
+					        resolve(Buffer.from(data))
+				      }
+			    })
+		  })
+		  
+		  const coverBuffer = await toBuffer((await getStream(cover)).stream)
+	 	  const imageDataHash = sha256(coverBuffer).toString('base64')
 
-       const zipBuffer = await new Promise(async (resolve, reject) => {
-           await zip(stickerData!, (err, data) => {
-               if (err) {
-                   reject(err) 
-               } else {
-                   resolve(Buffer.from(data)) 
-               }
-           }) 
-       }) 
+		  const [coverUploadResult, stickerPackUploadResult] = await Promise.all([
+			    prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' }),
+			    prepareWAMessageMedia(
+				  { document: zipBuffer, mimetype: 'application/zip' },
+				  { ...options, mediaTypeOverride: 'sticker-pack' })
+		  ])
+		  
+	  	const [stickerPackUpload, coverUpload] = await Promise.all([
+			    encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }),
+			    prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
+		  ])
 
-       const coverBuffer = await toBuffer(await (await getStream(cover, options.options)).stream) 
+		  const stickerPackId = packId || generateMessageID()
+  		const coverImage = coverUploadResult.imageMessage!
+		  const stickerPackArchive = stickerPackUploadResult.documentMessage!
+		  const stickerPackUploadResult = await options.upload(stickerPackUpload.encFilePath, {
+			   fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'),
+			   mediaType: 'sticker-pack',
+			   timeoutMs: options.mediaUploadTimeoutMs,
+		  })
 
-       const [stickerPackUpload, coverUpload] = await Promise.all([
-            await encryptedStream(zipBuffer!, 'sticker-pack', { logger: options.logger, opts: options.options }), 
-            await prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' })
-       ]) 
+		  const stickerPackSize = stickerPackArchive.fileLength ? +stickerPackArchive.fileLength : 0
+		  await fs.unlink(stickerPackUpload.encFilePath)
 
-       const stickerPackUploadResult = await options.upload(stickerPackUpload!.bodyPath, {
-           fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'), 
-           mediaType: 'sticker-pack', 
-           timeoutMs: options.mediaUploadTimeoutMs
-       })
+		  const coverImage = coverUpload.imageMessage!
+	  	const imageDataHash = sha256(coverBuffer).toString('base64')
 
-
-      const coverImage = coverUpload.imageMessage
-      const imageDataHash = sha256(coverBuffer).toString('base64') 
-      const stickerPackId = packId ?? generateMessageID() 
-
-      m.stickerPackMessage = WAProto.Message.StickerPackMessage.fromObject({
-          name, 
-          publisher, 
-          caption,
-          stickerPackId, 
-          packDescription: description, 
-          stickerPackOrigin: proto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY, 
-          stickerPackSize: fileLength || stickerPackUpload.fileLength, 
-          stickers: stickerMetadata, 
-          fileSha256: stickerPackUpload.fileSha256, 
-          fileEncSha256: stickerPackUpload.fileEncSha256, 
-          mediaKey: stickerPackUpload.mediaKey, 
-          directPath: stickerPackUploadResult.directPath, 
-          fileLength: fileLength || stickerPackUpload.fileLength, 
-          mediaKeyTimestamp: unixTimestampSeconds(), 
-          trayIconFileName: `${stickerPackId}.png`, 
-          imageDataHash, 
-          thumbnailDirectPath: coverImage?.directPath, 
-          thumbnailFileSha256: coverImage?.fileSha256, 
-          thumbnailFileEncSha256: coverImage?.fileEncSha256, 
-          thumbnailHeight: coverImage?.height, 
-          thumbnailWidth: coverImage?.width
-      })
+		  m.stickerPackMessage = {
+			    name,
+			    publisher,
+			    stickerPackId,
+			    caption,
+		    	packDescription: description,
+		    	stickerPackOrigin: WAProto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY,
+			    stickerPackSize: fileLength || stickerPackUpload.fileLength,
+			    stickers: stickerMetadata,
+		    	fileSha256: stickerPackArchive.fileSha256,
+		    	fileEncSha256: stickerPackArchive.fileEncSha256,
+			    mediaKey: stickerPackArchive.mediaKey,
+		    	directPath: stickerPackArchive.directPath,
+			    fileLength: stickerPackArchive.fileLength,
+			    mediaKeyTimestamp: stickerPackArchive.mediaKeyTimestamp,
+			    trayIconFileName: `${stickerPackIdValue}.png`,
+			    imageDataHash,
+			    fileSha256: stickerPackUpload.fileSha256,
+		    	fileEncSha256: stickerPackUpload.fileEncSha256,
+			    mediaKey: stickerPackUpload.mediaKey,
+			    directPath: stickerPackUploadResult.directPath,
+			    fileLength: fileLength || stickerPackUpload.fileLength,
+			    mediaKeyTimestamp: unixTimestampSeconds(),
+			    thumbnailDirectPath: coverImage.directPath,
+		     	thumbnailSha256: coverImage.fileSha256,
+			    thumbnailEncSha256: coverImage.fileEncSha256,
+		     	thumbnailHeight: coverImage.height,
+			    thumbnailWidth: coverImage.width
+		  }
        
       if('contextInfo' in message && !!message.contextInfo) {
         	m.stickerPackMessage.contextInfo = message.contextInfo
       }
-       
+		       
    } else if('requestPayment' in message) {  
        const sticker = message?.requestPayment?.sticker ?
           await prepareWAMessageMedia(
@@ -740,6 +753,7 @@ export const generateWAMessageContent = async(
 		             stanzaId: options?.quoted?.key?.id,
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
+		             mentionedJid: message.mentions,
 		             ...message.contextInfo,
 		          }
 	         }
@@ -752,6 +766,7 @@ export const generateWAMessageContent = async(
 		             stanzaId: options?.quoted?.key?.id,
 		             participant: options?.quoted?.key?.participant,
 		             quotedMessage: options?.quoted?.message,
+		             mentionedJid: message.mentions,
 		             ...message.contextInfo,
 		          }
 		       }
