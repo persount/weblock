@@ -995,11 +995,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 							        : undefined
 						    },
 				     ),
-				     upload: async(readStream: Readable, opts: WAMediaUploadFunctionOpts) => {
-						    const up = await waUploadToServer(readStream, { ...opts })
-					      mediaHandle = up.handle
-					      return up
-			       },
+				     upload: waUploadToServer,
 				     mediaCache: config.mediaCache,
 				     options: config.options,
              backgroundColor: getRandomHexColor(),
@@ -1108,11 +1104,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { 
                     userJid,
                     logger,
-                    upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
-                       mediaHandle = up.handle;
-                       return up;
-                    },
+                    upload: waUploadToServer,
 					    	    mediaCache: config.mediaCache,
 					    	    options: config.options,						
 					    	    messageId: customMessageID() || generateMessageID(),						
@@ -1127,11 +1119,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  { 
                     userJid,
                     logger,
-                    upload: async(readStream, opts) => {
-                       const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) });
-                       mediaHandle = up.handle;
-                       return up;
-                    },
+                    upload: waUploadToServer,
 					    	    mediaCache: config.mediaCache,
 					    	    options: config.options,						
 					    	    messageId: customMessageID() || generateMessageID(),						
@@ -1204,11 +1192,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 									: undefined
 							},
 						),
-						upload: async(readStream: Readable, opts: WAMediaUploadFunctionOpts) => {
-							const up = await waUploadToServer(readStream, { ...opts, newsletter: isJidNewsletter(jid) })
-							mediaHandle = up.handle
-							return up
-						},
+						upload: waUploadToServer,
 						mediaCache: config.mediaCache,
 						options: config.options,
 						messageId: customMessageID() || generateMessageID(),
