@@ -428,7 +428,9 @@ export const prepareStream = async(
     let originalFileStream: WriteStream | undefined
 
     if (type === 'file') {
-        originalFilePath = media.url.toString()
+        if('url' in media && typeof media.url !== 'undefined') {
+            originalFilePath = media.url.toString()
+        }        
     } else if (saveOriginalFileIfRequired) {
         originalFilePath = join(tmpdir(), mediaType + generateMessageID() + '-original')
         originalFileStream = createWriteStream(originalFilePath)
