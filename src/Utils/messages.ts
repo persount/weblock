@@ -701,11 +701,8 @@ export const generateWAMessageContent = async(
 			   timeoutMs: options.mediaUploadTimeoutMs,
 		  })
 
-		  const stickerPackSize = stickerPackArchive.fileLength ? +stickerPackArchive.fileLength : 0
-		  await fs.unlink(stickerPackUpload.encFilePath)
-
-		  const coverImage = coverUpload.imageMessage!
-	  	const imageDataHash = sha256(coverBuffer).toString('base64')
+		  const stickerPackSize = fileLength || stickerPackUpload.fileLength
+		  await fs.unlink(stickerPackUpload.bodyPath)
 
 		  m.stickerPackMessage = {
 			    name,
@@ -714,7 +711,7 @@ export const generateWAMessageContent = async(
 			    caption,
 		    	packDescription: description,
 		    	stickerPackOrigin: WAProto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY,
-			    stickerPackSize: fileLength || stickerPackUpload.fileLength,
+			    stickerPackSize,
 			    stickers: stickerMetadata,
 		    	fileSha256: stickerPackArchive.fileSha256,
 		    	fileEncSha256: stickerPackArchive.fileEncSha256,
@@ -722,13 +719,13 @@ export const generateWAMessageContent = async(
 		    	directPath: stickerPackArchive.directPath,
 			    fileLength: stickerPackArchive.fileLength,
 			    mediaKeyTimestamp: stickerPackArchive.mediaKeyTimestamp,
-			    trayIconFileName: `${stickerPackIdValue}.png`,
+			    trayIconFileName: `${stickerPackId}.png`,
 			    imageDataHash,
 			    fileSha256: stickerPackUpload.fileSha256,
 		    	fileEncSha256: stickerPackUpload.fileEncSha256,
 			    mediaKey: stickerPackUpload.mediaKey,
 			    directPath: stickerPackUploadResult.directPath,
-			    fileLength: fileLength || stickerPackUpload.fileLength,
+			    fileLength: stickerPackSize,
 			    mediaKeyTimestamp: unixTimestampSeconds(),
 			    thumbnailDirectPath: coverImage.directPath,
 		     	thumbnailSha256: coverImage.fileSha256,
