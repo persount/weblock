@@ -641,6 +641,11 @@ export const generateWAMessageContent = async(
 			     }
 		   }
    } else if ('stickerPack' in message) {
+   
+      if(!Array.isArray(message.stickerPack.stickers)) {
+			    throw new Boom('Invalid stickers metadata', { statusCode: 400 })
+		  }
+		  
 		  const { stickers, cover, name, caption, publisher, packId, description, fileLength } = message.stickerPack
 
 		  const stickerData: Record<string, [Uint8Array, { level: 0 }]> = {}
@@ -690,7 +695,7 @@ export const generateWAMessageContent = async(
 		  const stickerPackId = packId || generateMessageID()
   		const coverImage = coverUploadResult.imageMessage!
 		  const stickerPackArchive = stickerPackUploadResult.documentMessage!
-		  const stickerPackUploadResult = await options.upload(stickerPackUpload.encFilePath, {
+		  const stickerPackUploadResult = await options.upload(stickerPackUpload.bodyPath, {
 			   fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'),
 			   mediaType: 'sticker-pack',
 			   timeoutMs: options.mediaUploadTimeoutMs,
