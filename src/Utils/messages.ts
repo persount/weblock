@@ -679,13 +679,6 @@ export const generateWAMessageContent = async(
 		  
 		  const coverBuffer = await toBuffer((await getStream(cover)).stream)
 	 	  const imageDataHash = sha256(coverBuffer).toString('base64')
-
-		  const [coverUploadResult, stickerPackUploadResult] = await Promise.all([
-			    prepareWAMessageMedia({ image: coverBuffer }, { ...options, mediaTypeOverride: 'image' }),
-			    prepareWAMessageMedia(
-				  { document: zipBuffer, mimetype: 'application/zip' },
-				  { ...options, mediaTypeOverride: 'sticker-pack' })
-		  ])
 		  
 	  	const [stickerPackUpload, coverUpload] = await Promise.all([
 			    encryptedStream(zipBuffer, 'sticker-pack', { logger: options.logger, opts: options.options }),
@@ -693,8 +686,7 @@ export const generateWAMessageContent = async(
 		  ])
 
 		  const stickerPackId = packId || generateMessageID()
-  		const coverImage = coverUploadResult.imageMessage!
-		  const stickerPackArchive = stickerPackUploadResult.documentMessage!
+  		const coverImage = coverUpload.imageMessage!
 		  const stickerPackUploadResult = await options.upload(stickerPackUpload.bodyPath, {
 			   fileEncSha256B64: stickerPackUpload.fileEncSha256.toString('base64'),
 			   mediaType: 'sticker-pack',
@@ -713,20 +705,14 @@ export const generateWAMessageContent = async(
 		    	stickerPackOrigin: WAProto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY,
 			    stickerPackSize,
 			    stickers: stickerMetadata,
-		    	fileSha256: stickerPackArchive.fileSha256,
-		    	fileEncSha256: stickerPackArchive.fileEncSha256,
-			    mediaKey: stickerPackArchive.mediaKey,
-		    	directPath: stickerPackArchive.directPath,
-			    fileLength: stickerPackArchive.fileLength,
-			    mediaKeyTimestamp: stickerPackArchive.mediaKeyTimestamp,
-			    trayIconFileName: `${stickerPackId}.png`,
-			    imageDataHash,
-			    fileSha256: stickerPackUpload.fileSha256,
+		    	fileSha256: stickerPackUpload.fileSha256,
 		    	fileEncSha256: stickerPackUpload.fileEncSha256,
 			    mediaKey: stickerPackUpload.mediaKey,
-			    directPath: stickerPackUploadResult.directPath,
+		    	directPath: stickerPackUpload.directPath,
 			    fileLength: stickerPackSize,
 			    mediaKeyTimestamp: unixTimestampSeconds(),
+			    trayIconFileName: `${stickerPackId}.png`,
+			    imageDataHash,
 			    thumbnailDirectPath: coverImage.directPath,
 		     	thumbnailSha256: coverImage.fileSha256,
 			    thumbnailEncSha256: coverImage.fileEncSha256,
