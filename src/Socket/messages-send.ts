@@ -363,7 +363,15 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	const relayMessage = async(
 		jid: string,
 		message: proto.IMessage,
-		{ messageId: msgId, participant, additionalAttributes, additionalNodes, useUserDevicesCache, useCachedGroupMetadata, statusJidList }: MessageRelayOptions
+		{ 
+		   messageId: msgId, 
+		   participant, 
+		   additionalAttributes,
+		   additionalNodes,
+		   useUserDevicesCache, 
+		   useCachedGroupMetadata,
+		   statusJidList 
+		}: MessageRelayOptions
 	) => {
 		const meId = authState.creds.me!.id
 
@@ -393,6 +401,10 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			deviceSentMessage: {
 				destinationJid,
 				message
+			},
+			messageContextInfo: {
+			  messageSecret: randomBytes(32),
+			  ...message.messageContextInfo
 			}
 		}
 
@@ -607,7 +619,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					tag: 'message',
 					attrs: {
 						id: msgId!,
-						type: isNewsletter ? getTypeMessage(message) : 'text',
+						type: getTypeMessage(message),
 						...(additionalAttributes || {})
 					},
 					content: binaryNodeContent
@@ -638,8 +650,32 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					logger.debug({ jid }, 'adding device identity')
 				}
+        
+        if(isGroup && regexGroupOld.test(jid) && !message.reactionMessage) {
+          stanza.content.push({
+            tag: 'multicast',
+            attrs: {}
+          }) 
+        }
 
 				const messageContent: proto.IMessage = normalizeMessageContent(message)! 
+         
+        const regexGroupOld = /^(\d{1,15})-(\d+)@g\.us$/
+        const pollMessage = messages.pollCreationMessage || messages.pollCreationMessageV2 || messages.pollCreationMessageV3
+
+        if(pollMessage || messageContent.eventMessage) {
+          stanza.content.push({
+            tag: 'meta', 
+            attrs: messageContent.eventMessage ? {
+                event_type: 'creation'
+              } : isNewsletter ? {
+                polltype: 'creation', 
+                contenttype: pollMessage?.pollContentType === 2 ? 'image' : 'text'
+              } : {
+                polltype: 'creation'
+              }
+          }) 
+        }
         
 				const buttonType = getButtonType(messageContent)
         if(!isNewsletter && buttonType) {
@@ -693,19 +729,14 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		return msgId
 	}
 
-	const getTypeMessage = (msg: proto.IMessage) => {
-		if(msg.viewOnceMessage) {
-			return getTypeMessage(msg.viewOnceMessage.message!)
-		} else if(msg.viewOnceMessageV2) {
-			return getTypeMessage(msg.viewOnceMessageV2.message!)
-		} else if(msg.viewOnceMessageV2Extension) {
-			return getTypeMessage(msg.viewOnceMessageV2Extension.message!)
-		} else if(msg.ephemeralMessage) {
-			return getTypeMessage(msg.ephemeralMessage.message!)
-		} else if(msg.documentWithCaptionMessage) {
-			return getTypeMessage(msg.documentWithCaptionMessage.message!)
-		} else if(msg.reactionMessage) {
-			return 'reaction'
+	const getTypeMessage = (message: proto.IMessage) => {
+	  const msg: proto.IMessage = normalizeMessageContent(message!)
+		if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3) {
+      return 'poll'
+    } else if(msg.reactionMessage) {
+      return 'reaction'
+    } else if(msg.eventMessage) {
+      return 'event'
 		} else if(getMediaType(msg)) {
 			return 'media'
 		} else {
@@ -716,7 +747,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	const getMediaType = (message: proto.IMessage) => {
 		if(message.imageMessage) {
 			return 'image'
-		} else if(message.videoMessage) {
+		} else if (message.stickerMessage) {
+      return message.stickerMessage.isLottie ? '1p_sticker' : message.stickerMessage.isAvatar ? 'avatar_sticker' : 'sticker'
+   } else if(message.videoMessage) {
 			return message.videoMessage.gifPlayback ? 'gif' : 'video'
 		} else if(message.audioMessage) {
 			return message.audioMessage.ptt ? 'ptt' : 'audio'
@@ -738,7 +771,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			return 'product'
 		} else if(message.interactiveResponseMessage) {
 			return 'native_flow_response'
-		} else if(message.groupInviteMessage) {
+    } else if(/https:\/\/wa\.me\/c\/\d+/.test(message.extendedTextMessage?.text)) {
+      return 'cataloglink'
+    } else if (/https:\/\/wa\.me\/p\/\d+\/\d+/.test(message.extendedTextMessage?.text)) {
+      return 'productlink'
+		} else if(message.extendedTextMessage?.matchedText || message.groupInviteMessage) {
 			return 'url'
 		}
 	}
@@ -746,9 +783,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	const getButtonType = (msg: proto.IMessage) => {
 		if(msg.buttonsMessage) {
 			return 'buttons'
-		} else if(msg.templateMessage) {
-			return 'template'
-    } else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay') {
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_and_pay') {
       return 'review_and_pay'
     } else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'review_order') {
       return 'review_order'
@@ -764,6 +799,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       return 'mpm'
 		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'call_permission_request') {
       return 'call_request'
+    } else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'automated_greeting_message_view_catalog') {
+      return 'view_catalog'
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'wa_payment_transaction_details') {
+      return 'wa_pay_detail'
+		} else if(msg.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name === 'send_location') {
+      return 'send_location'
 		} else if(msg.interactiveMessage && msg.interactiveMessage?.nativeFlowMessage) {
 			return 'interactive'
 		} else if(msg.listMessage) {
