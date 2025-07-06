@@ -421,11 +421,11 @@ export const prepareStream = async(
     const { stream, type } = await getStream(media, opts)
     logger?.debug('fetched media stream')
 
-    const encFilePath = path_1.join(tmpdir(), mediaType + generateMessageID() + '-plain')
-    const encFileWriteStream = fs_1.createWriteStream(encFilePath)
+    const encFilePath = join(tmpdir(), mediaType + generateMessageID() + '-plain')
+    const encFileWriteStream = createWriteStream(encFilePath)
 
     let originalFilePath: string | undefined
-    let originalFileStream: string | undefined
+    let originalFileStream: WriteStream | undefined
 
     if (type === 'file') {
         originalFilePath = media.url.toString()
@@ -444,7 +444,7 @@ export const prepareStream = async(
             if (type === 'remote'
                 && opts?.maxContentLength
                 && fileLength + data.length > opts.maxContentLength) {
-                throw new boom_1.Boom(`content length exceeded when preparing "${type}"`, {
+                throw new Boom(`content length exceeded when preparing "${type}"`, {
                     data: { media, type }
                 })
             }
@@ -453,7 +453,7 @@ export const prepareStream = async(
             encFileWriteStream.write(data)
 
             if (originalFileStream && !originalFileStream.write(data)) {
-                await events_1.once(originalFileStream, 'drain')
+                await once(originalFileStream, 'drain')
             }
         }
 
@@ -473,16 +473,15 @@ export const prepareStream = async(
             fileSha256,
             fileLength
         }
-    }
-    catch (error) {
+    } catch (error) {
         encFileWriteStream.destroy()
         originalFileStream?.destroy?.call(originalFileStream)
         sha256.destroy()
         stream.destroy()
         try {
-            await promises.unlink(encFilePath)
-            if (originalFilePath && didSaveToTmpPath) {
-                await promises.unlink(originalFilePath)
+            await fs.unlink(encFilePath)
+            if (originalFilePath) {
+                await fs.unlink(originalFilePath)
             }
         } catch (err) {
             logger?.error({ err }, 'failed deleting tmp files')

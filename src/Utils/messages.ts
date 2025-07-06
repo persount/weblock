@@ -28,7 +28,18 @@ import {
 import { isJidGroup, isJidNewsletter, isJidStatusBroadcast, jidNormalizedUser } from '../WABinary'
 import { sha256 } from './crypto'
 import { delay, generateMessageID, getKeyAuthor, unixTimestampSeconds } from './generics'
-import { downloadContentFromMessage, encryptedStream, generateThumbnail, getAudioDuration, getAudioWaveform, getStream, MediaDownloadOptions, prepareStream, toBuffer } from './messages-media'
+import { 
+  downloadContentFromMessage, 
+  encryptedStream,
+  generateThumbnail, 
+  getAudioDuration,
+  getAudioWaveform, 
+  getRawMediaUploadData,
+  getStream, 
+  MediaDownloadOptions,
+  prepareStream, 
+  toBuffer 
+} from './messages-media'
 
 type MediaUploadData = {
 	media: WAMediaUpload
@@ -152,6 +163,49 @@ export const prepareWAMessageMedia = async(
 			return obj
 		}
 	}
+	
+	const isNewsletter = !!options.jid && isJidNewsletter(options.jid)
+	if (isNewsletter) {
+		logger?.info({ key: cacheableKey }, 'Preparing raw media for newsletter')
+		const { filePath, fileSha256, fileLength } = await getRawMediaUploadData(
+			uploadData.media,
+			options.mediaTypeOverride || mediaType,
+			logger
+		)
+
+		const fileSha256B64 = fileSha256.toString('base64')
+		const { mediaUrl, directPath } = await options.upload(filePath, {
+			fileEncSha256B64: fileSha256B64,
+			mediaType: mediaType,
+			timeoutMs: options.mediaUploadTimeoutMs
+		})
+
+		await fs.unlink(filePath)
+
+		const obj = WAProto.Message.fromObject({
+			[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
+				url: mediaUrl,
+				directPath,
+				fileSha256,
+				fileLength,
+				...uploadData,
+				media: undefined
+			})
+		})
+
+		if (uploadData.ptv) {
+			obj.ptvMessage = obj.videoMessage
+			delete obj.videoMessage
+		}
+
+		if (cacheableKey) {
+			logger?.debug({ cacheableKey }, 'set cache')
+			options.mediaCache!.set(cacheableKey, WAProto.Message.encode(obj).finish())
+		}
+
+		return obj
+	}
+
 
 	const requiresDurationComputation = mediaType === 'audio' && typeof uploadData.seconds === 'undefined'
 	const requiresThumbnailComputation = (mediaType === 'image' || mediaType === 'video') &&
@@ -161,8 +215,8 @@ export const prepareWAMessageMedia = async(
 	const requiresOriginalForSomeProcessing = requiresDurationComputation || requiresThumbnailComputation
 	const {
 		mediaKey,
-		encWriteStream,
 		encFilePath,
+		originalFilePath,
 		fileEncSha256,
 		fileSha256,
 		fileLength,
@@ -180,7 +234,7 @@ export const prepareWAMessageMedia = async(
 	const [{ mediaUrl, directPath, handle }] = await Promise.all([
 		(async() => {
 			const result = await options.upload(
-				encWriteStream,
+				encFilePath,
 				{ fileEncSha256B64, mediaType, timeoutMs: options.mediaUploadTimeoutMs }
 			)
 			logger?.debug({ mediaType, cacheableKey }, 'uploaded media')
@@ -192,7 +246,7 @@ export const prepareWAMessageMedia = async(
 					const {
 						thumbnail,
 						originalImageDimensions
-					} = await generateThumbnail(encFilePath!, mediaType as 'image' | 'video', options)
+					} = await generateThumbnail(originalFilePath!, mediaType as 'image' | 'video', options)
 					uploadData.jpegThumbnail = thumbnail
 					if(!uploadData.width && originalImageDimensions) {
 						uploadData.width = originalImageDimensions.width
@@ -204,12 +258,12 @@ export const prepareWAMessageMedia = async(
 				}
 
 				if(requiresDurationComputation) {
-					uploadData.seconds = await getAudioDuration(encFilePath!)
+					uploadData.seconds = await getAudioDuration(originalFilePath!)
 					logger?.debug('computed audio duration')
 				}
 
 				if(requiresWaveformProcessing) {
-					uploadData.waveform = await getAudioWaveform(encFilePath!, logger)
+					uploadData.waveform = await getAudioWaveform(originalFilePath!, logger)
 					logger?.debug('processed waveform')
 				}
 
@@ -222,19 +276,18 @@ export const prepareWAMessageMedia = async(
 			}
 		})(),
 	])
-		.finally(
-			async() => {
-				if (!Buffer.isBuffer(encWriteStream)) {
-					encWriteStream.destroy()
-				}
+		.finally(async () => {
+		  try {
+			  await fs.unlink(encFilePath)
+			  if (originalFilePath) {
+				  await fs.unlink(originalFilePath)
+			  }
 
-				// remove tmp files
-				if(encFilePath) {
-					await fs.unlink(encFilePath)
-					logger?.debug('removed tmp files')
-				}
-			}
-		)
+			  logger?.debug('removed tmp files')
+		  } catch (error) {
+			  logger?.warn('failed to remove tmp file')
+		  }
+	  })
 
 	const obj = WAProto.Message.fromObject({
 		[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject(
