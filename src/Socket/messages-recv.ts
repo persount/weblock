@@ -858,6 +858,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							}
 							msg.participant ??= node.attrs.participant
 							msg.messageTimestamp = +node.attrs.t
+							console.log(JSON.stringify(node, null, 2))
 
 							const fullMsg = proto.WebMessageInfo.fromObject(msg)
 							await upsertMessage(fullMsg, 'append')

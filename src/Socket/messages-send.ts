@@ -411,7 +411,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			// when the retry request is not for a group
 			// only send to the specific device that asked for a retry
 			// otherwise the message is sent out to every device that should be a recipient
-			if(!isGroup && !isStatus && !isBroadcast) {
+			if(!isGroup && !isStatus) {
 				additionalAttributes = { ...additionalAttributes, 'device_fanout': 'false' }
 			}
 
@@ -734,7 +734,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     } else if(msg.eventMessage) {
       return 'event'
 		} else if(msg.listMessage) {
-      return 'list'
+      return 'product_list'
 		} else {
 			return 'text'
 		}
@@ -749,7 +749,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     } else if(msg.eventMessage) {
       return 'event'
 		} else if(msg.listMessage) {
-      return 'list'
+      return 'product_list'
 		} else if(getMediaType(msg)) {
 			return 'media'
 		} else {
