@@ -390,10 +390,10 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 		msgId = msgId || customMessageID() || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
-		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus && !isBroadcast
+		useCachedGroupMetadata = useCachedGroupMetadata !== false && (!isStatus || !isBroadcast)
 
 		const participants: BinaryNode[] = []
-		const destinationJid = (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBroadcast ? 'broadcast' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
+		const destinationJid = isBroadcast ? jidEncode(user, 'broadcast') : (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
 		const binaryNodeContent: BinaryNode[] = []
 		const devices: JidWithDevice[] = []
 
@@ -443,7 +443,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 							return groupData
 						})(),
 						(async() => {
-							if(!participant && !isStatus && !isBroadcast) {
+							if(!participant && (!isStatus || !isBroadcast)) {
 								const result = await authState.keys.get('sender-key-memory', [jid])
 								return result[jid] || { }
 							}
@@ -454,8 +454,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					if(!participant) {
 						const participantsList = (groupData && !isStatus && !isBroadcast) ? groupData.participants.map(p => p.id) : []
-						if((isStatus || isBroadcast) && statusJidList) {
+						if(isStatus && statusJidList) {
 							participantsList.push(...statusJidList)
+						}
+						
+						if(isBroadcast && statusJidList) {
+						  participantsList.push(...statusJidList)
 						}
 
 						if(!isStatus) {
@@ -733,8 +737,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       return 'poll'
     } else if(msg.eventMessage) {
       return 'event'
-		} else if(msg.listMessage) {
-      return 'product_list'
 		} else {
 			return 'text'
 		}
@@ -748,8 +750,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       return 'reaction'
     } else if(msg.eventMessage) {
       return 'event'
-		} else if(msg.listMessage) {
-      return 'product_list'
 		} else if(getMediaType(msg)) {
 			return 'media'
 		} else {
