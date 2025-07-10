@@ -111,14 +111,13 @@ export function decodeMessageNode(
 		broadcast: isJidBroadcast(from),
 	}
 	
-	if(stanza) {
+	if(fullMessage && stanza) {
 	  fullMessage.stanza = stanza
 	}
 	
 	if(msgType === 'newsletter') {
-	  fullMessage.newsletter = true
 		fullMessage.newsletterServerId = +stanza.attrs?.server_id
-		key.server_id = +stanza.attrs?.server_id
+		key.server_id = stanza.attrs?.server_id
 	}
 
 	if(key.fromMe) {
