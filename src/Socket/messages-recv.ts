@@ -838,6 +838,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const handleNotification = async(node: BinaryNode) => {
 		const remoteJid = node.attrs.from
 		const mode = node.attrs.addressing_mode
+		const content = node.attrs.content
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
 			logger.debug({ remoteJid, id: node.attrs.id }, 'ignored notification')
 			await sendMessageAck(node)
@@ -860,7 +861,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							}
 							msg.participant ??= mode === 'lid' ? node.attrs.participant_pn : node.attrs.participant
 							msg.messageTimestamp = +node.attrs.t
-							msg.messageStubParameters = node.attrs.content ?? []
+							msg.messageStubParameters = (msg.messageStubParameters as BinaryNode[]).push(...content) ?? []
 
 							const fullMsg = proto.WebMessageInfo.fromObject(msg)
 							await upsertMessage(fullMsg, 'append')
