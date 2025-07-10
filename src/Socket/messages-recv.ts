@@ -978,7 +978,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                       result = metadata.participants.find(({ lid }) => lid === id)
                       mentions.push(result.id) 
                    }
-                   if (msgType === 'conversation')
+                   if (msgType === 'conversation') {
                      content?.contextInfo?.mentionedJid = mentions
                    } else {
                      message[msgType].contextInfo.mentionedJid = mentions
@@ -990,14 +990,14 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                  const senderPn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn) 
                  msg.key.remoteJid = senderPn
                  if (message?.contextInfo?.participant) {
-                   if (msgType === 'conversation')
+                   if (msgType === 'conversation') {
                      content.contextInfo.participant = senderPn
                    } else {
                      message.contextInfo.participant = senderPn
                    }
                  }
                  if (message?.contextInfo?.mentionedJid?.length > 0) {
-                   if (msgType === 'conversation')
+                   if (msgType === 'conversation') {
                      content?.contextInfo?.mentionedJid = [senderPn]
                    } else {
                      message[msgType].contextInfo.mentionedJid = [senderPn]
