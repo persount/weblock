@@ -507,6 +507,10 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const [child] = getAllBinaryNodeChildren(node)
 		const nodeType = node.attrs.type
 		const from = jidNormalizedUser(node.attrs.from)
+		const senderJid = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
+		const metadata = isJidGroup(from) ? await groupMetadata(from) : null
+    const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
+    const participant = participants.id || senderJid
 
 		switch (nodeType) {
 		case 'privacy_token':
@@ -531,7 +535,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			handleMexNewsletterNotification(node.attrs.from, child)
 			break
 		case 'w:gp2':
-			handleGroupNotification(node.attrs.participant, child, result)
+			handleGroupNotification(participant, child, result)
 			break
 		case 'mediaretry':
 			const event = decodeMediaRetryNode(node)
@@ -747,7 +751,10 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const handleReceipt = async(node: BinaryNode) => {
 		const { attrs, content } = node
 		const isLid = attrs.from.includes('lid')
-		const participant = attrs.sender_pn || attrs.participant_pn || attrs.participant
+		const senderJid = attrs.sender_pn || attrs.participant_pn || attrs.participant
+		const metadata = isJidGroup(attrs.from) ? await groupMetadata(attrs.from) : null
+    const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
+    const participant = participants.id || senderJid
 		const isNodeFromMe = areJidsSameUser(participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
 		const mode = node.attrs.addressing_mode
 		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.peer_recipient_pn ? attrs.peer_recipient_pn : attrs.recipient
@@ -844,8 +851,10 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const handleNotification = async(node: BinaryNode) => {
 		const remoteJid = node.attrs.from
 		const mode = node.attrs.addressing_mode
-		const participant = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
-		const content = node.attrs.content
+		const senderJid = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
+		const metadata = isJidGroup(node.attrs.from) ? await groupMetadata(node.attrs.from) : null
+    const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
+    const participant = participants.id || senderJid
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
 			logger.debug({ remoteJid, id: node.attrs.id }, 'ignored notification')
 			await sendMessageAck(node)
@@ -960,49 +969,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 						} else {
 							// no type in the receipt => message delivered
 							let type: MessageReceiptType = undefined
-							const content = normalizeMessageContent(msg.message)  
-              const msgType = getContentType(content)
-              const message = content[msgType]
               if (node.attrs?.addressing_mode === 'lid' && isJidGroup(node.attrs.from)) {
                 const metadata = await groupMetadata(node.attrs.from) 
                 let result = metadata.participants.find(({ lid }) => lid === node.attrs.participant)
 
-                msg?.key?.participant = result.id
-
-                if (message?.contextInfo?.participant) {
-                   message.contextInfo.participant = result.id
-                }
-                if (message?.contextInfo?.mentionedJid?.length > 0) {
-                   let mentions = []
-                   for (const id of message.contextInfo.mentionedJid) {
-                      result = metadata.participants.find(({ lid }) => lid === id)
-                      mentions.push(result.id) 
-                   }
-                   if (msgType === 'conversation') {
-                     content?.contextInfo?.mentionedJid = mentions
-                   } else {
-                     message?.contextInfo?.mentionedJid = mentions
-                   }
-                }
-              }
-                        
-              if (!isJidGroup(node.attrs.from) && isLidUser(jidNormalizedUser(node.attrs.from))) {
-                 const senderPn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn) 
-                 msg.key.remoteJid = senderPn
-                 if (message?.contextInfo?.participant) {
-                   if (msgType === 'conversation') {
-                     content?.contextInfo?.participant = senderPn
-                   } else {
-                     message?.contextInfo?.participant = senderPn
-                   }
-                 }
-                 if (message?.contextInfo?.mentionedJid?.length > 0) {
-                   if (msgType === 'conversation') {
-                     content?.contextInfo?.mentionedJid = [senderPn]
-                   } else {
-                     message?.contextInfo?.mentionedJid = [senderPn]
-                   }
-                 }
+                msg?.key?.participant = result?.id
               }
               
 							let participant = msg.key.participant
