@@ -340,8 +340,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		child: BinaryNode,
 		msg: Partial<proto.IWebMessageInfo>
 	) => {
-	  const groups = getBinaryNodeChild(child, 'participant')
-    const participantJid = isLidUser(groups?.attrs?.jid) ? groups?.attrs?.phone_number : groups?.attrs?.jid || participant
+	  const participantJid = isLidUser(getBinaryNodeChild(child, 'participant')?.attrs?.jid) ? participant : getBinaryNodeChild(child, 'participant')?.attrs?.jid || participant
 		switch (child?.tag) {
 		case 'create':
 			const metadata = extractGroupMetadata(child)
@@ -506,6 +505,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const processNotification = async(node: BinaryNode) => {
 		const result: Partial<proto.IWebMessageInfo> = { }
 		const [child] = getAllBinaryNodeChildren(node)
+		const mode = node.attrs.addressing_mode
 		const nodeType = node.attrs.type
 		const from = jidNormalizedUser(node.attrs.from)
 		const senderJid = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
@@ -752,12 +752,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const handleReceipt = async(node: BinaryNode) => {
 		const { attrs, content } = node
 		const isLid = attrs.from.includes('lid')
+		const mode = node.attrs.addressing_mode
 		const senderJid = attrs.sender_pn || attrs.participant_pn || attrs.participant
 		const metadata = mode === 'lid' && isJidGroup(attrs.from) ? await groupMetadata(attrs.from) : null
     const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
     const participant = participants?.id || senderJid
 		const isNodeFromMe = areJidsSameUser(participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
-		const mode = node.attrs.addressing_mode
 		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.peer_recipient_pn ? attrs.peer_recipient_pn : attrs.recipient
 		const fromMe = !attrs.recipient || (
 			(attrs.type === 'retry' || attrs.type === 'sender') 
