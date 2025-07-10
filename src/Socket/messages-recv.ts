@@ -973,7 +973,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                 const metadata = await groupMetadata(node.attrs.from) 
                 let result = metadata.participants.find(({ lid }) => lid === node.attrs.participant)
 
-                msg?.key?.participant = result?.id
+                msg.key.participant = result?.id
               }
               
 							let participant = msg.key.participant
