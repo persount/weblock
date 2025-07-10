@@ -108,7 +108,6 @@ export function decodeMessageNode(
 		messageTimestamp: +stanza.attrs.t,
 		pushName: pushname,
 		broadcast: isJidBroadcast(from),
-	  newsletter: isJidNewsletter(from),
 	}
 	
 	if(msgType === 'newsletter') {
@@ -118,15 +117,7 @@ export function decodeMessageNode(
 
 	if(key.fromMe) {
 		fullMessage.status = proto.WebMessageInfo.Status.SERVER_ACK
-		fullMessage.attrs = stanza.attrs
-		fullMessage.nodes = stanza
 	}
-	
-	if (!key.fromMe) {
-    fullMessage.platform = getDevice(key.id) 
-    fullMessage.attrs = stanza.attrs
-    fullMessage.nodes = stanza
-  }
 
 	return {
 		fullMessage,
