@@ -37,7 +37,8 @@ import {
 	getBinaryNodeChild,
 	getBinaryNodeChildBuffer,
 	getBinaryNodeChildren,
-	isJidGroup, isJidStatusBroadcast,
+	isJidGroup, 
+	isJidStatusBroadcast,
 	isJidUser,
 	jidDecode,
 	jidEncode,
@@ -754,7 +755,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			remoteJid,
 			id: '',
 			fromMe,
-			participant: mode === 'lid' ? attrs.participant_pn : attrs.participant
+			participant: attrs.participant
 		}
 
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
@@ -791,7 +792,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 										ids.map(id => ({
 											key: { ...key, id },
 											receipt: {
-												userJid: jidNormalizedUser(mode === 'lid' ? attrs.participant_pn : attrs.participant),
+												userJid: jidNormalizedUser(attrs.participant),
 												[updateKey]: +attrs.t
 											}
 										}))
@@ -855,11 +856,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							msg.key = {
 								remoteJid,
 								fromMe,
-								participant: mode === 'lid' ? node.attrs.participant_pn : node.attrs.participant,
+								participant: node.attrs.participant,
 								id: node.attrs.id,
 								...(msg.key || {})
 							}
-							msg.participant ??= mode === 'lid' ? node.attrs.participant_pn : node.attrs.participant
+							msg.participant ??= node.attrs.participant
 							msg.messageTimestamp = +node.attrs.t
 
 							const fullMsg = proto.WebMessageInfo.fromObject(msg)

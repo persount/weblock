@@ -149,7 +149,7 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
             await newsletterWMexQuery(jid, QueryIds.MUTE)
         },
 
-        newsletterCreate: async(name: string, description?: string, mode?: NewsletterReactionMode, picture?: WAMediaUpload) => {
+        newsletterCreate: async(name: string, description?: string, picture?: WAMediaUpload) => {
             await query({
                 tag: 'iq',
                 attrs: {
@@ -175,9 +175,9 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
                     description: description ?? null,
                     picture: picture ? (await generateProfilePicture(picture)).img.toString('base64') : null,
                     settings: {
-                        reaction_codes: { 
-                           value: mode || 'ALL' 
-                        }
+                       reaction_codes: { 
+                          value: 'ALL' 
+                       }
                     }
                 }
             })
@@ -269,18 +269,18 @@ export const extractNewsletterMetadata = (node: BinaryNode, isCreate?: boolean) 
     const metadata: NewsletterMetadata = {
         id: metadataPath.id,
         state: metadataPath.state.type,
-        creation_time: +metadataPath.thread_metadata.creation_time,
-        name: metadataPath.thread_metadata.name.text,
-        nameTime: +metadataPath.thread_metadata.name.update_time,
-        description: metadataPath.thread_metadata.description.text,
-        descriptionTime: +metadataPath.thread_metadata.description.update_time,
-        invite: metadataPath.thread_metadata.invite,
-        handle: metadataPath.thread_metadata.handle,
+        creation_time: +metadataPath.thread_metadata?.creation_time,
+        name: metadataPath.thread_metadata?.name?.text,
+        nameTime: +metadataPath.thread_metadata?.name?.update_time,
+        description: metadataPath.thread_metadata?.description?.text,
+        descriptionTime: +metadataPath.thread_metadata?.description?.update_time,
+        invite: metadataPath.thread_metadata?.invite,
+        handle: metadataPath.thread_metadata?.handle,
         picture: metadataPath.thread_metadata.picture?.direct_path || null,
         preview: metadataPath.thread_metadata.preview?.direct_path || null,
         reaction_codes: metadataPath.thread_metadata?.settings?.reaction_codes?.value,
-        subscribers: +metadataPath.thread_metadata.subscribers_count,
-        verification: metadataPath.thread_metadata.verification,
+        subscribers: +metadataPath.thread_metadata?.subscribers_count,
+        verification: metadataPath.thread_metadata?.verification,
         viewer_metadata: metadataPath.viewer_metadata
     }
 

@@ -386,14 +386,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const isLid = server === 'lid'
     const isPerson = server === 's.whatsapp.net'
     const isBot = server === 'bot'
-    const isBroadcast = server === 'broadcast'
 
 		msgId = msgId || customMessageID() || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
-		useCachedGroupMetadata = useCachedGroupMetadata !== false && (!isStatus || !isBroadcast)
+		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
 		const participants: BinaryNode[] = []
-		const destinationJid = isBroadcast ? jidEncode(user, 'broadcast') : (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
+		const destinationJid =  (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
 		const binaryNodeContent: BinaryNode[] = []
 		const devices: JidWithDevice[] = []
 
@@ -429,7 +428,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					extraAttrs['decrypt-fail'] = 'hide'
 				}
 
-				if(isGroup || isStatus || isBroadcast) {
+				if(isGroup || isStatus) {
 					const [groupData, senderKeyMap] = await Promise.all([
 						(async() => {
 							let groupData = useCachedGroupMetadata && cachedGroupMetadata ? await cachedGroupMetadata(jid) : undefined
@@ -443,7 +442,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 							return groupData
 						})(),
 						(async() => {
-							if(!participant && (!isStatus || !isBroadcast)) {
+							if(!participant && !isStatus) {
 								const result = await authState.keys.get('sender-key-memory', [jid])
 								return result[jid] || { }
 							}
@@ -453,13 +452,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					])
 
 					if(!participant) {
-						const participantsList = (groupData && !isStatus && !isBroadcast) ? groupData.participants.map(p => p.id) : []
+						const participantsList = (groupData && !isStatus) ? groupData.participants.map(p => p.id) : []
 						if(isStatus && statusJidList) {
 							participantsList.push(...statusJidList)
-						}
-						
-						if(isBroadcast && statusJidList) {
-						  participantsList.push(...statusJidList)
 						}
 
 						if(!isStatus) {
@@ -698,7 +693,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            logger.debug({ jid }, 'adding business node')
         } 
             
-        if(isPerson || isLid || isBroadcast || isBot) {
+        if(!isGroup || !isNewsletter || !isStatus) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
              stanza.content = []
            }
