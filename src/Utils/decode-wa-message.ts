@@ -42,21 +42,24 @@ export function decodeMessageNode(
 
 	const msgId = stanza.attrs.id
 	const from = stanza.attrs.from
-	const participant: string | undefined = stanza.attrs.participant
+	const mode: string | undefined = stanza.attrs.addressing_mode
+	const participant: string | undefined = mode === 'lid' ? stanza.attrs.participant_pn : stanza.attrs.participant
 	const recipient: string | undefined = stanza.attrs.recipient
 
 	const isMe = (jid: string) => areJidsSameUser(jid, meId)
 	const isMeLid = (jid: string) => areJidsSameUser(jid, meLid)
 
 	if(isJidUser(from) || isLidUser(from)) {
-		if (recipient && !isJidMetaIa(recipient)) {
+		if (isJidMetaIa(from)) {
+		 /*
 			if(!isMe(from) && !isMeLid(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
 			}
+	  */
 
-			chatId = recipient
+			chatId = participant
 		} else {
-			chatId = from
+			chatId = mode === 'lid' ? participant : from
 		}
 
 		msgType = 'chat'
@@ -86,7 +89,7 @@ export function decodeMessageNode(
 		}
 
 		chatId = from
-		author = participant
+		author = recipient
 	} else {
 		throw new Boom('Unknown message type', { data: stanza })
 	}
@@ -108,9 +111,14 @@ export function decodeMessageNode(
 		broadcast: isJidBroadcast(from),
 	}
 	
-	if (msgType === 'newsletter') {
+	if(stanza) {
+	  fullMessage.stanza = stanza
+	}
+	
+	if(msgType === 'newsletter') {
+	  fullMessage.newsletter = true
 		fullMessage.newsletterServerId = +stanza.attrs?.server_id
-		key.server_id = stanza.attrs?.server_id
+		key.server_id = +stanza.attrs?.server_id
 	}
 
 	if(key.fromMe) {
