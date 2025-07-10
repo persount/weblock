@@ -40,6 +40,7 @@ import {
 	getBinaryNodeChildBuffer,
 	getBinaryNodeChildren,
 	isJidGroup, 
+	isJidUser,
 	isJidStatusBroadcast,
 	isJidUser,
 	jidDecode,
@@ -961,22 +962,27 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							let type: MessageReceiptType = undefined
 							const content = normalizeMessageContent(msg.message)  
               const msgType = getContentType(content)
-              if (node.attrs?.addressing_mode === 'lid') {
+              const message: proto.IMessage = content[msgType]
+              if (node.attrs?.addressing_mode === 'lid' && isJidGroup(node.attrs.from)) {
                 const metadata = await groupMetadata(node.attrs.from) 
                 let result = metadata.participants.find(({ lid }) => lid === node.attrs.participant)
 
-                msg.key.participant = result.id
+                msg?.key?.participant = result.id
 
                 if (message?.contextInfo?.participant) {
-                   msg.message[msgType].contextInfo.participant = result.id
+                   message.contextInfo.participant = result.id
                 }
                 if (message?.contextInfo?.mentionedJid?.length > 0) {
                    let mentions = []
                    for (const id of message.contextInfo.mentionedJid) {
                       result = metadata.participants.find(({ lid }) => lid === id)
-                         mentions.push(result.id) 
+                      mentions.push(result.id) 
                    }
-                   msg.message[msgType].contextInfo.mentionedJid = mentions
+                   if (msgType === 'conversation')
+                     content?.contextInfo?.mentionedJid = mentions
+                   } else {
+                     message[msgType].contextInfo.mentionedJid = mentions
+                   }
                 }
               }
                         
@@ -984,10 +990,18 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                  const senderPn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn) 
                  msg.key.remoteJid = senderPn
                  if (message?.contextInfo?.participant) {
-                   msg.message[msgType].contextInfo.participant = senderPn
+                   if (msgType === 'conversation')
+                     content.contextInfo.participant = senderPn
+                   } else {
+                     message.contextInfo.participant = senderPn
+                   }
                  }
                  if (message?.contextInfo?.mentionedJid?.length > 0) {
-                   msg.message[msgType].contextInfo.mentionedJid = [senderPn]
+                   if (msgType === 'conversation')
+                     content?.contextInfo?.mentionedJid = [senderPn]
+                   } else {
+                     message[msgType].contextInfo.mentionedJid = [senderPn]
+                   }
                  }
               }
               
