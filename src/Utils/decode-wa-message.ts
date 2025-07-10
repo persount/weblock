@@ -44,8 +44,8 @@ export function decodeMessageNode(
 	const msgId = stanza.attrs.id
 	const from = stanza.attrs.from
 	const mode: string | undefined = stanza.attrs.addressing_mode
-	const participant: string | undefined = stanza.attrs.sender_pn || stanza.attrs.participant_pn || stanza.attrs.participant
-	const recipient: string | undefined = stanza.attrs.peer_recipient_pn || stanza.attrs.recipient
+	const participant: string | undefined = mode === 'lid' ? stanza.attrs.participant_pn : stanza.attrs.participant
+	const recipient: string | undefined = mode === 'lid' ? stanza.attrs.peer_recipient_pn : stanza.attrs.recipient
 
 	const isMe = (jid: string) => areJidsSameUser(jid, meId)
 	const isMeLid = (jid: string) => areJidsSameUser(jid, meLid)
