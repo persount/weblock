@@ -743,6 +743,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const { attrs, content } = node
 		const isLid = attrs.from.includes('lid')
 		const isNodeFromMe = areJidsSameUser(attrs.participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
+		const mode = node.attrs.addressing_mode
 		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.recipient
 		const fromMe = !attrs.recipient || (
 			(attrs.type === 'retry' || attrs.type === 'sender') 
@@ -753,7 +754,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			remoteJid,
 			id: '',
 			fromMe,
-			participant: attrs.participant
+			participant: mode === 'lid' ? attrs.participant_pn : attrs.participant
 		}
 
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
@@ -783,14 +784,14 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							)
 						) {
 							if(isJidGroup(remoteJid) || isJidStatusBroadcast(remoteJid)) {
-								if(attrs.participant) {
+								if(attrs.participant_pn || attrs.participant) {
 									const updateKey: keyof MessageUserReceipt = status === proto.WebMessageInfo.Status.DELIVERY_ACK ? 'receiptTimestamp' : 'readTimestamp'
 									ev.emit(
 										'message-receipt.update',
 										ids.map(id => ({
 											key: { ...key, id },
 											receipt: {
-												userJid: jidNormalizedUser(attrs.participant),
+												userJid: jidNormalizedUser(mode === 'lid' ? attrs.participant_pn : attrs.participant),
 												[updateKey]: +attrs.t
 											}
 										}))
@@ -859,7 +860,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							}
 							msg.participant ??= mode === 'lid' ? node.attrs.participant_pn : node.attrs.participant
 							msg.messageTimestamp = +node.attrs.t
-							msg.stanza = node
+							msg.messageStubParameters = msg.messageStubParameters || (msg.messageStubParameters as string[]).push(node) || []
 
 							const fullMsg = proto.WebMessageInfo.fromObject(msg)
 							await upsertMessage(fullMsg, 'append')
