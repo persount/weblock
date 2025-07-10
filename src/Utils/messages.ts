@@ -751,7 +751,7 @@ export const generateWAMessageContent = async(
 			    name,
 			    publisher,
 			    stickerPackId,
-			    caption: message.caption || caption,
+			    caption,
 		    	packDescription: description,
 		    	stickerPackOrigin: WAProto.Message.StickerPackMessage.StickerPackOrigin.THIRD_PARTY,
 			    stickerPackSize,
