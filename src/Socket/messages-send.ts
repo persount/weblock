@@ -386,6 +386,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const isLid = server === 'lid'
     const isPerson = server === 's.whatsapp.net'
     const isBot = server === 'bot'
+    const isBroadcast = server === 'broadcast'
 
 		msgId = msgId || customMessageID() || generateMessageID()
 		useUserDevicesCache = useUserDevicesCache !== false
@@ -693,7 +694,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            logger.debug({ jid }, 'adding business node')
         } 
             
-        if(!isGroup || !isNewsletter || !isStatus) {
+        if(isPerson || isLid || isBot || (!isStatus && isBroadcast)) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
              stanza.content = []
            }
