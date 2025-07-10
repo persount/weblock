@@ -44,8 +44,8 @@ export function decodeMessageNode(
 	const msgId = stanza.attrs.id
 	const from = stanza.attrs.from
 	const mode: string | undefined = stanza.attrs.addressing_mode
-	const participant: string | undefined = stanza.attrs.participant
-	const recipient: string | undefined = stanza.attrs.recipient
+	const participant: string | undefined = stanza.attrs.sender_pn || stanza.attrs.participant_pn || stanza.attrs.participant
+	const recipient: string | undefined = stanza.attrs.peer_recipient_pn || stanza.attrs.recipient
 
 	const isMe = (jid: string) => areJidsSameUser(jid, meId)
 	const isMeLid = (jid: string) => areJidsSameUser(jid, meLid)
@@ -88,7 +88,7 @@ export function decodeMessageNode(
 		}
 
 		chatId = from
-		author = recipient
+		author = from
 	} else {
 		throw new Boom('Unknown message type', { data: stanza })
 	}
@@ -108,7 +108,7 @@ export function decodeMessageNode(
 		messageTimestamp: +stanza.attrs.t,
 		pushName: pushname,
 		broadcast: isJidBroadcast(from),
-		fullMessage.newsletter = isJidNewsletter(from),
+	  newsletter: isJidNewsletter(from),
 	}
 	
 	if(msgType === 'newsletter') {
