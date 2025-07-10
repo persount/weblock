@@ -4,6 +4,7 @@ import { ILogger } from './logger'
 import { SignalRepository, WAMessageKey } from '../Types'
 import { areJidsSameUser, BinaryNode, isJidBroadcast, isJidGroup, isJidMetaIa, isJidNewsletter, isJidStatusBroadcast, isJidUser, isLidUser } from '../WABinary'
 import { unpadRandomMax16 } from './generics'
+import { getDevice } from './messages'
 
 export const NO_MESSAGE_FOUND_ERROR_TEXT = 'Message absent from node'
 
@@ -43,23 +44,21 @@ export function decodeMessageNode(
 	const msgId = stanza.attrs.id
 	const from = stanza.attrs.from
 	const mode: string | undefined = stanza.attrs.addressing_mode
-	const participant: string | undefined = mode === 'lid' ? stanza.attrs.participant_pn : stanza.attrs.participant
+	const participant: string | undefined = stanza.attrs.participant
 	const recipient: string | undefined = stanza.attrs.recipient
 
 	const isMe = (jid: string) => areJidsSameUser(jid, meId)
 	const isMeLid = (jid: string) => areJidsSameUser(jid, meLid)
 
 	if(isJidUser(from) || isLidUser(from)) {
-		if (isJidMetaIa(from)) {
-		 /*
+		if (recipient) {		 
 			if(!isMe(from) && !isMeLid(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
 			}
-	  */
-
-			chatId = participant
+						
+			chatId = recipient
 		} else {
-			chatId = mode === 'lid' ? participant : from
+			chatId = from
 		}
 
 		msgType = 'chat'
@@ -109,6 +108,7 @@ export function decodeMessageNode(
 		messageTimestamp: +stanza.attrs.t,
 		pushName: pushname,
 		broadcast: isJidBroadcast(from),
+		fullMessage.newsletter = isJidNewsletter(from),
 	}
 	
 	if(msgType === 'newsletter') {
@@ -118,11 +118,18 @@ export function decodeMessageNode(
 
 	if(key.fromMe) {
 		fullMessage.status = proto.WebMessageInfo.Status.SERVER_ACK
+		fullMessage.attrs = stanza.attrs
+		fullMessage.nodes = stanza
 	}
+	
+	if (!key.fromMe) {
+    fullMessage.platform = getDevice(key.id) 
+    fullMessage.attrs = stanza.attrs
+    fullMessage.nodes = stanza
+  }
 
 	return {
 		fullMessage,
-		stanza,
 		author,
 		sender: msgType === 'chat' ? author : chatId
 	}
