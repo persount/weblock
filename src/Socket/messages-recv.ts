@@ -510,7 +510,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const senderJid = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
 		const metadata = isJidGroup(from) ? await groupMetadata(from) : null
     const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
-    const participant = participants.id || senderJid
+    const participant = participants?.id || senderJid
 
 		switch (nodeType) {
 		case 'privacy_token':
@@ -754,7 +754,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const senderJid = attrs.sender_pn || attrs.participant_pn || attrs.participant
 		const metadata = isJidGroup(attrs.from) ? await groupMetadata(attrs.from) : null
     const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
-    const participant = participants.id || senderJid
+    const participant = participants?.id || senderJid
 		const isNodeFromMe = areJidsSameUser(participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
 		const mode = node.attrs.addressing_mode
 		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.peer_recipient_pn ? attrs.peer_recipient_pn : attrs.recipient
@@ -854,7 +854,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const senderJid = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
 		const metadata = isJidGroup(node.attrs.from) ? await groupMetadata(node.attrs.from) : null
     const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
-    const participant = participants.id || senderJid
+    const participant = participants?.id || senderJid
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
 			logger.debug({ remoteJid, id: node.attrs.id }, 'ignored notification')
 			await sendMessageAck(node)
