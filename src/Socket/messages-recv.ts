@@ -340,7 +340,8 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		child: BinaryNode,
 		msg: Partial<proto.IWebMessageInfo>
 	) => {
-	    const participantJid = getBinaryNodeChild(child, 'participant')?.attrs?.jid || participant
+	  const groups = getBinaryNodeChild(child, 'participant')
+    const participantJid = isLidUser(groups?.attrs?.jid) ? groups?.attrs?.phone_number : groups?.attrs?.jid || participant
 		switch (child?.tag) {
 		case 'create':
 			const metadata = extractGroupMetadata(child)
@@ -369,7 +370,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			}
 			break
 		case 'modify':
-			const oldNumber = getBinaryNodeChildren(child, 'participant').map(p => p.attrs.jid)
+			const oldNumber = getBinaryNodeChildren(child, 'participant').map(p => isLidUser(p.attrs.jid) ? p.attrs.phone_number : p.attrs.jid)
 			msg.messageStubParameters = oldNumber || []
 			msg.messageStubType = WAMessageStubType.GROUP_PARTICIPANT_CHANGE_NUMBER
 			break
@@ -381,7 +382,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			const stubType = `GROUP_PARTICIPANT_${child.tag.toUpperCase()}`
 			msg.messageStubType = WAMessageStubType[stubType]
 
-			const participants = getBinaryNodeChildren(child, 'participant').map(p => p.attrs.jid)
+			const participants = getBinaryNodeChildren(child, 'participant').map(p => isLidUser(p.attrs.jid) ? p.attrs.phone_number : p.attrs.jid)
 			if(
 				participants.length === 1 &&
 					// if recv. "remove" message and sender removed themselves
@@ -508,7 +509,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const nodeType = node.attrs.type
 		const from = jidNormalizedUser(node.attrs.from)
 		const senderJid = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
-		const metadata = isJidGroup(from) ? await groupMetadata(from) : null
+		const metadata = mode === 'lid' && isJidGroup(from) ? await groupMetadata(from) : null
     const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
     const participant = participants?.id || senderJid
 
@@ -752,7 +753,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const { attrs, content } = node
 		const isLid = attrs.from.includes('lid')
 		const senderJid = attrs.sender_pn || attrs.participant_pn || attrs.participant
-		const metadata = isJidGroup(attrs.from) ? await groupMetadata(attrs.from) : null
+		const metadata = mode === 'lid' && isJidGroup(attrs.from) ? await groupMetadata(attrs.from) : null
     const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
     const participant = participants?.id || senderJid
 		const isNodeFromMe = areJidsSameUser(participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
@@ -852,7 +853,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const remoteJid = node.attrs.from
 		const mode = node.attrs.addressing_mode
 		const senderJid = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
-		const metadata = isJidGroup(node.attrs.from) ? await groupMetadata(node.attrs.from) : null
+		const metadata = mode === 'lid' && isJidGroup(node.attrs.from) ? await groupMetadata(node.attrs.from) : null
     const participants = metadata ? metadata.participants.find(({ lid }) => lid === senderJid) : null
     const participant = participants?.id || senderJid
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
