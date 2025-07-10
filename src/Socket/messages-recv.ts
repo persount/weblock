@@ -41,8 +41,8 @@ import {
 	getBinaryNodeChildren,
 	isJidGroup, 
 	isJidUser,
+	isLidUser,
 	isJidStatusBroadcast,
-	isJidUser,
 	jidDecode,
 	jidEncode,
 	jidNormalizedUser,
@@ -962,7 +962,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							let type: MessageReceiptType = undefined
 							const content = normalizeMessageContent(msg.message)  
               const msgType = getContentType(content)
-              const message: proto.IMessage = content[msgType]
+              const message = content[msgType]
               if (node.attrs?.addressing_mode === 'lid' && isJidGroup(node.attrs.from)) {
                 const metadata = await groupMetadata(node.attrs.from) 
                 let result = metadata.participants.find(({ lid }) => lid === node.attrs.participant)
@@ -981,7 +981,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                    if (msgType === 'conversation') {
                      content?.contextInfo?.mentionedJid = mentions
                    } else {
-                     message[msgType].contextInfo.mentionedJid = mentions
+                     message?.contextInfo?.mentionedJid = mentions
                    }
                 }
               }
@@ -991,16 +991,16 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                  msg.key.remoteJid = senderPn
                  if (message?.contextInfo?.participant) {
                    if (msgType === 'conversation') {
-                     content.contextInfo.participant = senderPn
+                     content?.contextInfo?.participant = senderPn
                    } else {
-                     message.contextInfo.participant = senderPn
+                     message?.contextInfo?.participant = senderPn
                    }
                  }
                  if (message?.contextInfo?.mentionedJid?.length > 0) {
                    if (msgType === 'conversation') {
                      content?.contextInfo?.mentionedJid = [senderPn]
                    } else {
-                     message[msgType].contextInfo.mentionedJid = [senderPn]
+                     message?.contextInfo?.mentionedJid = [senderPn]
                    }
                  }
               }
