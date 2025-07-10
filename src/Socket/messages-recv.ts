@@ -27,7 +27,9 @@ import {
 	NO_MESSAGE_FOUND_ERROR_TEXT,
 	unixTimestampSeconds,
 	xmppPreKey,
-	xmppSignedPreKey
+	xmppSignedPreKey,
+	normalizeMessageContent,
+  getContentType
 } from '../Utils'
 import { makeMutex } from '../Utils/make-mutex'
 import {
@@ -75,6 +77,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		createParticipantNodes,
 		getUSyncDevices,
 		sendPeerDataOperationMessage,
+		groupMetadata,
 	} = felz
 
 	/** this mutex ensures that each retryRequest will wait for the previous one to finish */
@@ -743,9 +746,10 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const handleReceipt = async(node: BinaryNode) => {
 		const { attrs, content } = node
 		const isLid = attrs.from.includes('lid')
-		const isNodeFromMe = areJidsSameUser(attrs.participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
+		const participant = attrs.sender_pn || attrs.participant_pn || attrs.participant
+		const isNodeFromMe = areJidsSameUser(participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
 		const mode = node.attrs.addressing_mode
-		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.recipient
+		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.peer_recipient_pn ? attrs.peer_recipient_pn : attrs.recipient
 		const fromMe = !attrs.recipient || (
 			(attrs.type === 'retry' || attrs.type === 'sender') 
 			&& isNodeFromMe
@@ -755,7 +759,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			remoteJid,
 			id: '',
 			fromMe,
-			participant: attrs.participant
+			participant
 		}
 
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
@@ -785,14 +789,14 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							)
 						) {
 							if(isJidGroup(remoteJid) || isJidStatusBroadcast(remoteJid)) {
-								if(attrs.participant_pn || attrs.participant) {
+								if(participant) {
 									const updateKey: keyof MessageUserReceipt = status === proto.WebMessageInfo.Status.DELIVERY_ACK ? 'receiptTimestamp' : 'readTimestamp'
 									ev.emit(
 										'message-receipt.update',
 										ids.map(id => ({
 											key: { ...key, id },
 											receipt: {
-												userJid: jidNormalizedUser(attrs.participant),
+												userJid: jidNormalizedUser(participant),
 												[updateKey]: +attrs.t
 											}
 										}))
@@ -839,6 +843,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const handleNotification = async(node: BinaryNode) => {
 		const remoteJid = node.attrs.from
 		const mode = node.attrs.addressing_mode
+		const participant = node.attrs.sender_pn || node.attrs.participant_pn || node.attrs.participant
 		const content = node.attrs.content
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
 			logger.debug({ remoteJid, id: node.attrs.id }, 'ignored notification')
@@ -856,11 +861,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							msg.key = {
 								remoteJid,
 								fromMe,
-								participant: node.attrs.participant,
+								participant,
 								id: node.attrs.id,
 								...(msg.key || {})
 							}
-							msg.participant ??= node.attrs.participant
+							msg.participant ??= participant
 							msg.messageTimestamp = +node.attrs.t
 
 							const fullMsg = proto.WebMessageInfo.fromObject(msg)
@@ -954,6 +959,38 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 						} else {
 							// no type in the receipt => message delivered
 							let type: MessageReceiptType = undefined
+							const content = normalizeMessageContent(msg.message)  
+              const msgType = getContentType(content)
+              if (node.attrs?.addressing_mode === 'lid') {
+                const metadata = await groupMetadata(node.attrs.from) 
+                let result = metadata.participants.find(({ lid }) => lid === node.attrs.participant)
+
+                msg.key.participant = result.id
+
+                if (message?.contextInfo?.participant) {
+                   msg.message[msgType].contextInfo.participant = result.id
+                }
+                if (message?.contextInfo?.mentionedJid?.length > 0) {
+                   let mentions = []
+                   for (const id of message.contextInfo.mentionedJid) {
+                      result = metadata.participants.find(({ lid }) => lid === id)
+                         mentions.push(result.id) 
+                   }
+                   msg.message[msgType].contextInfo.mentionedJid = mentions
+                }
+              }
+                        
+              if (!isJidGroup(node.attrs.from) && isLidUser(jidNormalizedUser(node.attrs.from))) {
+                 const senderPn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn) 
+                 msg.key.remoteJid = senderPn
+                 if (message?.contextInfo?.participant) {
+                   msg.message[msgType].contextInfo.participant = senderPn
+                 }
+                 if (message?.contextInfo?.mentionedJid?.length > 0) {
+                   msg.message[msgType].contextInfo.mentionedJid = [senderPn]
+                 }
+              }
+              
 							let participant = msg.key.participant
 							if(category === 'peer') { // special peer message
 								type = 'peer_msg'
