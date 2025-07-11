@@ -26,6 +26,9 @@ export import WAMessageStatus = proto.WebMessageInfo.Status
 export type WAMediaPayloadURL = { url: URL | string }
 export type WAMediaPayloadStream = { stream: Readable }
 export type WAMediaUpload = WAMediaPayloadURL | Buffer | WAMediaPayloadStream
+export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapshot, 'productImage'> & {
+    productImage: WAMediaUpload
+}
 /** Set of message types that are supported by the library */
 export type MessageType = keyof proto.Message
 
@@ -81,6 +84,7 @@ export interface Carousel {
    title?: string
    caption?: string
    footer?: string
+   businessOwnerJid?: string
    buttons?: proto.Message.InteractiveMessage.NativeFlowMessage.NativeFlowButton[]
 }
 
@@ -212,10 +216,6 @@ type SharePhoneNumber = {
 
 type RequestPhoneNumber = {
     requestPhoneNumber: boolean
-}
-
-export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapshot, 'productImage'> & {
-    productImage: WAMediaUpload
 }
 
 export type MediaType = keyof typeof MEDIA_HKDF_KEY_MAPPING
