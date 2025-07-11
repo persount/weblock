@@ -984,6 +984,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                     const result = participants.find(p => p.lid === (contextInfo.participant ?? node.attrs.participant))
 	                     contextInfo.participant = jidNormalizedUser(result?.id)
 	                  }
+	                  contextInfo.participant = contextInfo.participant
 	               }
 	            
 	               if(content && contextInfo && contextInfo.mentionedJid) {
@@ -1013,6 +1014,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                     if(contextInfo && contextInfo.participant && isLidUser(contextInfo.participant)) {
 	                        contextInfo.participant = sender_pn
 	                     }
+	                     contextInfo.participant = contextInfo.participant
 	                     
 	                     if(contextInfo.mentionedJid) {
 	                        let mentions: string[] = []
