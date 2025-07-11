@@ -63,7 +63,7 @@ const MIMETYPE_MAP: { [T in MediaType]?: string } = {
 	document: 'application/pdf',
 	audio: 'audio/ogg; codecs=opus',
 	sticker: 'image/webp',
-	'product-catalog-image': 'image/jpeg',
+	'product': 'image/jpeg',
 }
 
 const MessageTypeProto = {
@@ -72,7 +72,7 @@ const MessageTypeProto = {
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
   'document': WAProto.Message.DocumentMessage,
-  'product-catalog-image': WAProto.Message.ImageMessage,
+  'product': WAProto.Message.ProductMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -182,16 +182,16 @@ export const prepareWAMessageMedia = async(
 		})
 
 		await fs.unlink(filePath)
-
+		
 		const obj = WAProto.Message.fromObject({
-			[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
+		  [`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
 				url: mediaUrl,
 				directPath,
-				fileSha256,
-				fileLength,
+			  fileSha256,
+		    fileLength,
 				...uploadData,
 				media: undefined
-			})
+		  })
 		})
 
 		if (uploadData.ptv) {
@@ -222,7 +222,7 @@ export const prepareWAMessageMedia = async(
 		fileSha256,
 		fileLength,
 	} = await (options.newsletter ? prepareStream : encryptedStream)(
-		uploadData.media,
+		mediaType === product ? uploadData.media[mediaType].productImage : uploadData.media,
 		options.mediaTypeOverride || mediaType,
 		{
 			logger,
@@ -290,21 +290,37 @@ export const prepareWAMessageMedia = async(
 		  }
 	  })
 
-	const obj = WAProto.Message.fromObject({
-		[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject(
-			{
-				url:  handle ? undefined : mediaUrl,
-				directPath,
-				mediaKey: mediaKey,
-				fileEncSha256: fileEncSha256,
-				fileSha256,
+	let obj
+		
+  if(mediaType === 'product') {
+		obj = WAProto.Message.ProductMessage.fromObject({
+		  ...uploadData,
+		  [`${mediaType}`]: {
+				...uploadData.product,
+		    productImage: MessageTypeProto[mediaType].ProductSnapshot.fromObject({
+		       url: mediaUrl,
+	  	     directPath,
+			     fileSha256,
+			     fileLength,
+				   ...uploadData,
+				   ...uploadData.product,
+				   ...uploadData.product.productImage,
+				   media: undefined
+		    })
+		  }
+	  })
+  } else {
+		obj = WAProto.Message.fromObject({
+		 	[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
+		    url: mediaUrl,
+	  	  directPath,
+			  fileSha256,
 				fileLength,
-				mediaKeyTimestamp: handle ? undefined : unixTimestampSeconds(),
 				...uploadData,
 				media: undefined
-			}
-		)
-	})
+			})
+		})
+  }
 
 	if(uploadData.ptv) {
 		obj.ptvMessage = obj.videoMessage
@@ -1061,21 +1077,15 @@ export const generateWAMessageContent = async(
     if('cards' in message && !!message.cards) {
         const slides = await Promise.all(
            message.cards.map(async slide => {              
-              const { image, video, product, title, caption, footer, buttons } = slide           
+              const { image, video, product, businessOwnerJid, title, caption, footer, buttons } = slide           
               let header
               if(product) {
-                 const { imageMessage } = await prepareWAMessageMedia(
-                     { image: product.productImage, ...options }, 
-                     options
+                 const msg = await prepareWAMessageMedia(
+                     { product: msg.product, businessOwnerJid, ...slide, ...options }, 
+                     { ...options, mediaTypeOverride: 'image' }
                  );
 		             header = {
-		                 productMesage: WAProto.Message.ProductMessage.fromObject({
-			                   product: {
-			                       ...product,
-				                     productImage: imageMessage,
-			                   },
-			                   ...slide
-		                 })
+		                 productMesage: WAProto.Message.ProductMessage.fromObject(product)
 		             }
               } else if(image) {
                  header = await prepareWAMessageMedia(
@@ -1273,12 +1283,7 @@ export const generateWAMessageFromContent = (
         }
 		}
 		
-		let contextInfo: proto.IContextInfo
-		if(key === 'requestPaymentMessage') {
-		   contextInfo = requestPayment.contextInfo
-		} else {
-		   contextInfo = innerMessage[key].contextInfo
-    }
+		let contextInfo: proto.IContextInfo = (key === 'requestPaymentMessage' ? requestPayment?.contextInfo : innerMessage[key].contextInfo) || { }
     
 		contextInfo.participant = jidNormalizedUser(participant!)
 		contextInfo.stanzaId = quoted.key.id
@@ -1363,7 +1368,7 @@ export const generateWAMessage = async(
 export const getContentType = (content: WAProto.IMessage | undefined) => {
 	if(content) {
 		const keys = Object.keys(content)
-		const key = keys.find(k => (k === 'conversation' || k.includes('Message')) && k !== 'senderKeyDistributionMessage')
+		const key = keys.find(k => (k === 'conversation' || k.includes('Message') || k.endsWith('V2') || k.endsWith('V3') || k.endsWith('V4') || k.endsWith('V5')) && k !== 'senderKeyDistributionMessage')
 		return key as keyof typeof content
 	}
 }
