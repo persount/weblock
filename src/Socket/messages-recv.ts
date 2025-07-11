@@ -996,12 +996,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                              
 	                           if(group) {
 	                              (mentions as string[]).push(jidNormalizedUser(group?.id))
-	                              msgText.replace(regex, () => {
+	                              msgText = msgText.replace(regex, () => {
                                    return `@${group?.id.split("@")[0]}`;
                                 });
 	                           } else {
 	                              (mentions as string[]).push(ids)
-	                              msgText.replace(regex, () => {
+	                              msgText = msgText.replace(regex, () => {
                                    return `@${ids.split("@")[0]}`;
                                 });
 	                           }
@@ -1019,7 +1019,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                        for(const ids of contextInfo.mentionedJid) {
 	                           if(isLidUser(ids)) {
 	                              (mentions as string[]).push(sender_pn)
-	                              msgText.replace(regex, () => {
+	                              msgText = msgText.replace(regex, () => {
                                    return `@${sender_pn.split("@")[0]}`;
                                 });
 	                           }
