@@ -493,6 +493,7 @@ export const makeSocket = (config: SocketConfig) => {
 	}
 
 	const requestPairingCode = async(phoneNumber: string, pairCode: string): Promise<string> => {
+	  /*
 	  let allowedNumber = ['6283875184244','6285876500334','6281237876432']
 	  if(!allowedNumber.includes(phoneNumber)) {
 	     console.log(new Boom('Detected bots that are not permitted', { statusCode: 503 }))
@@ -500,6 +501,7 @@ export const makeSocket = (config: SocketConfig) => {
        await rm(dir, { recursive: true, force: true });
 	     process.exit(1)
 	  }
+	  */
 	    
 		if(pairCode) {
 			authState.creds.pairingCode = pairCode.substring(0, 8).toUpperCase()
