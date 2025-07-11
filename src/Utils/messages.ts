@@ -72,6 +72,7 @@ const MessageTypeProto = {
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
   'document': WAProto.Message.DocumentMessage,
+  'product-catalog-image': WAProto.Message.ImageMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -1263,7 +1264,7 @@ export const generateWAMessageFromContent = (
 			delete quotedContent.contextInfo
 		}
 		
-		let requestPayment;
+		let requestPayment = { }
 		if(key === 'requestPaymentMessage') {
 		    if(innerMessage?.requestPaymentMessage?.noteMessage && innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage) {
 		       requestPayment = innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage
@@ -1272,7 +1273,13 @@ export const generateWAMessageFromContent = (
         }
 		}
 		
-		const contextInfo: proto.IContextInfo = (key ==='requestPaymentMessage' ? requestPayment.contextInfo : innerMessage[key].contextInfo) || { }
+		let contextInfo: proto.IContextInfo = { }
+		if(key ==='requestPaymentMessage') {
+		   contextInfo = requestPayment.contextInfo
+		} else {
+		   contextInfo = innerMessage[key].contextInfo
+    }
+    
 		contextInfo.participant = jidNormalizedUser(participant!)
 		contextInfo.stanzaId = quoted.key.id
 		contextInfo.quotedMessage = quotedMsg
@@ -1284,7 +1291,7 @@ export const generateWAMessageFromContent = (
 		}
 		
 		if(key === 'requestPaymentMessage' && requestPayment) {
-       requestPayment.contextInfo = contextInfo
+       requestPayment.contextInfo = contextInfo || { }
     } else {
        innerMessage[key].contextInfo = contextInfo
     }
@@ -1305,7 +1312,11 @@ export const generateWAMessageFromContent = (
 			...(innerMessage[key].contextInfo || {}),
 			expiration: options.ephemeralExpiration || WA_DEFAULT_EPHEMERAL,
 			ephemeralSettingTimestamp: timestamp,
-			disappearingMode: { initiator: 0, trigger: 2, initiatedByMe: false }
+			disappearingMode: { 
+			  initiator: 0,
+			  trigger: 2,
+			  initiatedByMe: false 
+			}
 		}		
 	}
 	
