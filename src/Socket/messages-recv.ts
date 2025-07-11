@@ -970,7 +970,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            if(node.attrs.addressing_mode === 'lid') {
 	               if(content && contextInfo && contextInfo.participant) {
 	                  if(isJidGroup(contextInfo.remoteJid || node.attrs.from) && isLidUser(contextInfo.participant)) {
-	                     const { participants } = await groupMetadata(contextInfo.remoteJid)!
+	                     const { participants } = await groupMetadata(contextInfo.remoteJid || node.attrs.from)!
 	                     const result = participants.find(p => p.lid === contextInfo.participant)
 	                     contextInfo.participant = jidNormalizedUser(result?.id)
 	                  }
@@ -978,12 +978,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            
 	               if(content && contextInfo && contextInfo.mentionedJid) {
 	                  if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
-	                     let mentions = []
+	                     let mentions: string[] = []
 	                     for(const ids of contextInfo.mentionedJid) {
 	                        if(isLidUser(ids)) {
-	                           const { participants } = await groupMetadata(contextInfo.remoteJid)!
+	                           const { participants } = await groupMetadata(contextInfo.remoteJid || node.attrs.from)!
 	                           const result = participants.find(p => p.lid === ids)
-	                           mentions.push(jidNormalizedUser(result?.id))
+	                           (mentions as string[]).push(jidNormalizedUser(result?.id))
 	                        }
 	                        contextInfo.mentionedJid = mentions
 	                     }
@@ -994,10 +994,10 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                     }
 	                     
 	                     if(contextInfo.mentionedJid) {
-	                        let mentions = []
+	                        let mentions: string[] = []
 	                        for(const ids of contextInfo.mentionedJid) {
 	                           if(isLidUser(ids)) {
-	                              mentions.push(sender_pn)
+	                              (mentions as string[]).push(sender_pn)
 	                           }
 	                           contextInfo.mentionedJid = mentions
 	                        }
