@@ -63,7 +63,7 @@ const MIMETYPE_MAP: { [T in MediaType]?: string } = {
 	document: 'application/pdf',
 	audio: 'audio/ogg; codecs=opus',
 	sticker: 'image/webp',
-	'product': 'image/jpeg',
+	'product-catalog-image': 'image/jpeg',
 }
 
 const MessageTypeProto = {
@@ -72,7 +72,7 @@ const MessageTypeProto = {
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
   'document': WAProto.Message.DocumentMessage,
-  'product': WAProto.Message.ProductMessage,
+  'product-catalog-image': WAProto.Message.ImageMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -222,7 +222,7 @@ export const prepareWAMessageMedia = async(
 		fileSha256,
 		fileLength,
 	} = await (options.newsletter ? prepareStream : encryptedStream)(
-		mediaType === product ? uploadData.media[mediaType].productImage : uploadData.media,
+		uploadData.media,
 		options.mediaTypeOverride || mediaType,
 		{
 			logger,
@@ -290,37 +290,16 @@ export const prepareWAMessageMedia = async(
 		  }
 	  })
 
-	let obj
-		
-  if(mediaType === 'product') {
-		obj = WAProto.Message.ProductMessage.fromObject({
-		  ...uploadData,
-		  [`${mediaType}`]: {
-				...uploadData.product,
-		    productImage: MessageTypeProto[mediaType].ProductSnapshot.fromObject({
-		       url: mediaUrl,
-	  	     directPath,
-			     fileSha256,
-			     fileLength,
-				   ...uploadData,
-				   ...uploadData.product,
-				   ...uploadData.product.productImage,
-				   media: undefined
-		    })
-		  }
-	  })
-  } else {
-		obj = WAProto.Message.fromObject({
-		 	[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
-		    url: mediaUrl,
-	  	  directPath,
-			  fileSha256,
-				fileLength,
-				...uploadData,
-				media: undefined
-			})
+	const obj = WAProto.Message.fromObject({
+	 	[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
+		   url: mediaUrl,
+	  	 directPath,
+			 fileSha256,
+			 fileLength,
+			 ...uploadData,
+			 media: undefined
 		})
-  }
+  })
 
 	if(uploadData.ptv) {
 		obj.ptvMessage = obj.videoMessage
@@ -567,17 +546,17 @@ export const generateWAMessageContent = async(
             break        
 		}
    } else if('product' in message) {
-		const { imageMessage } = await prepareWAMessageMedia(
-			{ image: message?.product?.productImage },
-			options
-		)
-		m.productMessage = WAProto.Message.ProductMessage.fromObject({
-			...message,
-			product: {
-				...message.product,
-				productImage: imageMessage,
-			}
-		})
+		    const { imageMessage } = await prepareWAMessageMedia(
+			     { image: message?.product?.productImage },
+			     options
+		    )
+		    m.productMessage = WAProto.Message.ProductMessage.fromObject({
+			     ...message,
+			     product: {
+				      ...message.product,
+				      productImage: imageMessage,
+			     }
+		    })
 		
         if('contextInfo' in message && !!message.contextInfo) {
         	m.productMessage.contextInfo = message.contextInfo
@@ -1077,16 +1056,22 @@ export const generateWAMessageContent = async(
     if('cards' in message && !!message.cards) {
         const slides = await Promise.all(
            message.cards.map(async slide => {              
-              const { image, video, product, businessOwnerJid, title, caption, footer, buttons } = slide           
-              let header
+              const { image, video, product, businessOwnerJid, title, caption, footer, buttons } = slide
+              let header: proto.Message.InteractiveMessage.IHeader
               if(product) {
-                 const msg = await prepareWAMessageMedia(
-                     { product: msg.product, businessOwnerJid, ...slide, ...options }, 
-                     { ...options, mediaTypeOverride: 'image' }
-                 );
-		             header = {
-		                 productMesage: WAProto.Message.ProductMessage.fromObject(product)
-		             }
+                 const { imageMessage } = await prepareWAMessageMedia(
+			             { image: product?.productImage, ...slide, ...options },
+			             options
+		             )
+		             
+		             header = await WAProto.Message.ProductMessage.fromObject({
+		                product: {
+		                   ...product,
+		                   productImage: imageMessage,
+		                },
+		                businessOwnerJid,
+		                ...slide,
+                 })
               } else if(image) {
                  header = await prepareWAMessageMedia(
                     { image: image, ...options }, 
