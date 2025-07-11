@@ -508,7 +508,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const mode = node.attrs.addressing_mode
 		const nodeType = node.attrs.type
 		const from = jidNormalizedUser(node.attrs.from)
-		const participant = mode === 'lid' ? node.attrs.participant_pn : node.attrs.participant
+		const participant = mode === 'lid' ? (node.attrs.participant_pn || node.attrs.sender_pn) : node.attrs.participant
 
 		switch (nodeType) {
 		case 'privacy_token':
@@ -750,7 +750,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const { attrs, content } = node
 		const isLid = attrs.from.includes('lid')
 		const mode = attrs.addressing_mode
-    const participant = mode === 'lid' ? attrs.participant_pn : attrs.participant
+    const participant = mode === 'lid' ? (attrs.participant_pn || attrs.sender_pn) : attrs.participant
 		const isNodeFromMe = areJidsSameUser(participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
 		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.peer_recipient_pn ? attrs.peer_recipient_pn : attrs.recipient
 		const fromMe = !attrs.recipient || (
@@ -846,7 +846,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	const handleNotification = async(node: BinaryNode) => {
 		const remoteJid = node.attrs.from
 		const mode = node.attrs.addressing_mode
-    const participant = mode === 'lid' ? node.attrs.participant_pn : node.attrs.participant
+    const participant = mode === 'lid' ? (node.attrs.participant_pn || node.attrs.sender_pn) : node.attrs.participant
 		if(shouldIgnoreJid(remoteJid) && remoteJid !== '@s.whatsapp.net') {
 			logger.debug({ remoteJid, id: node.attrs.id }, 'ignored notification')
 			await sendMessageAck(node)
@@ -961,13 +961,51 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 						} else {
 							// no type in the receipt => message delivered
 							let type: MessageReceiptType = undefined
-              if(node.attrs?.addressing_mode === 'lid') {
-                msg.key.participant = node.attrs.participant_pn
-              } else {
-                msg.key.participant = node.attrs.participant
-              }
-              
+                        
 							let participant = msg.key.participant
+							const content = normalizeMessageContent(msg.message)!
+	            const key: string = getContentType(content)!
+	            const message = content[key]
+	            const contextInfo: proto.IContextInfo = message.contextInfo
+	            if(node.attrs.addressing_mode === 'lid') {
+	               if(content && contextInfo && contextInfo.participant) {
+	                  if(isJidGroup(contextInfo.remoteJid || node.attrs.from) && isLidUser(contextInfo.participant)) {
+	                     const { participants } = await groupMetadata(contextInfo.remoteJid)!
+	                     const result = participants.find(p => p.lid === contextInfo.participant)
+	                     contextInfo.participant = jidNormalizedUser(result?.id)
+	                  }
+	               }
+	            
+	               if(content && contextInfo && contextInfo.mentionedJid) {
+	                  if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
+	                     let mentions = []
+	                     for(const ids of contextInfo.mentionedJid) {
+	                        if(isLidUser(ids)) {
+	                           const { participants } = await groupMetadata(contextInfo.remoteJid)!
+	                           const result = participants.find(p => p.lid === ids)
+	                           mentions.push(jidNormalizedUser(result?.id))
+	                        }
+	                        contextInfo.mentionedJid = mentions
+	                     }
+	                  } else if(isLidUser(contextInfo.remoteJid || node.attrs.from)) {
+	                     const sender_pn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn)
+	                     if(contextInfo.participant && isLidUser(contextInfo.participant)) {
+	                        contextInfo.participant = sender_pn
+	                     }
+	                     
+	                     if(contextInfo.mentionedJid) {
+	                        let mentions = []
+	                        for(const ids of contextInfo.mentionedJid) {
+	                           if(isLidUser(ids)) {
+	                              mentions.push(sender_pn)
+	                           }
+	                           contextInfo.mentionedJid = mentions
+	                        }
+	                     }
+	                  }
+	               }
+	            }
+	
 							if(category === 'peer') { // special peer message
 								type = 'peer_msg'
 							} else if(msg.key.fromMe) { // message was sent by us from a different device
