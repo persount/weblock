@@ -1261,7 +1261,7 @@ export const generateWAMessageFromContent = (
 
 		const quotedContent = quotedMsg[msgType]		
         if(typeof quotedContent === 'object' && quotedContent && 'contextInfo' in quotedContent) {
-			delete quotedContent.contextInfo
+			  delete quotedContent.contextInfo
 		}
 		
 		let requestPayment;
@@ -1273,8 +1273,8 @@ export const generateWAMessageFromContent = (
         }
 		}
 		
-		let contextInfo: proto.IContextInfo = { }
-		if(key ==='requestPaymentMessage') {
+		let contextInfo: proto.IContextInfo
+		if(key === 'requestPaymentMessage') {
 		   contextInfo = requestPayment.contextInfo
 		} else {
 		   contextInfo = innerMessage[key].contextInfo
@@ -1293,7 +1293,7 @@ export const generateWAMessageFromContent = (
 		if(key === 'requestPaymentMessage' && requestPayment) {
        requestPayment.contextInfo = contextInfo || { }
     } else {
-       innerMessage[key].contextInfo = contextInfo
+       innerMessage[key].contextInfo = contextInfo || { }
     }
 		    
 	}
