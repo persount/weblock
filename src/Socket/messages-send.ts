@@ -393,7 +393,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
 		const participants: BinaryNode[] = []
-		const destinationJid =  (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
+		const destinationJid =  (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : isNewsletter ? 'newsletter' : isBroadcast ? 'broadcast' : isBot ? 'bot' : 's.whatsapp.net') : statusJid
 		const binaryNodeContent: BinaryNode[] = []
 		const devices: JidWithDevice[] = []
 
@@ -411,7 +411,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			// when the retry request is not for a group
 			// only send to the specific device that asked for a retry
 			// otherwise the message is sent out to every device that should be a recipient
-			if(!isGroup && !isStatus) {
+			if(!isGroup && !isStatus && !isBroadcast) {
 				additionalAttributes = { ...additionalAttributes, 'device_fanout': 'false' }
 			}
 
@@ -429,7 +429,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					extraAttrs['decrypt-fail'] = 'hide'
 				}
 
-				if(isGroup || isStatus) {
+				if(isGroup || isStatus || isBroadcast) {
 					const [groupData, senderKeyMap] = await Promise.all([
 						(async() => {
 							let groupData = useCachedGroupMetadata && cachedGroupMetadata ? await cachedGroupMetadata(jid) : undefined
@@ -443,7 +443,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 							return groupData
 						})(),
 						(async() => {
-							if(!participant && !isStatus) {
+							if(!participant && (!isStatus || !isBroadcast)) {
 								const result = await authState.keys.get('sender-key-memory', [jid])
 								return result[jid] || { }
 							}
@@ -453,12 +453,15 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					])
 
 					if(!participant) {
-						const participantsList = (groupData && !isStatus) ? groupData.participants.map(p => p.id) : []
+						const participantsList = (groupData && (!isStatus && !isBroadcast)) ? groupData.participants.map(p => p.id) : []
 						if(isStatus && statusJidList) {
 							participantsList.push(...statusJidList)
 						}
+						if(isBroadcast && statusJidList) {
+						  participantsList.push(...statusJidList)
+						}
 
-						if(!isStatus) {
+						if(!isStatus || isBroadcast) {
 							additionalAttributes = {
 								...additionalAttributes,
 								// eslint-disable-next-line camelcase
