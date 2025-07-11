@@ -968,7 +968,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            const message = content[key]
 	            const contextInfo: proto.IContextInfo = message.contextInfo
               const regex = /@(\d+)/g           
-              const msgText = content.conversation || message.text || message.caption
+              let msgText = content.conversation || message.text || message.caption
               
 	            if(node.attrs.addressing_mode === 'lid') {
 	               if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
