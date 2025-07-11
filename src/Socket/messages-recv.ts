@@ -982,8 +982,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                     for(const ids of contextInfo.mentionedJid) {
 	                        if(isLidUser(ids)) {
 	                           const { participants } = await groupMetadata(contextInfo.remoteJid || node.attrs.from)!
-	                           const result = participants.find(p => p.lid === ids)
-	                           (mentions as string[]).push(jidNormalizedUser(result?.id))
+	                           const group = participants ? participants.find(p => p?.lid === ids) : null
+	                           if(group) {
+	                              (mentions as string[]).push(jidNormalizedUser(group?.id))
+	                           } else {
+	                              (mentions as string[]).push(ids)
+	                           }
 	                        }
 	                        contextInfo.mentionedJid = mentions
 	                     }
