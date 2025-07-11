@@ -976,7 +976,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                  }
                  
 	               if(content && contextInfo && contextInfo.participant) {
-	                  if(isJidGroup(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from) && isLidUser(content && contextInfo && contextInfo.participant ? contextInfo.participant : participant)) {
+	                  if(isJidGroup(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from) && isLidUser(contextInfo.participant ?? participant)) {
 	                     const { participants } = await groupMetadata(contextInfo.remoteJid || node.attrs.from)!
 	                     const result = participants.find(p => p.lid === (contextInfo.participant ?? node.attrs.participant))
 	                     contextInfo.participant = jidNormalizedUser(result?.id)
