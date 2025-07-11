@@ -968,10 +968,17 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            const message = content[key]
 	            const contextInfo: proto.IContextInfo = message.contextInfo
 	            if(node.attrs.addressing_mode === 'lid') {
+	               if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
+	                  const { participants } = await groupMetadata(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from) 
+                    let results = participants.find(p => p?.lid === node.attrs.participant)
+
+                    msg.key.participant = results?.id
+                 }
+                 
 	               if(content && contextInfo && contextInfo.participant) {
-	                  if(isJidGroup(contextInfo.remoteJid || node.attrs.from) && isLidUser(contextInfo.participant)) {
+	                  if(isJidGroup(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from) && isLidUser(content && contextInfo && contextInfo.participant ? contextInfo.participant : participant)) {
 	                     const { participants } = await groupMetadata(contextInfo.remoteJid || node.attrs.from)!
-	                     const result = participants.find(p => p.lid === contextInfo.participant)
+	                     const result = participants.find(p => p.lid === (contextInfo.participant ?? node.attrs.participant))
 	                     contextInfo.participant = jidNormalizedUser(result?.id)
 	                  }
 	               }
