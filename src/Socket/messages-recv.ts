@@ -967,6 +967,9 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            const key: string = getContentType(content)!
 	            const message = content[key]
 	            const contextInfo: proto.IContextInfo = message.contextInfo
+              const regex = /@(\d+)/g           
+              const msgText = content.conversation || message.text || message.caption
+              
 	            if(node.attrs.addressing_mode === 'lid') {
 	               if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
 	                  const { participants } = await groupMetadata(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from) 
@@ -990,17 +993,24 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                        if(isLidUser(ids)) {
 	                           const { participants } = await groupMetadata(contextInfo.remoteJid || node.attrs.from)!
 	                           const group = participants ? participants.find(p => p?.lid === ids) : null
+                             
 	                           if(group) {
 	                              (mentions as string[]).push(jidNormalizedUser(group?.id))
+	                              msgText.replace(regex, () => {
+                                   return `@${group?.id.split("@")[0]}`;
+                                });
 	                           } else {
 	                              (mentions as string[]).push(ids)
+	                              msgText.replace(regex, () => {
+                                   return `@${ids.split("@")[0]}`;
+                                });
 	                           }
 	                        }
 	                        contextInfo.mentionedJid = mentions
 	                     }
-	                  } else if(isLidUser(contextInfo.remoteJid || node.attrs.from)) {
-	                     const sender_pn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn)
-	                     if(contextInfo.participant && isLidUser(contextInfo.participant)) {
+	                  } else if(isLidUser(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from)) {
+	                     const sender_pn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn || node.attrs.recipient)
+	                     if(contextInfo && contextInfo.participant && isLidUser(contextInfo.participant)) {
 	                        contextInfo.participant = sender_pn
 	                     }
 	                     
@@ -1009,6 +1019,9 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                        for(const ids of contextInfo.mentionedJid) {
 	                           if(isLidUser(ids)) {
 	                              (mentions as string[]).push(sender_pn)
+	                              msgText.replace(regex, () => {
+                                   return `@${sender_pn.split("@")[0]}`;
+                                });
 	                           }
 	                           contextInfo.mentionedJid = mentions
 	                        }
