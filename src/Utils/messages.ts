@@ -1264,7 +1264,7 @@ export const generateWAMessageFromContent = (
 			delete quotedContent.contextInfo
 		}
 		
-		let requestPayment = { }
+		let requestPayment;
 		if(key === 'requestPaymentMessage') {
 		    if(innerMessage?.requestPaymentMessage?.noteMessage && innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage) {
 		       requestPayment = innerMessage?.requestPaymentMessage?.noteMessage?.extendedTextMessage
