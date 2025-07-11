@@ -967,8 +967,6 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            const key: string = getContentType(content)!
 	            const message = content[key]
 	            const contextInfo: proto.IContextInfo = message.contextInfo
-              const regex = /@(\d+)/g           
-              let msgText = content.conversation || message.text || message.caption
               
 	            if(node.attrs.addressing_mode === 'lid') {
 	               if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
@@ -984,7 +982,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                     const result = participants.find(p => p.lid === (contextInfo.participant ?? node.attrs.participant))
 	                     contextInfo.participant = jidNormalizedUser(result?.id)
 	                  }
-	                  contextInfo.participant = contextInfo.participant
+	                  contextInfo.participant = contextInfo.participant || null
 	               }
 	            
 	               if(content && contextInfo && contextInfo.mentionedJid) {
@@ -997,33 +995,24 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
                              
 	                           if(group) {
 	                              (mentions as string[]).push(jidNormalizedUser(group?.id))
-	                              msgText = msgText.replace(regex, () => {
-                                   return `@${group?.id.split("@")[0]}`;
-                                });
 	                           } else {
 	                              (mentions as string[]).push(ids)
-	                              msgText = msgText.replace(regex, () => {
-                                   return `@${ids.split("@")[0]}`;
-                                });
 	                           }
 	                        }
 	                        contextInfo.mentionedJid = mentions
 	                     }
 	                  } else if(isLidUser(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from)) {
-	                     const sender_pn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn || node.attrs.recipient)
+	                     const sender_pn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn || node.attrs.recipient || node.attrs.participant_pn || node.attrs.participant)
 	                     if(contextInfo && contextInfo.participant && isLidUser(contextInfo.participant)) {
 	                        contextInfo.participant = sender_pn
 	                     }
-	                     contextInfo.participant = contextInfo.participant
+	                     contextInfo.participant = contextInfo.participant || null
 	                     
 	                     if(contextInfo.mentionedJid) {
 	                        let mentions: string[] = []
 	                        for(const ids of contextInfo.mentionedJid) {
 	                           if(isLidUser(ids)) {
 	                              (mentions as string[]).push(sender_pn)
-	                              msgText = msgText.replace(regex, () => {
-                                   return `@${sender_pn.split("@")[0]}`;
-                                });
 	                           }
 	                           contextInfo.mentionedJid = mentions
 	                        }
