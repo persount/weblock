@@ -967,6 +967,13 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            const key: string = getContentType(content)!
 	            const message = content[key]
 	            const contextInfo: proto.IContextInfo = message.contextInfo
+	            
+	            if(content && contextInfo && contextInfo.externalAdReply) {
+	               contextInfo.externalAdReply = {
+	                  ...(contextInfo.externalAdReply || { }),
+	                  wtwaAdFormat: true,
+	               }
+	            }
               
 	            if(node.attrs.addressing_mode === 'lid') {
 	               if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
