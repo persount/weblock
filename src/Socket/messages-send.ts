@@ -206,7 +206,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	const profilePictureUrl = async (jid: string, type: 'preview' | 'image' = 'preview', timeoutMs ? : number) => {
      jid = jidNormalizedUser(jid)
      if (isJidNewsletter(jid)) {
-        const node = await newsletterWMexQuery(undefined, QueryIds.METADATA, {
+        const mexQuery = await newsletterWMexQuery(undefined, QueryIds.METADATA, {
 		       input: {
 		          key: jid,
 		          type: "JID",
@@ -216,7 +216,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			     fetch_full_image: true,
 			   	 fetch_creation_time: true
 	      })	  
-	      const result = getBinaryNodeChild(node, 'result')?.content?.toString()
+	      const result = getBinaryNodeChild(mexQuery, 'result')?.content?.toString()
 	      const metadataPath = JSON.parse(result!).data[XWAPaths.NEWSLETTER]
 	      const pictype = type === 'image' 
 	         ? 'picture' 
@@ -249,7 +249,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		} else {
 			const addrs = jids.map(jid => (
 				signalRepository
-					.jidToSignalProtocolAddress(jid)
+				.jidToSignalProtocolAddress(jid)
 			))
 			const sessions = await authState.keys.get('session', addrs)
 			for(const jid of jids) {
@@ -693,7 +693,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            logger.debug({ jid }, 'adding business node')
         } 
             
-        if(isPerson || isLid || isBot || (!isStatus && isBroadcast)) {
+        if(!messageContent.reactionMessage && (isPerson || isLid || isBot || (!isStatus && isBroadcast))) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
              stanza.content = []
            }
