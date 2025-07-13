@@ -72,6 +72,7 @@ const MessageTypeProto = {
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
   'document': WAProto.Message.DocumentMessage,
+	'productImage': WAProto.Message.ImageMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -117,8 +118,10 @@ export const prepareWAMessageMedia = async(
 	const logger = options.logger
 
 	let mediaType: typeof MEDIA_KEYS[number] | undefined
-	for(const key of MEDIA_KEYS) {
-		if(key in message) {
+	for(const key of MEDIA_KEYS) {	
+	  if(MessageTypeProto.productImage) {
+	    mediaType = 'image'
+	  } else if(key in message) {
 			mediaType = key
 		}
 	}
