@@ -81,7 +81,6 @@ export interface Carousel {
    image?: WAMediaUpload
    video?: WAMediaUpload
    product?: WASendableProduct
-   productImage?: WAMediaUpload
    title?: string
    caption?: string
    footer?: string
