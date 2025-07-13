@@ -1057,7 +1057,7 @@ export const generateWAMessageContent = async(
         const slides = await Promise.all(
            message.cards.map(async slide => {              
               const { image, video, product, businessOwnerJid, title, caption, footer, buttons } = slide
-              let header: proto.Message.InteractiveMessage.IHeader
+              let header
               if(product) {
                  const { imageMessage } = await prepareWAMessageMedia(
 			             { image: product?.productImage, ...options },
