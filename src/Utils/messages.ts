@@ -72,7 +72,6 @@ const MessageTypeProto = {
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
   'document': WAProto.Message.DocumentMessage,
-  'product-catalog-image': WAProto.Message.ImageMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -1064,14 +1063,16 @@ export const generateWAMessageContent = async(
 			             options
 		             )
 		             
-		             header = WAProto.Message.ProductMessage.fromObject({
+		             let productMessage: proto.Message.IProductMessage = {
 		                product: {
-		                   ...product,
 		                   productImage: imageMessage,
+		                   ...product,
 		                },
 		                businessOwnerJid,
 		                ...slide,
-                 })
+		             }
+		             
+		             header = { productMessage }
               } else if(image) {
                  header = await prepareWAMessageMedia(
                     { image: image, ...options }, 
