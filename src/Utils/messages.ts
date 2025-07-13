@@ -72,7 +72,7 @@ const MessageTypeProto = {
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
   'document': WAProto.Message.DocumentMessage,
-	'productImage': WAProto.Message.ImageMessage,
+	'product-catalog-image': WAProto.Message.ImageMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -119,9 +119,7 @@ export const prepareWAMessageMedia = async(
 
 	let mediaType: typeof MEDIA_KEYS[number] | undefined
 	for(const key of MEDIA_KEYS) {	
-	  if(MessageTypeProto.productImage) {
-	    mediaType = 'image'
-	  } else if(key in message) {
+	  if(key in message) {
 			mediaType = key
 		}
 	}
@@ -869,7 +867,7 @@ export const generateWAMessageContent = async(
 		    m = { buttonsMessage }
 	  } else if('templateButtons' in message && !!message.templateButtons) {
 		    const msg: proto.Message.TemplateMessage.IHydratedFourRowTemplate = {
-			      hydratedButtons: message.hasOwnProperty("templateButtons") ? message.templateButtons : message.templateButtons
+			      hydratedButtons: message.hasOwnProperty('templateButtons') ? message.templateButtons : message.templateButtons
 		    }
 
 		    if('text' in message) {
@@ -1058,11 +1056,11 @@ export const generateWAMessageContent = async(
     if('cards' in message && !!message.cards) {
         const slides = await Promise.all(
            message.cards.map(async slide => {              
-              const { image, video, product, productImage, businessOwnerJid, title, caption, footer, buttons } = slide
+              const { image, video, product, businessOwnerJid, title, caption, footer, buttons } = slide
               let header
-              if(product && productImage) {
+              if(product) {
                  const img = await prepareWAMessageMedia(
-			             { image: productImage, ...options },
+			             { image: product?.productImage, ...options },
 			             options
 		             )
 		             
@@ -1078,12 +1076,12 @@ export const generateWAMessageContent = async(
 		             }
               } else if(image) {
                  header = await prepareWAMessageMedia(
-                    { image: image, ...options }, 
+                    { image, ...options }, 
                     options
                  )
               } else if(video) {
                  header = await prepareWAMessageMedia(
-                    { video: video, ...options }, 
+                    { video, ...options }, 
                     options
                  )
               } 
