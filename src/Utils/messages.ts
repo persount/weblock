@@ -1063,16 +1063,16 @@ export const generateWAMessageContent = async(
 			             options
 		             )
 		             
-		             let productMessage: proto.Message.IProductMessage = {
-		                product: {
-		                   productImage: img.imageMessage,
-		                   ...product,
-		                },
-		                businessOwnerJid,
-		                ...slide,
+		             header = { 
+		                productMessage: {
+		                   product: {
+		                     productImage: img.imageMessage,
+		                     ...product,
+		                   },
+		                   businessOwnerJid,
+		                   ...slide,
+		                } 
 		             }
-		             
-		             header = { productMessage }
               } else if(image) {
                  header = await prepareWAMessageMedia(
                     { image: image, ...options }, 
