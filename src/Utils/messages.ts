@@ -1067,14 +1067,14 @@ export const generateWAMessageContent = async(
 		             )
 		             
 		             header = { 
-		                productMessage: {
+		                productMessage: WAProto.Message.ProductMessage.fromObject({
 		                   product: {
 		                     productImage: img.imageMessage,
 		                     ...product,
 		                   },
 		                   businessOwnerJid,
 		                   ...slide,
-		                } 
+		                })
 		             }
               } else if(image) {
                  header = await prepareWAMessageMedia(
@@ -1312,6 +1312,13 @@ export const generateWAMessageFromContent = (
 			  initiatedByMe: false 
 			}
 		}		
+	}
+	
+	if(innerMessage[key].contextInfo && innerMessage[key].contextInfo.externalAdReply) {
+		innerMessage[key].contextInfo = {
+			...(innerMessage[key].contextInfo || {}),
+			wtwaAdFormat: true
+		}
 	}
 	
 	innerMessage.messageContextInfo = {
