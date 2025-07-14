@@ -62,6 +62,7 @@ export const getBinaryNodeFilter = (node) => {
 
 export const getAdditionalNode = (name: string) => {
    name = name.toLowerCase()
+   const privacy_mode_ts = `${+new Date() / 1000 >>> 0}`
    
    const order_response_name = {
       review_and_pay: 'order_details',
@@ -90,7 +91,11 @@ export const getAdditionalNode = (name: string) => {
    } else if(flow_name[name] || name === 'interactive' || name === 'buttons') {
       return [{
          tag: 'biz',
-         attrs: { },
+         attrs: { 
+            actual_actors: '2',
+            host_storage: '2',
+            privacy_mode_ts
+         },
          content: [{
             tag: 'interactive',
 			   		attrs: {
@@ -110,12 +115,16 @@ export const getAdditionalNode = (name: string) => {
    } else if(name === 'list') {
       return [{
          tag: 'biz',
-         attrs: { },
+         attrs: {
+            actual_actors: '2',
+            host_storage: '2',
+            privacy_mode_ts
+         },
          content: [{
             tag: 'list',
             attrs: { 
                v: '2',
-               type: 'product_list'
+               type: 'single_select'
             }
          }]
       }]
@@ -125,7 +134,14 @@ export const getAdditionalNode = (name: string) => {
 			   attrs: { biz_bot: '1' }
 	    }]
    } else {
-      return []
+      return [{
+         tag: 'biz',
+         attrs: {
+            actual_actors: '2',
+            host_storage: '2',
+            privacy_mode_ts
+         }
+      }]
    }
 }
 
