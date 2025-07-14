@@ -1054,8 +1054,16 @@ export const generateWAMessageContent = async(
    
     if('cards' in message && !!message.cards) {
         const slides = await Promise.all(
-           message.cards.map(async (slide, { product }) => {              
-              const { image, video, title, caption, footer, buttons } = slide
+           message.cards.map(async (slide) => {              
+              const { 
+                 product, 
+                 image,
+                 video, 
+                 title, 
+                 caption, 
+                 footer, 
+                 buttons 
+              } = slide
               let header
               if(product) {
                  const { imageMessage } = await prepareWAMessageMedia(
