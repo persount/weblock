@@ -1078,7 +1078,6 @@ export const generateWAMessageContent = async(
 		                     productImage: imageMessage,
 		                   },
 		                   ...product,
-		                   ...slide,
 		                })
 		             }
               } else if(image) {
@@ -1289,10 +1288,15 @@ export const generateWAMessageFromContent = (
 			contextInfo.remoteJid = quoted.key.remoteJid
 		}
 		
+		if(quotedContent.contextInfo && quotedContent.contextInfo.mentionedJid) {
+		  contextInfo.mentionedJid = quotedContent.contextInfo.mentionedJid
+		}
+		
+		
 		if(key === 'requestPaymentMessage' && requestPayment) {
-       requestPayment.contextInfo = contextInfo || { }
+       requestPayment.contextInfo = contextInfo
     } else {
-       innerMessage[key].contextInfo = contextInfo || { }
+       innerMessage[key].contextInfo = contextInfo
     }
 		    
 	}
@@ -1407,6 +1411,7 @@ export const normalizeMessageContent = (content: WAMessageContent | null | undef
 			 || message?.documentWithCaptionMessage
 			 || message?.viewOnceMessageV2
 			 || message?.viewOnceMessageV2Extension
+       || message?.deviceSentMessage
 			 || message?.editedMessage
        || message?.groupMentionedMessage
        || message?.botInvokeMessage

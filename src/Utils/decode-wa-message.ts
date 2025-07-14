@@ -2,7 +2,17 @@ import { Boom } from '@hapi/boom'
 import { proto } from '../../WAProto'
 import { ILogger } from './logger'
 import { SignalRepository, WAMessageKey } from '../Types'
-import { areJidsSameUser, BinaryNode, isJidBroadcast, isJidGroup, isJidMetaIa, isJidNewsletter, isJidStatusBroadcast, isJidUser, isLidUser } from '../WABinary'
+import {
+  areJidsSameUser, 
+  BinaryNode, 
+  isJidBroadcast, 
+  isJidGroup, 
+  isJidMetaIa, 
+  isJidNewsletter, 
+  isJidStatusBroadcast, 
+  isJidUser,
+  isLidUser 
+} from '../WABinary'
 import { unpadRandomMax16 } from './generics'
 import { getDevice } from './messages'
 
@@ -44,18 +54,18 @@ export function decodeMessageNode(
 	const msgId = stanza.attrs.id
 	const from = stanza.attrs.from
 	const mode: string | undefined = stanza.attrs.addressing_mode
-	const participant: string | undefined = mode === 'lid' ? (stanza.attrs.participant_pn || stanza.attrs.sender_pn) : stanza.attrs.participant
-	const recipient: string | undefined = mode === 'lid' ? (stanza.attrs.peer_recipient_pn || stanza.attrs.sender_pn) : stanza.attrs.recipient
+	const participant: string | undefined = mode === 'lid' ? (stanza.attrs.participant_pn || stanza.attrs.sender_pn || stanza.attrs.participant) : stanza.attrs.participant
+	const recipient: string | undefined = mode === 'lid' ? (stanza.attrs.peer_recipient_pn || stanza.attrs.sender_pn || stanza.attrs.recipient) : stanza.attrs.recipient
 
 	const isMe = (jid: string) => areJidsSameUser(jid, meId)
 	const isMeLid = (jid: string) => areJidsSameUser(jid, meLid)
 
 	if(isJidUser(from) || isLidUser(from)) {
-		if (recipient) {		 
-			if(!isMe(from) && !isMeLid(from)) {
+		if (recipient && !isJidMetaIa(recipient)) {
+			if (!isMe(from) && !isMeLid(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
 			}
-						
+
 			chatId = recipient
 		} else {
 			chatId = from
@@ -101,6 +111,9 @@ export function decodeMessageNode(
 		fromMe,
 		id: msgId,
 		participant,
+		senderPn: participant.split('@')[0],
+		mode,
+		lid: mode === 'lid' ? stanza.attrs.participant : (stanza.attrs.participant_pn || stanza.attrs.sender_pn || stanza.attrs.participant)
 	}
 
 	const fullMessage: proto.IWebMessageInfo = {
@@ -108,6 +121,12 @@ export function decodeMessageNode(
 		messageTimestamp: +stanza.attrs.t,
 		pushName: pushname,
 		broadcast: isJidBroadcast(from),
+		...({ 
+		  newsletter: isJidNewsletter(from), 
+		  platform: key.fromMe ? 'FELZ BOT' : getDevice(key?.id),
+		  stanza,
+		  attrs: stanza?.attrs
+    })		  
 	}
 	
 	if(msgType === 'newsletter') {
