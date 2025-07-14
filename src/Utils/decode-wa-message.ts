@@ -88,7 +88,7 @@ export function decodeMessageNode(
 		}
 
 		chatId = from
-		author = from
+		author = participant
 	} else {
 		throw new Boom('Unknown message type', { data: stanza })
 	}
@@ -108,6 +108,19 @@ export function decodeMessageNode(
 		messageTimestamp: +stanza.attrs.t,
 		pushName: pushname,
 		broadcast: isJidBroadcast(from),
+	}
+	
+	if(fullMessage.broadcast && (msgType === 'peer_broadcast' || msgType === 'other_broadcast')) {
+	  if(!fullMessage.messageStubParameters || !Array.isArray(fullMessage.messageStubParameters)) {
+      fullMessage.messageStubParameters = []
+    }
+	  
+	  const broadcastData = getBinaryNodeChild(stanza.content, 'participants')
+	  const broadcastRecipients = getBinaryNodeChildren(broadcastData, 'to')?.forEach((list) => {
+	    if(list.tag === 'to') {
+	      fullMessage.messageStubParameters.push(list.attrs.stanza.attrs.peer_recipient_pn || list.attrs.jid)
+	    }
+	  }
 	}
 	
 	if(msgType === 'newsletter') {

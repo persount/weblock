@@ -72,7 +72,6 @@ const MessageTypeProto = {
 	'audio': WAProto.Message.AudioMessage,
 	'sticker': WAProto.Message.StickerMessage,
   'document': WAProto.Message.DocumentMessage,
-	'product-catalog-image': WAProto.Message.ImageMessage,
 } as const
 
 const ButtonType = proto.Message.ButtonsMessage.HeaderType
@@ -291,15 +290,15 @@ export const prepareWAMessageMedia = async(
 	  })
 
 	const obj = WAProto.Message.fromObject({
-	 	[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
-		   url: mediaUrl,
-	  	 directPath,
-			 fileSha256,
-			 fileLength,
-			 ...uploadData,
-			 media: undefined
-		})
-  })
+		 [`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
+				url: mediaUrl,
+				directPath,
+			  fileSha256,
+		    fileLength,
+				...uploadData,
+				media: undefined
+		 })
+	})
 
 	if(uploadData.ptv) {
 		obj.ptvMessage = obj.videoMessage
@@ -1055,8 +1054,8 @@ export const generateWAMessageContent = async(
    
     if('cards' in message && !!message.cards) {
         const slides = await Promise.all(
-           message.cards.map(async slide => {              
-              const { image, video, product, businessOwnerJid, title, caption, footer, buttons } = slide
+           message.cards.map(async (slide, { product }) => {              
+              const { image, video, title, caption, footer, buttons } = slide
               let header
               if(product) {
                  const { imageMessage } = await prepareWAMessageMedia(
@@ -1070,29 +1069,20 @@ export const generateWAMessageContent = async(
 		                     ...product,
 		                     productImage: imageMessage,
 		                   },
-		                   businessOwnerJid,
+		                   ...product,
 		                   ...slide,
 		                })
 		             }
-		             
-		             Object.assign(header, slide)
-		             
               } else if(image) {
                  header = await prepareWAMessageMedia(
                     { image, ...options }, 
                     options
                  )
-		             
-		             Object.assign(header, slide)
-		             
               } else if(video) {
                  header = await prepareWAMessageMedia(
                     { video, ...options }, 
                     options
                  )
-		             
-		             Object.assign(header, slide)
-		             
               } 
               let msg: proto.Message.IInteractiveMessage = {
                   header: {
@@ -1324,7 +1314,10 @@ export const generateWAMessageFromContent = (
 	if(innerMessage[key].contextInfo && innerMessage[key].contextInfo.externalAdReply) {
 		innerMessage[key].contextInfo = {
 			...(innerMessage[key].contextInfo || {}),
-			wtwaAdFormat: true
+			externalAdReply: {
+			   ...(innerMessage[key].contextInfo.externalAdReply || {}),
+			   wtwaAdFormat: true,
+      }
 		}
 	}
 	
