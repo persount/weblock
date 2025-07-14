@@ -2,7 +2,7 @@ import { Boom } from '@hapi/boom'
 import { proto } from '../../WAProto'
 import { ILogger } from './logger'
 import { SignalRepository, WAMessageKey } from '../Types'
-import { areJidsSameUser, BinaryNode, isJidBroadcast, isJidGroup, isJidMetaIa, isJidNewsletter, isJidStatusBroadcast, isJidUser, isLidUser } from '../WABinary'
+import { areJidsSameUser, BinaryNode, getBinaryNodeChild, getBinaryNodeChildren, isJidBroadcast, isJidGroup, isJidMetaIa, isJidNewsletter, isJidStatusBroadcast, isJidUser, isLidUser } from '../WABinary'
 import { unpadRandomMax16 } from './generics'
 import { getDevice } from './messages'
 
@@ -116,11 +116,11 @@ export function decodeMessageNode(
     }
 	  
 	  const broadcastData = getBinaryNodeChild(stanza.content, 'participants')
-	  const broadcastRecipients = getBinaryNodeChildren(broadcastData, 'to')?.forEach((list) => {
+	  getBinaryNodeChildren(broadcastData, 'to')?.forEach((list) => {
 	    if(list.tag === 'to') {
 	      fullMessage.messageStubParameters.push(list.attrs.stanza.attrs.peer_recipient_pn || list.attrs.jid)
 	    }
-	  }
+	  })
 	}
 	
 	if(msgType === 'newsletter') {
