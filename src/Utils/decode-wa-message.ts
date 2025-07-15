@@ -105,16 +105,17 @@ export function decodeMessageNode(
 
 	const fromMe = isJidNewsletter(from) ? !!stanza.attrs?.is_sender || false : (isLidUser(from) ? isMeLid : isMe)(stanza.attrs.participant || stanza.attrs.from)
 	const pushname = stanza?.attrs?.notify
-	const senderPn = participant ? participant.split('@')[0] : chatId.split('@')[0]
 
 	const key: WAMessageKey = {
 		remoteJid: chatId,
 		fromMe,
 		id: msgId,
 		participant,
-		senderPn,
-		mode,
-		lid: mode === 'lid' ? stanza.attrs.participant : (stanza.attrs.participant_pn || stanza.attrs.sender_pn || stanza.attrs.participant)
+		...({
+		  senderPn: msgType === 'chat' ? recipient.split('@')[0] : participant.split('@')[0],
+	  	mode,
+		  lid: mode === 'lid' ? stanza.attrs.participant : (stanza.attrs.participant_lid || stanza.attrs.sender_lid || stanza.attrs.peer_recipient_lid)
+	  })
 	}
 
 	const fullMessage: proto.IWebMessageInfo = {
@@ -124,7 +125,7 @@ export function decodeMessageNode(
 		broadcast: isJidBroadcast(from),
 		...({ 
 		  newsletter: isJidNewsletter(from), 
-		  platform: fromMe ? 'FELZ BOT' : getDevice(key?.id) || 'baileys',
+		  platform: fromMe ? 'FELZ BOT' : getDevice(msgId) || 'baileys',
 		  stanza,
 		  attrs: stanza?.attrs
     })		  
