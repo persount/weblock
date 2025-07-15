@@ -114,11 +114,11 @@ export const prepareWAMessageMedia = async(
 	message: AnyMediaMessageContent,
 	options: MessageContentGenerationOptions
 ) => {
-	const logger = options.logger
+  const logger = options.logger
 
-	let mediaType: typeof MEDIA_KEYS[number] | undefined
-	for(const key of MEDIA_KEYS) {	
-	  if(key in message) {
+	let mediaType: (typeof MEDIA_KEYS)[number] | undefined
+	for (const key of MEDIA_KEYS) {
+		if (key in message) {
 			mediaType = key
 		}
 	}
@@ -132,20 +132,19 @@ export const prepareWAMessageMedia = async(
 		media: message[mediaType]
 	}
 	delete uploadData[mediaType]
-	// check if cacheable + generate cache key
-	const cacheableKey = typeof uploadData.media === 'object' &&
-			('url' in uploadData.media) &&
-			!!uploadData.media.url &&
-			!!options.mediaCache && (
-	// generate the key
-		mediaType + ':' + uploadData.media.url!.toString()
-	)
 
-	if(mediaType === 'document' && !uploadData.fileName) {
+	const cacheableKey =
+		typeof uploadData.media === 'object' &&
+		'url' in uploadData.media &&
+		!!uploadData.media.url &&
+		!!options.mediaCache &&
+		mediaType + ':' + uploadData.media.url.toString()
+
+	if (mediaType === 'document' && !uploadData.fileName) {
 		uploadData.fileName = 'file'
 	}
 
-	if(!uploadData.mimetype) {
+	if (!uploadData.mimetype) {
 		uploadData.mimetype = MIMETYPE_MAP[mediaType]
 	}
 
@@ -207,20 +206,20 @@ export const prepareWAMessageMedia = async(
 	}
 
 
-	const requiresDurationComputation = mediaType === 'audio' && typeof uploadData.seconds === 'undefined'
-	const requiresThumbnailComputation = (mediaType === 'image' || mediaType === 'video') &&
-	  	(typeof uploadData['jpegThumbnail'] === 'undefined')
+	const requiresDurationComputation = mediaType === 'audio' // && typeof uploadData.seconds === 'undefined'
+	const requiresThumbnailComputation =
+		(mediaType === 'image' || mediaType === 'video') && typeof uploadData['jpegThumbnail'] === 'undefined'
 	const requiresWaveformProcessing = mediaType === 'audio' && uploadData.ptt === true
 	const requiresAudioBackground = options.backgroundColor && mediaType === 'audio' && uploadData.ptt === true
 	const requiresOriginalForSomeProcessing = requiresDurationComputation || requiresThumbnailComputation
-	const {
-		mediaKey,
-		encFilePath,
-		originalFilePath,
-		fileEncSha256,
-		fileSha256,
-		fileLength,
-	} = await (options.newsletter ? prepareStream : encryptedStream)(
+	const { 
+	  mediaKey, 
+	  encFilePath, 
+	  originalFilePath, 
+	  fileEncSha256, 
+	  fileSha256, 
+	  fileLength 
+	} = await encryptedStream(
 		uploadData.media,
 		options.mediaTypeOverride || mediaType,
 		{
@@ -229,14 +228,16 @@ export const prepareWAMessageMedia = async(
 			opts: options.options
 		}
 	)
+	
 	 // url safe Base64 encode the SHA256 hash of the body
-	const fileEncSha256B64 = (options.newsletter ? fileSha256 : fileEncSha256 ?? fileSha256).toString('base64')
-	const [{ mediaUrl, directPath, handle }] = await Promise.all([
-		(async() => {
-			const result = await options.upload(
-				encFilePath,
-				{ fileEncSha256B64, mediaType, timeoutMs: options.mediaUploadTimeoutMs }
-			)
+	const fileEncSha256B64 = fileEncSha256.toString('base64')
+	const [{ mediaUrl, directPath }] = await Promise.all([
+		(async () => {
+			const result = await options.upload(encFilePath, {
+				fileEncSha256B64,
+				mediaType,
+				timeoutMs: options.mediaUploadTimeoutMs
+			})
 			logger?.debug({ mediaType, cacheableKey }, 'uploaded media')
 			return result
 		})(),
@@ -290,14 +291,17 @@ export const prepareWAMessageMedia = async(
 	  })
 
 	const obj = WAProto.Message.fromObject({
-		 [`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
-				url: mediaUrl,
-				directPath,
-			  fileSha256,
-		    fileLength,
-				...uploadData,
-				media: undefined
-		 })
+		[`${mediaType}Message`]: MessageTypeProto[mediaType].fromObject({
+			url: mediaUrl,
+			directPath,
+			mediaKey,
+			fileEncSha256,
+			fileSha256,
+			fileLength,
+			mediaKeyTimestamp: unixTimestampSeconds(),
+			...uploadData,
+			media: undefined
+		})
 	})
 
 	if(uploadData.ptv) {
@@ -1168,7 +1172,7 @@ export const generateWAMessageContent = async(
 			    listType: proto.Message.ListMessage.ListType.PRODUCT_LIST,
 			    productListInfo: {
 			       productSections: message.productList,
-			       businessOwnerJid: message.bizJid,
+			       businessOwnerJid: message.businessOwnerJid,
 			       headerImage: {
 			           productId: message.productList[0]?.products 
 			               ? message.productList[0]?.products[0]?.productId 
