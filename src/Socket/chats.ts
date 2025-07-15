@@ -1,12 +1,57 @@
 import { Boom } from '@hapi/boom'
 import NodeCache from '@cacheable/node-cache'
 import { proto } from '../../WAProto'
-import { DEFAULT_CACHE_TTLS, PROCESSABLE_HISTORY_TYPES } from '../Defaults'
-import { ALL_WA_PATCH_NAMES, BotListInfo, ChatModification, ChatMutation, LTHashState, MessageUpsertType, PresenceData, SocketConfig, WABusinessHoursConfig, WABusinessProfile, WAMediaUpload, WAMessage, WAPatchCreate, WAPatchName, WAPresence, WAPrivacyCallValue, WAPrivacyGroupAddValue, WAPrivacyMessagesValue, WAPrivacyOnlineValue, WAPrivacyValue, WAReadReceiptsValue } from '../Types'
-import { generateMessageID, chatModificationToAppPatch, ChatMutationMap, decodePatches, decodeSyncdSnapshot, encodeSyncdPatch, extractSyncdPatches, generateProfilePicture, getHistoryMsg, newLTHashState, processSyncAction } from '../Utils'
+import { 
+  DEFAULT_CACHE_TTLS, 
+  PROCESSABLE_HISTORY_TYPES 
+} from '../Defaults'
+import {
+  ALL_WA_PATCH_NAMES,
+  BotListInfo,
+  ChatModification, 
+  ChatMutation,
+  LTHashState, 
+  MessageUpsertType, 
+  PresenceData, 
+  SocketConfig, 
+  WABusinessHoursConfig, 
+  WABusinessProfile, 
+  WAMediaUpload, 
+  WAMessage, 
+  WAPatchCreate, 
+  WAPatchName, 
+  WAPresence, 
+  WAPrivacyCallValue, 
+  WAPrivacyGroupAddValue, 
+  WAPrivacyMessagesValue, 
+  WAPrivacyOnlineValue, 
+  WAPrivacyValue, 
+  WAReadReceiptsValue 
+} from '../Types'
+import { 
+  generateMessageID, 
+  chatModificationToAppPatch, 
+  ChatMutationMap, 
+  decodePatches, 
+  decodeSyncdSnapshot, 
+  encodeSyncdPatch, 
+  extractSyncdPatches, 
+  generateProfilePicture,
+  getHistoryMsg, 
+  newLTHashState,
+  processSyncAction 
+} from '../Utils'
 import { makeMutex } from '../Utils/make-mutex'
 import processMessage from '../Utils/process-message'
-import { BinaryNode, getBinaryNodeChildString, getBinaryNodeChild, getBinaryNodeChildren, jidNormalizedUser, reduceBinaryNodeToDictionary, S_WHATSAPP_NET } from '../WABinary'
+import { 
+  BinaryNode, 
+  getBinaryNodeChildString, 
+  getBinaryNodeChild, 
+  getBinaryNodeChildren,
+  jidNormalizedUser, 
+  reduceBinaryNodeToDictionary, 
+  S_WHATSAPP_NET
+} from '../WABinary'
 import { USyncQuery, USyncUser } from '../WAUSync'
 import { makeUSyncSocket } from './usync'
 
@@ -142,7 +187,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		})
 	}
 
-	const getBotListV2 = async() => {
+	const getBotListV2 = async(categoryName: string | undefined) => {
 		const resp = await query({
 			tag: 'iq',
 			attrs: {
@@ -161,14 +206,87 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		const botNode = getBinaryNodeChild(resp, 'bot')
  
 		const botList: BotListInfo[] = []
+		const default = getBinaryNodeChild(botNode, 'default')
+		if(default) {
+		    botList.push({
+		      category: 'default',
+		      name: 'Meta AI',
+					jid: default.attrs.jid,
+					personaId: default.attrs['persona_id'],
+					personaJid: default.attrs['persona_id'].split('$')[0] + '@bot'
+				})
+	  }
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
-			if(section.attrs.type === 'all') {
+		  if(categoryName && section.attrs.type === 'category') {
+		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
+					botList.push({
+						jid: bot.attrs.jid,
+						personaId: bot.attrs['persona_id'],
+					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot'
+					})
+				}
+			} else if(section.attrs.type === 'all') {
 				for(const bot of getBinaryNodeChildren(section, 'bot')) {
 					botList.push({
 						jid: bot.attrs.jid,
-						personaId: bot.attrs['persona_id']
+						personaId: bot.attrs['persona_id'],
+					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot'
 					})
 				}
+			}
+		}
+ 
+		return botList
+	}
+	
+	const getBotListV3 = async(categoryName: string | undefined) => {
+	  if(!categoryName) {
+	    throw new Boom('Illegal no-category name. Please specify either category name', { statusCode: 500 })
+	  }
+	  
+		const resp = await query({
+			tag: 'iq',
+			attrs: {
+				xmlns: 'bot',
+				to: S_WHATSAPP_NET,
+				type: 'get'
+			},
+			content: [{
+				tag: 'bot',
+				attrs: {
+					v: '3'
+				}
+			}]
+		})
+ 
+		const botNode = getBinaryNodeChild(resp, 'bot')
+ 
+		const botList: BotListInfo[] = []
+		const default = getBinaryNodeChild(botNode, 'default')
+		if(default) {
+		    botList.push({
+		      category: 'default',
+		      name: 'Meta AI',
+					jid: default.attrs.jid,
+					personaId: default.attrs['persona_id']
+		      personaJid: default.attrs['persona_id'].split('$')[0] + '@bot'
+				})
+	  }
+		for(const section of getBinaryNodeChildren(botNode, 'section')) {
+		  if(section.attrs.name === categoryName && section.attrs.type === 'category') {
+		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
+					botList.push({
+					  category: section.attrs.category,
+					  listview: {
+						  jid: bot.attrs.jid,
+						  personaId: bot.attrs['persona_id'],
+					    personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot',
+						  messageCount: bot.attts.count
+					  }
+					})
+				}
+			} else {
+			  throw new Boom('forbidden', { statusCode: 500 })
 			}
 		}
  
@@ -1017,6 +1135,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	return {
 		...felz,
 		getBotListV2,
+		getBotListV3,
 		processingMutex,
 		fetchPrivacySettings,
 		upsertMessage,

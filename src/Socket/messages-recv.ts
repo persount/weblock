@@ -969,20 +969,12 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	            const contextInfo: proto.IContextInfo = message.contextInfo
               
 	            if(node.attrs.addressing_mode === 'lid') {
-	               if(isJidGroup(contextInfo.remoteJid || node.attrs.from)) {
-	                  const { participants } = await groupMetadata(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from) 
-                    let results = participants.find(p => p?.lid === node.attrs.participant)
-
-                    msg.key.participant = results?.id
-                 }
-                 
 	               if(content && contextInfo && contextInfo.participant && isLidUser(contextInfo.participant || node.attrs.participant)) {
 	                  if(isJidGroup(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from) && isLidUser(contextInfo.participant ?? node.attrs.participant)) {
 	                     const { participants } = await groupMetadata(contextInfo.remoteJid || node.attrs.from)!
-	                     const result = participants.find(p => p.lid === contextInfo.participant)
-	                     contextInfo.participant = jidNormalizedUser(result?.id) || null
+	                     const result = participants.find(p => p.lid === (contextInfo.participant || node.attrs.participant)
+	                     contextInfo.participant = jidNormalizedUser(result?.id)
 	                  }
-	                  contextInfo.participant = contextInfo.participant || null
 	               }
 	            
 	               if(content && contextInfo && contextInfo.mentionedJid) {
@@ -1004,9 +996,8 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	                  } else if(isLidUser(content && contextInfo && contextInfo.remoteJid ? contextInfo.remoteJid : node.attrs.from)) {
 	                     const sender_pn = jidNormalizedUser(node.attrs.peer_recipient_pn || node.attrs.sender_pn || node.attrs.recipient || node.attrs.participant_pn || node.attrs.participant)
 	                     if(contextInfo && contextInfo.participant && isLidUser(contextInfo.participant || node.attrs.participant)) {
-	                        contextInfo.participant = sender_pn || null
+	                        contextInfo.participant = sender_pn
 	                     }
-	                     contextInfo.participant = contextInfo.participant || null
 	                     
 	                     if(contextInfo.mentionedJid) {
 	                        let mentions: string[] = []

@@ -5,10 +5,60 @@ import { Readable } from 'stream'
 import { proto } from '../../WAProto'
 import { randomBytes } from 'crypto'
 import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults'
-import { AnyMessageContent, Medias, MediaConnInfo, MessageReceiptType, MessageRelayOptions, MiscMessageGenerationOptions, QueryIds, SocketConfig, WAMediaUploadFunctionOpts, WAMessageKey, XWAPaths } from '../Types'
-import { aggregateMessageKeysNotFromMe, assertMediaContent, bindWaitForEvent, decryptMediaRetryData, delay, encodeNewsletterMessage, encodeSignedDeviceIdentity, encodeWAMessage, encryptMediaRetryRequest, extractDeviceJids, generateMessageID, generateWAMessage, generateWAMessageFromContent, getContentType, getStatusCodeForMediaRetry, getUrlFromDirectPath, getWAUploadToServer, parseAndInjectE2ESessions, unixTimestampSeconds, normalizeMessageContent } from '../Utils'
+import {
+  AnyMessageContent, 
+  Medias, 
+  MediaConnInfo, 
+  MessageReceiptType, 
+  MessageRelayOptions, 
+  MiscMessageGenerationOptions,
+  QueryIds, 
+  SocketConfig, 
+  WAMediaUploadFunctionOpts, 
+  WAMessageKey, 
+  XWAPaths 
+} from '../Types'
+import {
+  aggregateMessageKeysNotFromMe, 
+  assertMediaContent, 
+  bindWaitForEvent, 
+  decryptMediaRetryData, 
+  delay, 
+  encodeNewsletterMessage, 
+  encodeSignedDeviceIdentity, 
+  encodeWAMessage, 
+  encryptMediaRetryRequest,
+  extractDeviceJids, 
+  generateMessageID, 
+  generateWAMessage, 
+  generateWAMessageFromContent, 
+  getContentType,
+  getStatusCodeForMediaRetry, 
+  getUrlFromDirectPath, 
+  getWAUploadToServer, 
+  parseAndInjectE2ESessions, 
+  unixTimestampSeconds, 
+  normalizeMessageContent 
+} from '../Utils'
 import { getUrlInfo } from '../Utils/link-preview'
-import { areJidsSameUser, BinaryNode, BinaryNodeAttributes, getAdditionalNode, getBinaryNodeChild, getBinaryNodeChildren, getBinaryNodeFilter, isJidGroup, isJidNewsletter, isJidUser, jidDecode, jidEncode, jidNormalizedUser, JidWithDevice, S_WHATSAPP_NET, STORIES_JID } from '../WABinary'
+import { 
+  areJidsSameUser, 
+  BinaryNode, 
+  BinaryNodeAttributes, 
+  getAdditionalNode,
+  getBinaryNodeChild,
+  getBinaryNodeChildren, 
+  getBinaryNodeFilter,
+  isJidGroup,
+  isJidNewsletter, 
+  isJidUser,
+  jidDecode, 
+  jidEncode, 
+  jidNormalizedUser,
+  JidWithDevice,
+  S_WHATSAPP_NET, 
+  STORIES_JID 
+} from '../WABinary'
 import { USyncQuery, USyncUser } from '../WAUSync'
 import { makeNewsletterSocket } from './newsletter'
 import ListType = proto.Message.ListMessage.ListType;
@@ -640,7 +690,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						stanza.attrs.to = participant.jid
 					}
 				} else {
-				  stanza.attrs.to = destinationJid
+				  if(commentMsg && isJidGroup(destinationJid)) {
+						stanza.attrs.to = destinationJid
+				    stanza.attrs.participant = '139612441833487@lid'
+				  } else {
+				    stanza.attrs.to = destinationJid
+          }
 				}
 
 				if(shouldIncludeDeviceIdentity) {
@@ -688,11 +743,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            if(additionalNodes && !Array.isArray(additionalNodes)) {
               return [additionalNodes]
            }
-           const content = getAdditionalNode(buttonType)
+           const content = getAdditionalNode(buttonType, isJidNewsletter(jid))
            const items = getBinaryNodeFilter(additionalNodes ?? [])
            if(items) {
-              (stanza.content as BinaryNode[]).push(...additionalNodes!)
               didPushAdditional = true
+              (stanza.content as BinaryNode[]).push(...additionalNodes!)
            } else {
               (stanza.content as BinaryNode[]).push(...content)
            }
@@ -706,26 +761,27 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            if(additionalNodes && !Array.isArray(additionalNodes)) {
               return [additionalNodes]
            }
-				   const nodes = getAdditionalNode('bot')
-           const bizBot = getBinaryNodeFilter(additionalNodes ?? [])
-           if(bizBot) {
-             (stanza.content as BinaryNode[]).push(...additionalNodes!)
+				   const nodes = getAdditionalNode('bot', false)
+           const botNode = getBinaryNodeFilter(additionalNodes ?? [])
+           if(botNode) {
              didPushAdditional = true
+             (stanza.content as BinaryNode[]).push(...additionalNodes!)
            } else {
-             (stanza.content as BinaryNode[]).push(
-             ...[
-                ...nodes,
-                {
-                  tag: 'biz',
-                  attrs: { 
-                    actual_actors: '2',
-                    host_storage: '2',
-                    privacy_mode_ts: `${+new Date() / 1000 >>> 0}`
-                  }, 
-                }
-             ])
+             (stanza.content as BinaryNode[]).push(...nodes)
            }
 			  }
+			  
+			  if(!isNewsletter && !buttonType) {
+			     didPushAdditional = true
+           (stanza.content as BinaryNode[]).push({
+              tag: 'biz',
+              attrs: { 
+                 actual_actors: '2',
+                 host_storage: '2',
+                 privacy_mode_ts: `${+new Date() / 1000 >>> 0}`
+              }, 
+           })
+        }
 			  
 			  if(!didPushAdditional && additionalNodes && additionalNodes.length > 0) {
 				   if(!stanza.content || !Array.isArray(stanza.content)) {
