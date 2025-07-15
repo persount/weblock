@@ -112,7 +112,7 @@ export function decodeMessageNode(
 		id: msgId,
 		participant,
 		...({
-		  senderPn: msgType === 'chat' ? recipient.split('@')[0] : participant.split('@')[0],
+		  senderPn: msgType === 'chat' && recipient ? recipient.split('@')[0] : participant ? participant.split('@')[0] : chatId.split("@")[0],
 	  	mode,
 		  lid: mode === 'lid' ? stanza.attrs.participant : (stanza.attrs.participant_lid || stanza.attrs.sender_lid || stanza.attrs.peer_recipient_lid)
 	  })
@@ -125,7 +125,7 @@ export function decodeMessageNode(
 		broadcast: isJidBroadcast(from),
 		...({ 
 		  newsletter: isJidNewsletter(from), 
-		  platform: fromMe ? 'FELZ BOT' : getDevice(msgId) || 'baileys',
+		  platform: fromMe ? 'baileys' : getDevice(msgId),
 		  stanza,
 		  attrs: stanza?.attrs
     })		  
