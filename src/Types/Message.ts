@@ -26,9 +26,7 @@ export import WAMessageStatus = proto.WebMessageInfo.Status
 export type WAMediaPayloadURL = { url: URL | string }
 export type WAMediaPayloadStream = { stream: Readable }
 export type WAMediaUpload = WAMediaPayloadURL | Buffer | WAMediaPayloadStream
-export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapshot, 'productImage'> & {
-    productImage: WAMediaUpload
-}
+
 /** Set of message types that are supported by the library */
 export type MessageType = keyof proto.Message
 
@@ -80,11 +78,12 @@ export interface StickerPack {
 export interface Carousel {   
    image?: WAMediaUpload
    video?: WAMediaUpload
-   product?: WASendableProduct
+   product?: Omit<proto.Message.ProductMessage.IProductSnapshot, 'productImage'> & { 
+      productImage: WAMediaUpload
+   }
    title?: string
    caption?: string
    footer?: string
-   businessOwnerJid?: string
    buttons?: proto.Message.InteractiveMessage.NativeFlowMessage.NativeFlowButton[]
 }
 
@@ -179,7 +178,7 @@ type ProductListable = {
     title?: string
     footer?: string
     buttonText?: string
-    bizJid?: string
+    businessOwnerJid?: string
     thumbnail?: Buffer
 }
 type WithDimensions = {
@@ -216,6 +215,10 @@ type SharePhoneNumber = {
 
 type RequestPhoneNumber = {
     requestPhoneNumber: boolean
+}
+
+export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapshot, 'productImage'> & {
+    productImage: WAMediaUpload
 }
 
 export type MediaType = keyof typeof MEDIA_HKDF_KEY_MAPPING
