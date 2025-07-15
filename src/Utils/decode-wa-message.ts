@@ -61,7 +61,7 @@ export function decodeMessageNode(
 	const isMeLid = (jid: string) => areJidsSameUser(jid, meLid)
 
 	if(isJidUser(from) || isLidUser(from)) {
-		if (recipient && !isJidMetaIa(recipient)) {
+		if(recipient /*&& !isJidMetaIa(recipient)*/) {
 			if (!isMe(from) && !isMeLid(from)) {
 				throw new Boom('receipient present, but msg not from me', { data: stanza })
 			}
@@ -105,13 +105,14 @@ export function decodeMessageNode(
 
 	const fromMe = isJidNewsletter(from) ? !!stanza.attrs?.is_sender || false : (isLidUser(from) ? isMeLid : isMe)(stanza.attrs.participant || stanza.attrs.from)
 	const pushname = stanza?.attrs?.notify
+	const senderPn = participant ? participant.split('@')[0] : chatId.split('@')[0]
 
 	const key: WAMessageKey = {
 		remoteJid: chatId,
 		fromMe,
 		id: msgId,
 		participant,
-		senderPn: participant.split('@')[0],
+		senderPn,
 		mode,
 		lid: mode === 'lid' ? stanza.attrs.participant : (stanza.attrs.participant_pn || stanza.attrs.sender_pn || stanza.attrs.participant)
 	}
@@ -123,7 +124,7 @@ export function decodeMessageNode(
 		broadcast: isJidBroadcast(from),
 		...({ 
 		  newsletter: isJidNewsletter(from), 
-		  platform: key.fromMe ? 'FELZ BOT' : getDevice(key?.id),
+		  platform: fromMe ? 'FELZ BOT' : getDevice(key?.id) || 'baileys',
 		  stanza,
 		  attrs: stanza?.attrs
     })		  

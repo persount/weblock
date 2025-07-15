@@ -1287,12 +1287,7 @@ export const generateWAMessageFromContent = (
 		if(jid !== quoted.key.remoteJid) {
 			contextInfo.remoteJid = quoted.key.remoteJid
 		}
-		
-		if(quotedContent.contextInfo && quotedContent.contextInfo.mentionedJid) {
-		  contextInfo.mentionedJid = quotedContent.contextInfo.mentionedJid
-		}
-		
-		
+				
 		if(key === 'requestPaymentMessage' && requestPayment) {
        requestPayment.contextInfo = contextInfo
     } else {
