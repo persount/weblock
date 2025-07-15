@@ -376,8 +376,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	) => {
 		const meId = authState.creds.me!.id
     const meJid = jidNormalizedUser(meId)
-    const getLid = await fetchUserLid(meJid)
-    const meLid = getLid.find(lid => lid.lid === lid.lid)
 
 		let shouldIncludeDeviceIdentity = false
     let didPushAdditional = false
@@ -642,12 +640,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						stanza.attrs.to = participant.jid
 					}
 				} else {
-				  if(isJidGroup(destinationJid) && commentMsg) {
-					  stanza.attrs.to = destinationJid
-				    stanza.attrs.participant = meLid
-				  } else {
-					  stanza.attrs.to = destinationJid
-          }
+				  stanza.attrs.to = destinationJid
 				}
 
 				if(shouldIncludeDeviceIdentity) {
