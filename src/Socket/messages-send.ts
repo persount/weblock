@@ -665,7 +665,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           }) 
         }
 
-        if(pollMessage || messageContent.eventMessage) {
+        if(pollMessage || messageContent.eventMessage || commentMessage) {
           (stanza.content as BinaryNode[]).push({
             tag: 'meta', 
             attrs: messageContent.eventMessage ? {
@@ -701,7 +701,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            logger.debug({ jid }, 'adding business node')
         } 
             
-        if(!messageContent.reactionMessage && (isPerson || isLid) {
+        if(!messageContent.reactionMessage && (isPerson || isLid)) {
            if(!stanza.content || !Array.isArray(stanza.content)) {
              stanza.content = []
            }
