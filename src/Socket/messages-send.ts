@@ -375,6 +375,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		}: MessageRelayOptions
 	) => {
 		const meId = authState.creds.me!.id
+    const meJid = jidNormalizedUser(meId)
 
 		let shouldIncludeDeviceIdentity = false
     let didPushAdditional = false
@@ -622,6 +623,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					},
 					content: binaryNodeContent
 				}
+				
+				const commentMsg = messageContent.commentMessage || messageContent.encCommentMessage
+
 				// if the participant to send to is explicitly specified (generally retry recp)
 				// ensure the message is only sent to that person
 				// if a retry receipt is sent to everyone -- it'll fail decryption for everyone else who received the msg
@@ -636,9 +640,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						stanza.attrs.to = participant.jid
 					}
 				} else {
-				  if(messageContent.encCommentMessage || messageContent.commentMessage) {
+				  if(isJidGroup(destinationJid) && commentMsg) {
 					  stanza.attrs.to = destinationJid
-				    stanza.attrs.participant = (await fetchUserLid(jidNormalizedUser(meId!)))[0].lid
+				    stanza.attrs.participant = await (await fetchUserLid(meJid))[0]?.lid
 				  } else {
 					  stanza.attrs.to = destinationJid
           }
@@ -654,9 +658,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					logger.debug({ jid }, 'adding device identity')
 				}
          
-        const pollMessage = messageContent.pollCreationMessage || messageContent.pollCreationMessageV2 || messageContent.pollCreationMessageV3
+        const pollMessage = messageContent.pollCreationMessage || messageContent.pollCreationMessageV2 || messageContent.pollCreationMessageV3        
         
-        const commentMessage = messageContent.commentMessage || messageContent.encCommentMessage
         
         if (isGroup && regexGroupOld.test(jid) && !messageContent.reactionMessage) {
           (stanza.content as BinaryNode[]).push({
@@ -670,9 +673,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             tag: 'meta', 
             attrs: messageContent.eventMessage ? {
                 event_type: 'creation'
-              } : commentMessage ? {
+              } : isGroup && commentMsg ? {
                 thread_msg_id: msgId,
-                thread_msg_sender_jid: jidNormalizedUser(meId!)
+                thread_msg_sender_jid: meJid
               } : isNewsletter ? {
                 polltype: 'creation', 
                 contenttype: pollMessage?.pollContentType === 2 ? 'image' : 'text'
@@ -790,9 +793,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       return 'sticker_pack'
    } else if(message.stickerMessage) {
 			return 'sticker'
-   } else if(msg.commentMessage) {
-		  return 'comment'
-	 } else if (msg.scheduledCallCreationMessage) {
+   } else if (message.scheduledCallCreationMessage) {
 		  return 'scheduled_call'
 	 } else if(message.buttonsResponseMessage) {
 			return 'buttons_response'
