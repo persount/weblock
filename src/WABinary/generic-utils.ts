@@ -60,7 +60,7 @@ export const getBinaryNodeFilter = (node) => {
    )
 }
 
-export const getAdditionalNode = (name: string) => {
+export const getAdditionalNode = (name: string, newsletter: boolean) => {
    name = name.toLowerCase()
    const privacy_mode_ts = `${+new Date() / 1000 >>> 0}`
    
@@ -91,11 +91,11 @@ export const getAdditionalNode = (name: string) => {
    } else if(flow_name[name] || name === 'interactive' || name === 'buttons') {
       return [{
          tag: 'biz',
-         attrs: { 
+         attrs: !newsletter ? { 
             actual_actors: '2',
             host_storage: '2',
             privacy_mode_ts
-         },
+         } : { },
          content: [{
             tag: 'interactive',
 			   		attrs: {
@@ -115,11 +115,11 @@ export const getAdditionalNode = (name: string) => {
    } else if(name === 'list') {
       return [{
          tag: 'biz',
-         attrs: {
+         attrs: !newsletter ? {
             actual_actors: '2',
             host_storage: '2',
             privacy_mode_ts
-         },
+         } : { },
          content: [{
             tag: 'list',
             attrs: { 
@@ -136,11 +136,11 @@ export const getAdditionalNode = (name: string) => {
    } else {
       return [{
          tag: 'biz',
-         attrs: {
+         attrs: !newsletter ? {
             actual_actors: '2',
             host_storage: '2',
             privacy_mode_ts
-         }
+         } : { }
       }]
    }
 }
