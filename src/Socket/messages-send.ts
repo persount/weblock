@@ -376,6 +376,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	) => {
 		const meId = authState.creds.me!.id
     const meJid = jidNormalizedUser(meId)
+    const getLid = await fetchUserLid(meJid)
+    const meLid = getLid.find(lid => lid.lid === lid.lid)
 
 		let shouldIncludeDeviceIdentity = false
     let didPushAdditional = false
@@ -642,7 +644,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				} else {
 				  if(isJidGroup(destinationJid) && commentMsg) {
 					  stanza.attrs.to = destinationJid
-				    stanza.attrs.participant = await (await fetchUserLid(meJid))[0]?.lid
+				    stanza.attrs.participant = meLid
 				  } else {
 					  stanza.attrs.to = destinationJid
           }
@@ -668,15 +670,15 @@ export const makeMessagesSocket = (config: SocketConfig) => {
           }) 
         }
 
-        if(pollMessage || messageContent.eventMessage || commentMessage) {
+        if(pollMessage || messageContent.eventMessage || commentMsg) {
           (stanza.content as BinaryNode[]).push({
             tag: 'meta', 
             attrs: messageContent.eventMessage ? {
                 event_type: 'creation'
-              } : isGroup && commentMsg ? {
-                thread_msg_id: msgId,
+              }/* : isGroup && commentMsg ? {
+                thread_msg_id: msgId!,
                 thread_msg_sender_jid: meJid
-              } : isNewsletter ? {
+              }*/ : isNewsletter ? {
                 polltype: 'creation', 
                 contenttype: pollMessage?.pollContentType === 2 ? 'image' : 'text'
               } : {
