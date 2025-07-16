@@ -40,10 +40,6 @@ export type BotListInfo = {
 }
 
 export type BotListInfoV3 = {
-    jid: string
-    name?: string | undefined
-    personaId: string
-    personaJid: string
     category: string
     listview: BotListInfo[]
 }
