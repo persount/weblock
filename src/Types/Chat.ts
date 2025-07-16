@@ -31,18 +31,18 @@ export interface PresenceData {
 }
 
 export type BotListInfo = {
+    category: string
     jid: string
-    name: string
+    name?: any
     personaId: string
     personaJid: string
-    messageCount,
-    category: string
-    messageCount?: string
+    messageCount?: any
 }
 
-export type BotListInfoV3 = (BotListInfo & {
+export type BotListInfoV3 = {
+    category: string
     listview: BotListInfo[]
-})
+}
 
 export type ChatMutation = {
     syncAction: proto.ISyncActionData
