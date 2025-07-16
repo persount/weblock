@@ -8,6 +8,7 @@ import {
 import {
   ALL_WA_PATCH_NAMES,
   BotListInfo,
+  BotListInfoV3,
   ChatModification, 
   ChatMutation,
   LTHashState, 
@@ -259,7 +260,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
  
 		const botNode = getBinaryNodeChild(resp, 'bot')
  
-		const botList: BotListInfo[] = []
+		const botList: BotListInfoV3[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
 		botList.push({
 		  category: 'default',

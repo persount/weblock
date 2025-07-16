@@ -743,7 +743,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            if(additionalNodes && !Array.isArray(additionalNodes)) {
               return [additionalNodes]
            }
-           const content = getAdditionalNode(buttonType, isJidNewsletter(jid))
+           const content = getAdditionalNode(buttonType)
            const items = getBinaryNodeFilter(additionalNodes ?? [])
            if(items) {
               didPushAdditional = true
@@ -761,7 +761,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            if(additionalNodes && !Array.isArray(additionalNodes)) {
               return [additionalNodes]
            }
-				   const nodes = getAdditionalNode('bot', false)
+				   const nodes = getAdditionalNode('bot')
            const botNode = getBinaryNodeFilter(additionalNodes ?? [])
            if(botNode) {
              didPushAdditional = true
