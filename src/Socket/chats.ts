@@ -264,23 +264,14 @@ export const makeChatsSocket = (config: SocketConfig) => {
  
 		const botList: BotListInfoV3[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
-		botList.push({
-		  category: 'default',
-		  listview: {
-		    name: 'Meta AI',
-			  jid: metaia?.attrs?.jid!,
-			  personaId: metaia?.attrs?.['persona_id']!,
-			  personaJid: metaia?.attrs?.['persona_id']?.split('$')[0] + '@bot'
-			}
-	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(section.attrs.name === categoryName && section.attrs.type === 'category') {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
 		      const listview: BotListInfo[] = []
 		      listview.push({
-						jid: bot.attrs.jid,
-						personaId: bot.attrs['persona_id'],
-					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot',
+						jid: bot.attrs?.jid,
+						personaId: bot.attrs?.['persona_id'],
+					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
 						messageCount: bot.attrs.count,
 					})
 					botList.push({
