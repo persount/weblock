@@ -33,10 +33,10 @@ export interface PresenceData {
 export type BotListInfo = {
     category: string
     jid: string
-    name?: any
+    name: string | undefined
     personaId: string
     personaJid: string
-    messageCount?: any
+    messageCount: string | undefined
 }
 
 export type BotListInfoV3 = {
