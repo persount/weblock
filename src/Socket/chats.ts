@@ -211,8 +211,8 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		botList.push({
 		  category: 'default',
 		  name: 'Meta AI',
-			jid: metaia?.attrs?.jid,
-			personaId: metaia?.attrs?.['persona_id'],
+			jid: metaia?.attrs?.jid!,
+			personaId: metaia?.attrs?.['persona_id']!,
 			personaJid: metaia?.attrs?.['persona_id']?.split('$')[0] + '@bot'
 	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
@@ -266,24 +266,25 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		const metaia = getBinaryNodeChild(botNode, 'default')
 		botList.push({
 		  category: 'default',
-		  name: 'Meta AI',
-			jid: metaia?.attrs?.jid,
-			personaId: metaia?.attrs?.['persona_id'],
-			personaJid: metaia?.attrs?.['persona_id']?.split('$')[0] + '@bot'
+		  listview: {
+		    name: 'Meta AI',
+			  jid: metaia?.attrs?.jid!,
+			  personaId: metaia?.attrs?.['persona_id']!,
+			  personaJid: metaia?.attrs?.['persona_id']?.split('$')[0] + '@bot'
+			}
 	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(section.attrs.name === categoryName && section.attrs.type === 'category') {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
 		      const listview: BotListInfo[] = []
 		      listview.push({
-		        category: categoryName,
 						jid: bot.attrs.jid,
 						personaId: bot.attrs['persona_id'],
 					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot',
 						messageCount: bot.attrs.count,
 					})
 					botList.push({
-					  category: section.attrs.category,
+					  category: categoryName,
 					  listview,
 					})
 				}
