@@ -238,7 +238,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			}
 		}
 		botList.push({
-		  category: !categoryName && section.attrs.type === 'all' ? 'all' : categoryName,
+		  category: !categoryName ? 'all' : categoryName,
 		  listview,
 	  })
  
