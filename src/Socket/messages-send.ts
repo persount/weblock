@@ -428,7 +428,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const meJid = jidNormalizedUser(meId)
 
 		let shouldIncludeDeviceIdentity = false
-    let didPushAdditional = false
+    let didPushAdditional: boolean = false
     const regexGroupOld = /^(\d{1,15})-(\d+)@g\.us$/
 	  const messageContent: proto.IMessage = normalizeMessageContent(message)! 
 

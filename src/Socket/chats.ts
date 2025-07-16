@@ -219,6 +219,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		  if(categoryName && section.attrs.type === 'category') {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
 					botList.push({
+		        category: categoryName,
 						jid: bot.attrs.jid,
 						personaId: bot.attrs['persona_id'],
 					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot'
@@ -227,6 +228,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			} else if(section.attrs.type === 'all') {
 				for(const bot of getBinaryNodeChildren(section, 'bot')) {
 					botList.push({
+		        category: 'all',
 						jid: bot.attrs.jid,
 						personaId: bot.attrs['persona_id'],
 					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot'
@@ -274,6 +276,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
 		      const listview: BotListInfo[] = []
 		      listview.push({
+		        category: categoryName,
 						jid: bot.attrs.jid,
 						personaId: bot.attrs['persona_id'],
 					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot',
