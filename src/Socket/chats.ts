@@ -271,14 +271,16 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(section.attrs.name === categoryName && section.attrs.type === 'category') {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
+		      const listview: BotListInfo[] = []
+		      listview.push({
+						jid: bot.attrs.jid,
+						personaId: bot.attrs['persona_id'],
+					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot',
+						messageCount: bot.attrs.count,
+					})
 					botList.push({
 					  category: section.attrs.category,
-					  listview: {
-						  jid: bot.attrs.jid,
-						  personaId: bot.attrs['persona_id'],
-					    personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot',
-						  messageCount: bot.attts.count
-					  }
+					  listview,
 					})
 				}
 			} else {
