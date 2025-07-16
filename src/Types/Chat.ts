@@ -33,15 +33,14 @@ export interface PresenceData {
 export type BotListInfo = {
     category: string
     jid: string
-    name: string | undefined
+    name?: string | undefined
     personaId: string
     personaJid: string
-    messageCount: string | undefined
 }
 
 export type BotListInfoV3 = {
     category: string
-    listview: BotListInfo[]
+    listview: (BotListInfo & { messageCount?: string })[]
 }
 
 export type ChatMutation = {
