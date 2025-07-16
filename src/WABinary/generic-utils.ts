@@ -124,7 +124,7 @@ export const getAdditionalNode = (name: string) => {
             tag: 'list',
             attrs: { 
                v: '2',
-               type: 'single_select'
+               type: 'product_list'
             }
          }]
       }]
