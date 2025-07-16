@@ -115,7 +115,7 @@ export function decodeMessageNode(
 		participant,
 		...({
 		  senderPn: msgType === 'chat' && recipient ? recipient.split('@')[0] : participant ? participant.split('@')[0] : chatId.split("@")[0],
-	  	mode: mode,
+	  	mode: mode || 'pn',
 		  lid: mode === 'lid' ? stanza.attrs.participant : (stanza.attrs.participant_lid || stanza.attrs.sender_lid || stanza.attrs.peer_recipient_lid || stanza.attrs.participant)
 	  })
 	}
