@@ -587,10 +587,6 @@ export const generateWAMessageContent = async(
       if('contextInfo' in message && !!message.contextInfo) {
         m.orderMessage.contextInfo = message.contextInfo
       }
-        
-      if('mentions' in message && !!message.mentions) {
-        m.orderMessage.contextInfo = { mentionedJid: message.mentions }
-      }
    } else if('listReply' in message) {
 		   m.listResponseMessage = { ...message.listReply }
    } else if('poll' in message) {
