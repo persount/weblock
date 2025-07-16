@@ -477,7 +477,7 @@ export const generateWAMessageContent = async(
         m.groupInviteMessage.jpegThumbnail = message.groupInvite.thumbnail;
         //TODO: use built-in interface and get disappearing mode info etc.
         //TODO: cache / use store!?
-        if(options.getProfilePicUrl) {
+     if(options.getProfilePicUrl) {
 			let pfpUrl;
 			try {
 			   pfpUrl = await options.getProfilePicUrl(message.groupInvite.jid, 'preview');
@@ -536,15 +536,15 @@ export const generateWAMessageContent = async(
 			break
         case 'interactive':
             m.interactiveResponseMessage = {
-                 body: {
-                    text: message.buttonReply.text,
-                    format: message.buttonReply.format, 
-                 }, 
-                 nativeFlowResponseMessage: {
-                    name: message.buttonReply.nativeFlow.name, 
-                    paramsJson: message.buttonReply.nativeFlow.paramsJson, 
-                    version: message.buttonReply.nativeFlow.version
-                 }
+               body: {
+                  text: message.buttonReply.text,
+                  format: message.buttonReply.format, 
+               },
+               nativeFlowResponseMessage: {
+                  name: message.buttonReply.nativeFlow.name, 
+                  paramsJson: message.buttonReply.nativeFlow.paramsJson, 
+                  version: message.buttonReply.nativeFlow.version
+               }
             }
             break        
 		}
@@ -568,20 +568,29 @@ export const generateWAMessageContent = async(
         if('mentions' in message && !!message.mentions) {
         	m.productMessage.contextInfo = { mentionedJid: message.mentions }
         }
+        
    } else if ('order' in message) {
       m.orderMessage = WAProto.Message.OrderMessage.fromObject({
-            orderId: message.order.id,
-            thumbnail: message.order.thumbnail,
-            itemCount: message.order.itemCount,
-            status: message.order.status,
-            surface: message.order.surface,
-            orderTitle: message.order.title,
-            message: message.order.text,
-            sellerJid: message.order.seller,
-            token: message.order.token,
-            totalAmount1000: message.order.amount,
-            totalCurrencyCode: message.order.currency
-        }) 
+          orderId: message.order.id,
+          thumbnail: message.order.thumbnail,
+          itemCount: message.order.itemCount,
+          status: message.order.status,
+          surface: message.order.surface,
+          orderTitle: message.order.title,
+          message: message.order.text,
+          sellerJid: message.order.seller,
+          token: message.order.token,
+          totalAmount1000: message.order.amount,
+          totalCurrencyCode: message.order.currency
+      }) 
+		
+      if('contextInfo' in message && !!message.contextInfo) {
+        m.orderMessage.contextInfo = message.contextInfo
+      }
+        
+      if('mentions' in message && !!message.mentions) {
+        m.orderMessage.contextInfo = { mentionedJid: message.mentions }
+      }
    } else if('listReply' in message) {
 		   m.listResponseMessage = { ...message.listReply }
    } else if('poll' in message) {
@@ -616,15 +625,15 @@ export const generateWAMessageContent = async(
 
 	   	 if(message.poll.toAnnouncementGroup) {
 			     // poll v2 is for community announcement groups (single select and multiple)
-			     m.pollCreationMessageV2 = pollCreationMessage
+			    m.pollCreationMessageV2 = pollCreationMessage
 		   } else {
-			     if(message.poll.selectableCount > 0) {
+			    if(message.poll.selectableCount > 0) {
 			        //poll v3 is for single select polls
-				      m.pollCreationMessageV3 = pollCreationMessage
-			     } else {
+				     m.pollCreationMessageV3 = pollCreationMessage
+			    } else {
 				      // poll v3 for multiple choice polls
-				      m.pollCreationMessage = pollCreationMessage
-			     }
+				     m.pollCreationMessage = pollCreationMessage
+			    }
 		   }
 		
        if('contextInfo' in message && !!message.contextInfo) {
