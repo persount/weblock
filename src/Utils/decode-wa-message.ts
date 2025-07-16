@@ -106,7 +106,7 @@ export function decodeMessageNode(
 	const fromMe = isJidNewsletter(from) ? !!stanza.attrs?.is_sender || false : (isLidUser(from) ? isMeLid : isMe)(stanza.attrs.participant || stanza.attrs.from)
 	const pushname = stanza?.attrs?.notify
   const platform = getDevice(msgId)
-	const content = Array.isArray(stanza?.content) ? stanza?.content.filter(item => (item.tag === 'enc' && item?.attrs?.mediatype) || (!['enc', 'reporting'].includes(item.tag))) : stanza?.content
+	const content = Array.isArray(stanza?.content) ? stanza?.content.filter(item => (item.tag === 'enc' && item?.attrs?.mediatype) || (!Buffer.isBuffer(item?.content))) : stanza?.content
 
 	const key: WAMessageKey = {
 		remoteJid: chatId,
@@ -114,7 +114,7 @@ export function decodeMessageNode(
 		id: msgId,
 		participant,
 		...({
-		  senderPn: msgType === 'chat' && recipient ? recipient.split('@')[0] : participant ? participant.split('@')[0] : chatId.split("@")[0],
+		  senderPn: msgType === 'chat' && chatId ? chatId.split("@")[0] : participant ? participant.split('@')[0] : recipient.split("@")[0],
 	  	mode: mode || 'pn',
 		  lid: mode === 'lid' ? stanza.attrs.participant : (stanza.attrs.participant_lid || stanza.attrs.sender_lid || stanza.attrs.peer_recipient_lid || stanza.attrs.participant)
 	  })
