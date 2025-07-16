@@ -746,8 +746,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            const content = getAdditionalNode(buttonType)
            const items = getBinaryNodeFilter(additionalNodes ?? [])
            if(items) {
-              didPushAdditional = true
               (stanza.content as BinaryNode[]).push(...additionalNodes!)
+              didPushAdditional = true
            } else {
               (stanza.content as BinaryNode[]).push(...content)
            }
@@ -764,15 +764,14 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				   const nodes = getAdditionalNode('bot')
            const botNode = getBinaryNodeFilter(additionalNodes ?? [])
            if(botNode) {
-             didPushAdditional = true
              (stanza.content as BinaryNode[]).push(...additionalNodes!)
+             didPushAdditional = true
            } else {
              (stanza.content as BinaryNode[]).push(...nodes)
            }
 			  }
 			  
 			  if(!isNewsletter && !buttonType) {
-			     didPushAdditional = true
            (stanza.content as BinaryNode[]).push({
               tag: 'biz',
               attrs: { 
@@ -781,6 +780,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
                  privacy_mode_ts: `${+new Date() / 1000 >>> 0}`
               }, 
            })
+           didPushAdditional = true
         }
 			  
 			  if(!didPushAdditional && additionalNodes && additionalNodes.length > 0) {
