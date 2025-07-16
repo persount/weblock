@@ -668,7 +668,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					tag: 'message',
 					attrs: {
 						id: msgId!,
-						type: getTypeMessage(messageContent),
+						type: isGroup ? getMessageType(messageContent) : getTypeMessage(messageContent),
 						...(additionalAttributes || {})
 					},
 					content: binaryNodeContent
