@@ -36,11 +36,12 @@ export type BotListInfo = {
     name?: string | undefined
     personaId: string
     personaJid: string
+    messageCount?: string
 }
 
 export type BotListInfoV3 = {
     category: string
-    listview: (BotListInfo & { messageCount?: string })[]
+    listview: BotListInfo[]
 }
 
 export type ChatMutation = {
