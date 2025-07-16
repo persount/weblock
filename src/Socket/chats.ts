@@ -219,31 +219,31 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(categoryName && section.attrs.type === 'category') {
+		    const listview: BotListInfo[] = []
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
-		      const listview: BotListInfo[] = []
 		      listview.push({
 						jid: bot.attrs?.jid,
 						personaId: bot.attrs?.['persona_id'],
 					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
 					})
-					botList.push({
-					  category: categoryName,
-					  listview,
-					})
 				}
-			} else if(section.attrs.type === 'all') {
+			  botList.push({
+					 category: categoryName,
+					 listview,
+				})
+			} else if(!categoryName && section.attrs.type === 'all') {
+		    const listview: BotListInfo[] = []
 				for(const bot of getBinaryNodeChildren(section, 'bot')) {
-		      const listview: BotListInfo[] = []
 		      listview.push({
 						jid: bot.attrs?.jid,
 						personaId: bot.attrs?.['persona_id'],
 					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
 					})
-					botList.push({
-					  category: 'all',
-					  listview,
-					})
 				}
+			  botList.push({
+					 category: 'all',
+					 listview,
+			  })
 			}
 		}
  
@@ -273,6 +273,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		const botNode = getBinaryNodeChild(resp, 'bot')
  
 		const botList: BotListInfoV3[] = []
+		const listview: BotListInfo[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
 		botList.push({
 		  category: 'default',
@@ -284,20 +285,19 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			}] as BotListInfo[]
 	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
-		  if(section.attrs.name === categoryName) {
+		  if(categoryName) {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
-		      const listview: BotListInfo[] = []
 		      listview.push({
 						jid: bot.attrs?.jid,
 						personaId: bot.attrs?.['persona_id'],
 					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
 						messageCount: bot.attrs.count,
 					})
-					botList.push({
-					  category: categoryName,
-					  listview,
-					})
 				}
+			  botList.push({
+					 category: categoryName,
+					 listview,
+			  })
 			} else {
 			  throw new Boom('forbidden', { statusCode: 500 })
 			}
