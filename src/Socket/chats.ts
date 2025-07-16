@@ -207,15 +207,13 @@ export const makeChatsSocket = (config: SocketConfig) => {
  
 		const botList: BotListInfo[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
-		if(default) {
-		    botList.push({
-		      category: 'default',
-		      name: 'Meta AI',
-					jid: metaia.attrs.jid,
-					personaId: metaia.attrs['persona_id'],
-					personaJid: metaia.attrs['persona_id'].split('$')[0] + '@bot'
-				})
-	  }
+		botList.push({
+		  category: 'default',
+		  name: 'Meta AI',
+			jid: metaia.attrs.jid,
+			personaId: metaia.attrs['persona_id'],
+			personaJid: metaia.attrs['persona_id'].split('$')[0] + '@bot'
+	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(categoryName && section.attrs.type === 'category') {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
@@ -263,15 +261,13 @@ export const makeChatsSocket = (config: SocketConfig) => {
  
 		const botList: BotListInfo[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
-		if(default) {
-		    botList.push({
-		      category: 'default',
-		      name: 'Meta AI',
-					jid: metaia.attrs.jid,
-					personaId: metaia.attrs['persona_id']
-		      personaJid: metaia.attrs['persona_id'].split('$')[0] + '@bot'
-				})
-	  }
+		botList.push({
+		  category: 'default',
+		  name: 'Meta AI',
+			jid: metaia.attrs.jid,
+			personaId: metaia.attrs['persona_id'],
+			personaJid: metaia.attrs['persona_id'].split('$')[0] + '@bot'
+	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(section.attrs.name === categoryName && section.attrs.type === 'category') {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
