@@ -723,10 +723,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
             tag: 'meta', 
             attrs: messageContent.eventMessage ? {
                 event_type: 'creation'
-              }/* : isGroup && commentMsg ? {
-                thread_msg_id: msgId!,
-                thread_msg_sender_jid: meJid
-              }*/ : isNewsletter ? {
+              } : isNewsletter ? {
                 polltype: 'creation', 
                 contenttype: pollMessage?.pollContentType === 2 ? 'image' : 'text'
               } : {

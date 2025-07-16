@@ -206,7 +206,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
  
 		const botNode = getBinaryNodeChild(resp, 'bot')
  
-		const botList: BotListInfo[] = []
+		const botList: BotListInfoV3[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
 		botList.push({
 		  category: 'default',
@@ -218,20 +218,28 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(categoryName && section.attrs.type === 'category') {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
+		      const listview: BotListInfo[] = []
+		      listview.push({
+						jid: bot.attrs?.jid,
+						personaId: bot.attrs?.['persona_id'],
+					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
+					})
 					botList.push({
-		        category: categoryName,
-						jid: bot.attrs.jid,
-						personaId: bot.attrs['persona_id'],
-					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot'
+					  category: categoryName,
+					  listview,
 					})
 				}
 			} else if(section.attrs.type === 'all') {
 				for(const bot of getBinaryNodeChildren(section, 'bot')) {
+		      const listview: BotListInfo[] = []
+		      listview.push({
+						jid: bot.attrs?.jid,
+						personaId: bot.attrs?.['persona_id'],
+					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
+					})
 					botList.push({
-		        category: 'all',
-						jid: bot.attrs.jid,
-						personaId: bot.attrs['persona_id'],
-					  personaJid: bot.attrs['persona_id'].split('$')[0] + '@bot'
+					  category: 'all',
+					  listview,
 					})
 				}
 			}
@@ -264,8 +272,15 @@ export const makeChatsSocket = (config: SocketConfig) => {
  
 		const botList: BotListInfoV3[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
+		botList.push({
+		  category: 'default',
+		  name: 'Meta AI',
+			jid: metaia?.attrs?.jid!,
+			personaId: metaia?.attrs?.['persona_id']!,
+			personaJid: metaia?.attrs?.['persona_id']?.split('$')[0] + '@bot'
+	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
-		  if(section.attrs.name === categoryName && section.attrs.type === 'category') {
+		  if(section.attrs.name === categoryName) {
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
 		      const listview: BotListInfo[] = []
 		      listview.push({
