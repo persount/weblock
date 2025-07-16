@@ -35,7 +35,7 @@ export type BotListInfo = {
     name?: string | undefined
     personaId: string
     personaJid: string
-    category?: string
+    category?: string | undefined
     messageCount?: string
 }
 
