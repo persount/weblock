@@ -289,7 +289,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 						messageCount: bot.attrs.count,
 					})
 				}
-			} else if(section.attrs.name !== categoryName{
+			} else if(section.attrs.name !== categoryName) {
 			  throw new Boom('forbidden', { statusCode: 500 })
 			}
 		}
