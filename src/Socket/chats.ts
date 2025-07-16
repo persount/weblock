@@ -207,6 +207,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		const botNode = getBinaryNodeChild(resp, 'bot')
  
 		const botList: BotListInfoV3[] = []
+		const listview: BotListInfo[] = []
 		const metaia = getBinaryNodeChild(botNode, 'default')
 		botList.push({
 		  category: 'default',
@@ -219,7 +220,6 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	  })
 		for(const section of getBinaryNodeChildren(botNode, 'section')) {
 		  if(categoryName && section.attrs.type === 'category') {
-		    const listview: BotListInfo[] = []
 		    for(const bot of getBinaryNodeChildren(section, 'bot')) {
 		      listview.push({
 						jid: bot.attrs?.jid,
@@ -227,12 +227,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
 					})
 				}
-			  botList.push({
-					 category: categoryName,
-					 listview,
-				})
 			} else if(!categoryName && section.attrs.type === 'all') {
-		    const listview: BotListInfo[] = []
 				for(const bot of getBinaryNodeChildren(section, 'bot')) {
 		      listview.push({
 						jid: bot.attrs?.jid,
@@ -240,12 +235,12 @@ export const makeChatsSocket = (config: SocketConfig) => {
 					  personaJid: bot.attrs?.['persona_id'].split('$')[0] + '@bot',
 					})
 				}
-			  botList.push({
-					 category: 'all',
-					 listview,
-			  })
 			}
 		}
+		botList.push({
+		  category: !categoryName && section.attrs.type === 'all' ? 'all' : categoryName,
+		  listview,
+	  })
  
 		return botList
 	}
@@ -294,14 +289,14 @@ export const makeChatsSocket = (config: SocketConfig) => {
 						messageCount: bot.attrs.count,
 					})
 				}
-			  botList.push({
-					 category: categoryName,
-					 listview,
-			  })
-			} else {
+			} else if(section.attrs.name !== categoryName{
 			  throw new Boom('forbidden', { statusCode: 500 })
 			}
 		}
+	  botList.push({
+			category: categoryName,
+		  listview,
+	  })
  
 		return botList
 	}
