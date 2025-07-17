@@ -430,8 +430,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
        .withLIDProtocol()
        .withUser(new USyncUser().withId(meJid))
 		const result = await felz.executeUSyncQuery(usyncQuery)
-		let resultLid = result?.list?.find(id => id?.id === meJid)
-    const meLid = resultLid?.lid
+		let resultLid = await result?.list?.find(id => id?.id === meJid)
+    const meLid = await resultLid?.lid
 
 		let shouldIncludeDeviceIdentity = false
     let didPushAdditional: boolean = false
@@ -701,7 +701,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				} else {
 				  if(commentMsg && isJidGroup(destinationJid)) {
 						stanza.attrs.to = destinationJid
-				    stanza.attrs.participant = meLid! || meJid!
+				    stanza.attrs.participant = meLid! as string || meJid! as string
 				  } else {
 				    stanza.attrs.to = destinationJid
           }
