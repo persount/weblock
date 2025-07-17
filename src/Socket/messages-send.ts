@@ -429,9 +429,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
     const usyncQuery = new USyncQuery()
        .withLIDProtocol()
        .withUser(new USyncUser().withId(meJid))
-		const { list } = await felz.executeUSyncQuery(usyncQuery)
-		let resultLid = list?.find(id => id?.id === meJid)
-    const meLid = res.lid
+		const result = await felz.executeUSyncQuery(usyncQuery)
+		let resultLid = result?.list?.find(id => id?.id === meJid)
+    const meLid = resultLid.lid
 
 		let shouldIncludeDeviceIdentity = false
     let didPushAdditional: boolean = false
