@@ -1,6 +1,7 @@
 import { Boom } from '@hapi/boom'
 import { proto } from '../../WAProto'
 import { BinaryNode } from './types'
+import { unixTimestampSeconds } from '../Utils'
 
 // some extra useful utilities
 
@@ -62,7 +63,7 @@ export const getBinaryNodeFilter = (node) => {
 
 export const getAdditionalNode = (name: string) => {
    name = name.toLowerCase()
-   const privacy_mode_ts = `${+new Date() / 1000 >>> 0}`
+   const ts = unixTimestampSeconds(new Date())
    
    const order_response_name = {
       review_and_pay: 'order_details',
@@ -94,7 +95,7 @@ export const getAdditionalNode = (name: string) => {
          attrs: { 
             actual_actors: '2',
             host_storage: '2',
-            privacy_mode_ts
+            privacy_mode_ts: +ts
          },
          content: [{
             tag: 'interactive',
@@ -118,7 +119,7 @@ export const getAdditionalNode = (name: string) => {
          attrs: {
             actual_actors: '2',
             host_storage: '2',
-            privacy_mode_ts
+            privacy_mode_ts: +ts
          },
          content: [{
             tag: 'list',
@@ -139,7 +140,7 @@ export const getAdditionalNode = (name: string) => {
          attrs: {
             actual_actors: '2',
             host_storage: '2',
-            privacy_mode_ts
+            privacy_mode_ts: +ts
          }
       }]
    }
