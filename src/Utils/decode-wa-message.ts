@@ -37,7 +37,14 @@ export const NACK_REASONS = {
 	DBOperationFailed: 552
 }
 
-type MessageType = 'chat' | 'peer_broadcast' | 'other_broadcast' | 'group' | 'direct_peer_status' | 'other_status' | 'newsletter'
+type MessageType = 
+  | 'chat'
+  | 'peer_broadcast' 
+  | 'other_broadcast' 
+  | 'group' 
+  | 'direct_peer_status' 
+  | 'other_status' 
+  | 'newsletter'
 
 /**
  * Decode the received node as a message.
@@ -108,6 +115,9 @@ export function decodeMessageNode(
 	const pushname = stanza?.attrs?.notify
   const platform = getDevice(msgId)
 	const content = Array.isArray(stanza?.content) ? stanza?.content.filter(item => (item.tag === 'enc' && item?.attrs?.mediatype) || (!Buffer.isBuffer(item?.content)) || (!['reporting'].includes(item?.tag))) : stanza?.content
+  if(fromMe) {
+    participant = jidNormalizedUser(meId)
+  }
 
 	const key: WAMessageKey = {
 		remoteJid: chatId,
