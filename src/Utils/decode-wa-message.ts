@@ -115,15 +115,12 @@ export function decodeMessageNode(
 	const pushname = stanza?.attrs?.notify
   const platform = getDevice(msgId)
 	const content = Array.isArray(stanza?.content) ? stanza?.content.filter(item => (item.tag === 'enc' && item?.attrs?.mediatype) || (!Buffer.isBuffer(item?.content)) || (!['reporting'].includes(item?.tag))) : stanza?.content
-  if(fromMe) {
-    participant = jidNormalizedUser(meId)
-  }
 
 	const key: WAMessageKey = {
 		remoteJid: chatId,
 		fromMe,
 		id: msgId,
-		participant,
+		participant: fromMe ? jidNormalizedUser(meId!) : participant,
 		...({
 		  senderPn: msgType === 'chat' && chatId 
 		     ? jidNormalizedUser(chatId).split("@")[0]
