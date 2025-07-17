@@ -62,7 +62,7 @@ export function decodeMessageNode(
 	const msgId = stanza.attrs.id
 	const from = stanza.attrs.from
 	const mode: string | undefined = stanza.attrs.addressing_mode as 'lid' | 'pn'
-	const participant: string | undefined = mode === 'lid' ? (stanza.attrs.participant_pn || stanza.attrs.sender_pn || stanza.attrs.participant) : stanza.attrs.participant
+	let participant: string | undefined = mode === 'lid' ? (stanza.attrs.participant_pn || stanza.attrs.sender_pn || stanza.attrs.participant) : stanza.attrs.participant
 	const recipient: string | undefined = mode === 'lid' ? (stanza.attrs.peer_recipient_pn || stanza.attrs.sender_pn || stanza.attrs.recipient) : stanza.attrs.recipient
 
 	const isMe = (jid: string) => areJidsSameUser(jid, meId)
@@ -119,15 +119,19 @@ export function decodeMessageNode(
 	      .filter(item => (item.tag === 'enc' && item?.attrs?.mediatype) || (!Buffer.isBuffer(item?.content)))
 	      .filter(item => !['reporting'].includes(item?.tag)) 
 	    : stanza?.content
-
+  if(fromMe) {
+      participant = jidNormalizedUser(meId!)
+  }
 	const key: WAMessageKey = {
 		remoteJid: chatId,
 		fromMe,
 		id: msgId,
-		participant: fromMe ? jidNormalizedUser(meId!) : participant,
+		participant,
 		...({
-		  senderPn: msgType === 'chat' && chatId 
-		     ? jidNormalizedUser(chatId).split("@")[0]
+		  senderPn: msgType === 'chat' && participant 
+		     ? jidNormalizedUser(participant).split("@")[0]
+		     : msgType === 'chat' && from 
+		     ? jidNormalizedUser(from).split("@")[0]
 		     : participant 
 		     ? jidNormalizedUser(participant).split('@')[0] 
 		     : jidNormalizedUser(recipient).split("@")[0],
