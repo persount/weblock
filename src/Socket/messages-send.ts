@@ -426,6 +426,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	) => {
 		const meId = authState.creds.me!.id
     const meJid = jidNormalizedUser(meId)
+    const usyncQuery = new USyncQuery()
+       .withLIDProtocol()
+       .withUser(new USyncUser().withId(meJid))
+		const { list } = await felz.executeUSyncQuery(usyncQuery)
+		let resultLid = list?.find(id => id?.id === meJid)
+    const meLid = res.lid
 
 		let shouldIncludeDeviceIdentity = false
     let didPushAdditional: boolean = false
@@ -477,9 +483,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				if(mediaType) {
 					extraAttrs['mediatype'] = mediaType
 				}
-				if(normalizeMessageContent(message)?.pinInChatMessage) {
+				if(messageContent?.pinInChatMessage) {
 					extraAttrs['decrypt-fail'] = 'hide'
-				}
+				}				
+				if(messageContent?.interactiveResponseMessage?.nativeFlowResponseMessage) {
+          extraAttrs['native_flow_name'] = messageContent.interactiveResponseMessage?.nativeFlowResponseMessage?.name
+        }
 
 				if(isGroup || isStatus) {
 					const [groupData, senderKeyMap] = await Promise.all([
@@ -573,7 +582,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					binaryNodeContent.push({
 						tag: 'enc',
-						attrs: { v: '2', type: 'skmsg' },
+						attrs: { v: '2', type: 'skmsg', ...extraAttrs },
 						content: ciphertext
 					})
 
@@ -601,7 +610,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					binaryNodeContent.push({
 						tag: 'plaintext',
-						attrs: mediaType ? { mediatype: mediaType } : {},
+						attrs: extraAttrs ? extraAttrs : { },
 						content: bytes
 					})
 				} else {
@@ -668,7 +677,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					tag: 'message',
 					attrs: {
 						id: msgId!,
-						type: isGroup ? getMessageType(messageContent) : getTypeMessage(messageContent),
+						type: getTypeMessage(messageContent),
 						...(additionalAttributes || {})
 					},
 					content: binaryNodeContent
@@ -692,7 +701,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				} else {
 				  if(commentMsg && isJidGroup(destinationJid)) {
 						stanza.attrs.to = destinationJid
-				    stanza.attrs.participant = '139612441833487@lid'
+				    stanza.attrs.participant = meLid
 				  } else {
 				    stanza.attrs.to = destinationJid
           }
@@ -796,17 +805,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		return msgId
 	}
 
-	const getMessageType = (message: proto.IMessage) => {
-	  const msg = normalizeMessageContent(message)!
-		if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3) {
-      return 'poll'
-    } else if(msg.eventMessage) {
-      return 'event'
-		} else {
-			return 'text'
-		}
-	}
-	
 	const getTypeMessage = (message: proto.IMessage) => {
 	  const msg = normalizeMessageContent(message)!
 		if (msg.pollCreationMessage || msg.pollCreationMessageV2 || msg.pollCreationMessageV3) {
@@ -839,9 +837,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
       return 'sticker_pack'
    } else if(message.stickerMessage) {
 			return 'sticker'
-   } else if (message.scheduledCallCreationMessage) {
-		  return 'scheduled_call'
-	 } else if(message.buttonsResponseMessage) {
+   } else if(message.buttonsResponseMessage) {
 			return 'buttons_response'
 	 } else if(message.orderMessage) {
 			return 'order'
@@ -888,22 +884,6 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		} else if(msg.listMessage) {
 			return 'list'
     }
-	}
-
-	const getButtonArgs = (message: proto.IMessage): BinaryNode['attrs'] => {
-		if(message.templateMessage) {
-			// TODO: Add attributes
-			return {}
-		} else if(message.listMessage) {
-			const type = message.listMessage.listType
-			if(!type) {
-				throw new Boom('Expected list type inside message')
-			}
-
-			return { v: '2', type: ListType[type].toLowerCase() }
-		} else {
-			return {}
-		}
 	}
 
 	const getPrivacyTokens = async(jids: string[]) => {
@@ -958,13 +938,13 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		relayMessage,
 		sendReceipt,
 		sendReceipts,
-		getButtonArgs,
 		readMessages,
 		refreshMediaConn,
 	  waUploadToServer,
 		fetchPrivacySettings,
 		getUSyncDevices,
 		profilePictureUrl,
+		getEphemeralGroup,
 		createParticipantNodes,
 		sendPeerDataOperationMessage,
 		updateMediaMessage: async(message: proto.IWebMessageInfo) => {
