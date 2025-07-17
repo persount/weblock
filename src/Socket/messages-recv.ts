@@ -863,11 +863,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							msg.key = {
 								remoteJid,
 								fromMe,
-								participant,
+								participant: fromMe ? jidNormalizedUser(authState.creds.me!.id) : participant,
 								id: node.attrs.id,
 								...(msg.key || {})
 							}
-							msg.participant ??= participant
+							msg.participant ??= fromMe ? jidNormalizedUser(authState.creds.me!.id) : participant
 							msg.messageTimestamp = +node.attrs.t
 
 							const fullMsg = proto.WebMessageInfo.fromObject(msg)
