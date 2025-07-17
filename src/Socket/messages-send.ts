@@ -783,7 +783,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
               attrs: { 
                  actual_actors: '2',
                  host_storage: '2',
-                 privacy_mode_ts: unixTimestampSeconds(new Date())
+                 privacy_mode_ts: `${unixTimestampSeconds(new Date())}`
               }, 
            })
            didPushAdditional = true
