@@ -95,7 +95,7 @@ export const getAdditionalNode = (name: string) => {
          attrs: { 
             actual_actors: '2',
             host_storage: '2',
-            privacy_mode_ts: +ts
+            privacy_mode_ts: `${ts}`
          },
          content: [{
             tag: 'interactive',
@@ -119,7 +119,7 @@ export const getAdditionalNode = (name: string) => {
          attrs: {
             actual_actors: '2',
             host_storage: '2',
-            privacy_mode_ts: +ts
+            privacy_mode_ts: `${ts}`
          },
          content: [{
             tag: 'list',
@@ -140,7 +140,7 @@ export const getAdditionalNode = (name: string) => {
          attrs: {
             actual_actors: '2',
             host_storage: '2',
-            privacy_mode_ts: +ts
+            privacy_mode_ts: `${ts}`
          }
       }]
    }
