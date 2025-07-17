@@ -777,7 +777,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
            }
 			  }
 			  
-			  if(!messageContent.reactionMessage && !isNewsletter && !buttonType) {
+			  if(!messageContent.reactionMessage && !isStatus && !isNewsletter && !buttonType) {
            (stanza.content as BinaryNode[]).push({
               tag: 'biz',
               attrs: { 
