@@ -1,6 +1,6 @@
 {
   "name": "@kangfarrel/felzar-baileys",
-  "version": "7.8.9",
+  "version": "7.9.0",
   "description": "WhatsApp API Modification By Frrlz",  
   "keywords": [
     "whatsapp",
@@ -92,6 +92,9 @@
     "sharp": "^0.34.1"
   },
   "peerDependenciesMeta": {
+    "audio-decode": {
+      "optional": true
+    },
     "jimp": {
       "optional": true
     },
