@@ -85,7 +85,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	const processingMutex = makeMutex()
 
 	const placeholderResendCache = config.placeholderResendCache || new NodeCache({
-		stdTTL: DEFAULT_CACHE_TTLS.MSG_RETRY, // 1 hour
+		stdTTL: DEFAULT_CACHE_TTLS!.MSG_RETRY, // 1 hour
 		useClones: false
 	})
 	if(!config.placeholderResendCache) {
