@@ -9,6 +9,7 @@ import {
   ALL_WA_PATCH_NAMES,
   BotListInfo,
   BotListInfoV3,
+  CacheStore,
   ChatModification, 
   ChatMutation,
   LTHashState, 
