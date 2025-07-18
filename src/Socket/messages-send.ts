@@ -7,6 +7,7 @@ import { randomBytes } from 'crypto'
 import { DEFAULT_CACHE_TTLS, WA_DEFAULT_EPHEMERAL } from '../Defaults'
 import {
   AnyMessageContent, 
+  CacheStore,
   Medias, 
   MediaConnInfo, 
   MessageReceiptType, 
@@ -90,8 +91,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		fetchUserLid,
 	} = felz
 
-	const userDevicesCache = config.userDevicesCache || new NodeCache({
-		stdTTL: DEFAULT_CACHE_TTLS.USER_DEVICES, // 5 minutes
+	const userDevicesCache = config.userDevicesCache || new NodeCache<CacheStore>({
+		stdTTL: DEFAULT_CACHE_TTLS!.USER_DEVICES, // 5 minutes
 		useClones: false
 	})
 

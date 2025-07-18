@@ -4,8 +4,26 @@ import { Boom } from '@hapi/boom'
 import { randomBytes } from 'crypto'
 import NodeCache from '@cacheable/node-cache'
 import { proto } from '../../WAProto'
-import { DEFAULT_CACHE_TTLS, KEY_BUNDLE_TYPE, MIN_PREKEY_COUNT } from '../Defaults'
-import { MessageReceiptType, MessageRelayOptions, MessageUserReceipt, MexOperations, NewsletterSettingsUpdate, SocketConfig, WACallEvent, WAMessageKey, WAMessageStatus, WAMessageStubType, WAPatchName, XWAPaths } from '../Types'
+import { 
+  DEFAULT_CACHE_TTLS, 
+  KEY_BUNDLE_TYPE, 
+  MIN_PREKEY_COUNT
+} from '../Defaults'
+import { 
+  CacheStore,
+  MessageReceiptType,
+  MessageRelayOptions, 
+  MessageUserReceipt, 
+  MexOperations, 
+  NewsletterSettingsUpdate, 
+  SocketConfig, 
+  WACallEvent, 
+  WAMessageKey,
+  WAMessageStatus,
+  WAMessageStubType, 
+  WAPatchName, 
+  XWAPaths 
+} from '../Types'
 import {
 	aesDecryptCTR,
 	aesEncryptGCM,
@@ -84,17 +102,17 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	/** this mutex ensures that each retryRequest will wait for the previous one to finish */
 	const retryMutex = makeMutex()
 
-	const msgRetryCache = config.msgRetryCounterCache || new NodeCache({
-		stdTTL: DEFAULT_CACHE_TTLS.MSG_RETRY, // 1 hour
+	const msgRetryCache = config.msgRetryCounterCache || new NodeCache<CacheStore>({
+		stdTTL: DEFAULT_CACHE_TTLS!.MSG_RETRY, // 1 hour
 		useClones: false
 	})
-	const callOfferCache = config.callOfferCache || new NodeCache({
-		stdTTL: DEFAULT_CACHE_TTLS.CALL_OFFER, // 5 mins
+	const callOfferCache = config.callOfferCache || new NodeCache<CacheStore>({
+		stdTTL: DEFAULT_CACHE_TTLS!.CALL_OFFER, // 5 mins
 		useClones: false
 	})
 
-	const placeholderResendCache = config.placeholderResendCache || new NodeCache({
-		stdTTL: DEFAULT_CACHE_TTLS.MSG_RETRY, // 1 hour
+	const placeholderResendCache = config.placeholderResendCache || new NodeCache<CacheStore>({
+		stdTTL: DEFAULT_CACHE_TTLS!.MSG_RETRY, // 1 hour
 		useClones: false
 	})
 
@@ -471,7 +489,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
         }
 
         if(viewsList.length) {
-			viewsList.forEach(item => {
+		    	viewsList.forEach(item => {
             	ev.emit('newsletter.view', { id, server_id, count: +item.attrs.count })
 			})
         }
