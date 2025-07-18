@@ -125,10 +125,8 @@ export function decodeMessageNode(
 		id: msgId,
 		participant: fromMe ? jidNormalizedUser(meId!) : participant,
 		...({
-		  senderPn: msgType === 'chat' && participant 
-		     ? jidNormalizedUser(participant).split("@")[0]
-		     : msgType === 'chat' && from 
-		     ? jidNormalizedUser(from).split("@")[0]
+		  senderPn: msgType === 'chat'
+		     ? jidNormalizedUser(author).split("@")[0]
 		     : participant 
 		     ? jidNormalizedUser(participant).split('@')[0] 
 		     : jidNormalizedUser(recipient).split("@")[0],
