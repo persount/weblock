@@ -91,7 +91,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		fetchUserLid,
 	} = felz
 
-	const userDevicesCache = config.userDevicesCache || new NodeCache<CacheStore>({
+	const userDevicesCache = config.userDevicesCache || new NodeCache({
 		stdTTL: DEFAULT_CACHE_TTLS!.USER_DEVICES, // 5 minutes
 		useClones: false
 	})

@@ -85,7 +85,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	/** this mutex ensures that the notifications (receipts, messages etc.) are processed in order */
 	const processingMutex = makeMutex()
 
-	const placeholderResendCache = config.placeholderResendCache || new NodeCache<CacheStore>({
+	const placeholderResendCache = config.placeholderResendCache || new NodeCache({
 		stdTTL: DEFAULT_CACHE_TTLS!.MSG_RETRY, // 1 hour
 		useClones: false
 	})

@@ -102,16 +102,16 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	/** this mutex ensures that each retryRequest will wait for the previous one to finish */
 	const retryMutex = makeMutex()
 
-	const msgRetryCache = config.msgRetryCounterCache || new NodeCache<CacheStore>({
+	const msgRetryCache = config.msgRetryCounterCache || new NodeCache({
 		stdTTL: DEFAULT_CACHE_TTLS!.MSG_RETRY, // 1 hour
 		useClones: false
 	})
-	const callOfferCache = config.callOfferCache || new NodeCache<CacheStore>({
+	const callOfferCache = config.callOfferCache || new NodeCache({
 		stdTTL: DEFAULT_CACHE_TTLS!.CALL_OFFER, // 5 mins
 		useClones: false
 	})
 
-	const placeholderResendCache = config.placeholderResendCache || new NodeCache<CacheStore>({
+	const placeholderResendCache = config.placeholderResendCache || new NodeCache({
 		stdTTL: DEFAULT_CACHE_TTLS!.MSG_RETRY, // 1 hour
 		useClones: false
 	})
