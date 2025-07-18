@@ -89,7 +89,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		useClones: false
 	})
 	if(!config.placeholderResendCache) {
-		config.placeholderResendCache = placeholderResendCache
+		config.placeholderResendCache ??= placeholderResendCache
 	}
 
 	/** helper function to fetch the given app state sync key */
